@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Header } from "@/components/Header";
-import { QuickLogger } from "@/components/QuickLogger";
+import { HeaderEn } from "@/components/en/HeaderEn";
+import { QuickLoggerEn } from "@/components/en/QuickLoggerEn";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { DashboardTabs } from "@/components/DashboardTabs";
-import { SettingsModal } from "@/components/SettingsModal";
-import { LandingPage } from "@/components/LandingPage";
+import { DashboardTabsEn } from "@/components/en/DashboardTabsEn";
+import { SettingsModalEn } from "@/components/en/SettingsModalEn";
+import { LandingPageEn } from "@/components/en/LandingPageEn";
 import { useAuth } from "@/context/AuthContext";
 import {
   subscribeUserRecords,
@@ -17,9 +17,10 @@ import {
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
-import { Sparkles, CheckCircle2, Layers, Loader2 } from "lucide-react";
+import { INITIAL_CAREER_RECORDS_EN } from "@/lib/initialDataEn";
+import { Sparkles, Layers, Loader2 } from "lucide-react";
 
-export default function Home() {
+export default function HomeEn() {
   const { user, loading: authLoading } = useAuth();
 
   const [records, setRecords] = useState<CareerRecord[]>([]);
@@ -27,28 +28,29 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isClientLoaded, setIsClientLoaded] = useState(false);
   const [jobRole, setJobRole] = useState<JobRole>(() => getSettings().jobRole || "engineering");
   const [toneManner, setToneManner] = useState<ToneManner>(() => getSettings().toneManner || "impact");
 
-  // 사용자가 로그인되어 있으면 해당 사용자의 Firestore 기록 및 무료 크레딧 실시간 구독
+  // Subscribe to user records & credit status
   useEffect(() => {
     if (!user) return;
 
-    // 1. 커리어 기록 실시간 동기화
     const unsubscribeRecords = subscribeUserRecords(
       user.uid,
       Boolean(user.isDemo),
       (syncedRecords) => {
-        setRecords(syncedRecords);
-        setIsClientLoaded(true);
+        // If empty, initialize with English initial records
+        if (!syncedRecords || syncedRecords.length === 0) {
+          setRecords(INITIAL_CAREER_RECORDS_EN);
+        } else {
+          setRecords(syncedRecords);
+        }
       },
       (error) => {
         console.error("Firestore sync error:", error);
       }
     );
 
-    // 2. 무료 크레딧 현황 실시간 동기화
     const unsubscribeCredit = subscribeCreditStatus(
       user.uid,
       Boolean(user.isDemo),
@@ -93,18 +95,18 @@ export default function Home() {
     tone: ToneManner = toneManner
   ) => {
     if (!user) {
-      alert("로그인이 필요합니다.");
+      alert("Sign-in required to continue.");
       return;
     }
 
-    // 1. 개인 무료 5회 및 전체 10,000회 상한선 사전 검증
+    // Free limit check
     if (creditStatus?.isGlobalExhausted) {
-      alert("⚠️ 서비스 전체 프로모션 무료 변환 한도(10,000회)가 소진되었습니다.");
+      alert("⚠️ The global promotional free quota (10,000 requests) has been reached.");
       return;
     }
 
     if (creditStatus?.isUserExhausted) {
-      alert("⚠️ 기본 제공 무료 변환 5회를 모두 사용하셨습니다.\n\n정기 구독 및 유료 플랜이 곧 오픈될 예정입니다.");
+      alert("⚠️ You have used all 5 free transformations.\n\nPro subscription plans will open soon!");
       return;
     }
 
@@ -118,6 +120,7 @@ export default function Home() {
           raw_memo: rawMemo,
           job_role: role,
           tone_manner: tone,
+          language: "en", // English transformation flag
           provider: settings.provider,
           isCreditExhausted: Boolean(creditStatus?.isUserExhausted),
           isGlobalExhausted: Boolean(creditStatus?.isGlobalExhausted),
@@ -126,18 +129,17 @@ export default function Home() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "변환 처리에 실패했습니다.");
+        throw new Error(errorData.error || "Transformation request failed.");
       }
 
       const output: TransformationOutput = await res.json();
 
-      // 대상 주차가 지정되었으면 해당 주의 금요일 오후 18시 기준으로 createdAt 생성, 아니면 현재 시각
       const recordDate = targetWeek
         ? `${targetWeek.endDate}T09:00:00.000Z`
         : new Date().toISOString();
 
       const newRecord: CareerRecord = {
-        id: `rec-${Date.now()}`,
+        id: `rec-en-${Date.now()}`,
         createdAt: recordDate,
         target_week: targetWeek,
         raw_memo: rawMemo,
@@ -146,23 +148,21 @@ export default function Home() {
         star_portfolio: output.star_portfolio,
       };
 
-      // Firestore 클라우드 동기화 저장
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
 
-      // 무료 크레딧 1회 차감
+      // Consume credit
       const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));
       setCreditStatus(updatedCredit);
 
-      showToast(`🎉 ${targetWeek ? targetWeek.label : "이번 주"} 3-Way 커리어 OS로 성공적으로 변환 및 동기화 완료!`);
+      showToast(`🎉 ${targetWeek ? targetWeek.label : "Weekly entry"} successfully transformed and synced!`);
 
-      // Scroll smoothly to dashboard
       const dashElement = document.getElementById("dashboard-section");
       if (dashElement) {
         dashElement.scrollIntoView({ behavior: "smooth" });
       }
     } catch (err: unknown) {
       console.error(err);
-      const msg = err instanceof Error ? err.message : "변환 중 오류가 발생했습니다. 다시 시도해 주세요.";
+      const msg = err instanceof Error ? err.message : "An error occurred during transformation.";
       alert(msg);
     } finally {
       setIsLoading(false);
@@ -173,22 +173,23 @@ export default function Home() {
     if (!user) return;
     try {
       await deleteUserRecordFromFirestore(user.uid, Boolean(user.isDemo), id);
-      showToast("기록이 삭제되었습니다.");
+      showToast("Record successfully deleted.");
     } catch (err) {
       console.error(err);
-      alert("기록 삭제 중 오류가 발생했습니다.");
+      alert("Failed to delete record.");
     }
   };
 
   const handleDataReset = () => {
-    showToast("초기 샘플 데이터로 복원되었습니다.");
+    setRecords(INITIAL_CAREER_RECORDS_EN);
+    showToast("Restored to initial 3-week English sample records.");
   };
 
   const handleDataImported = () => {
-    showToast("백업 데이터를 성공적으로 불러왔습니다.");
+    showToast("Backup data successfully imported.");
   };
 
-  // 1. 인증 상태 확인 중 로딩 화면
+  // 1. Auth loading state
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 space-y-4">
@@ -197,22 +198,22 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2 text-sm font-semibold text-zinc-500">
           <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-          <span>보안 인증 확인 중...</span>
+          <span>Verifying credentials...</span>
         </div>
       </div>
     );
   }
 
-  // 2. 비로그인 사용자: 기능 설명 랜딩 페이지 표시
+  // 2. Unauthenticated user: English landing page
   if (!user) {
-    return <LandingPage />;
+    return <LandingPageEn />;
   }
 
-  // 3. 로그인된 사용자: 정식 3-Way 커리어 OS 대시보드 표시
+  // 3. Authenticated dashboard
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950">
       {/* Header */}
-      <Header
+      <HeaderEn
         onOpenSettings={() => setIsSettingsOpen(true)}
         recordCount={records.length}
         creditStatus={creditStatus}
@@ -224,40 +225,40 @@ export default function Home() {
         <section className="text-center space-y-3 max-w-2xl mx-auto pt-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/60 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>1-Input 3-Output 자동 분류 커리어 운영체제</span>
+            <span>1-Input, 3-Output Career Operating System</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight">
-            금요일 퇴근 전 1분,{" "}
+            Friday 1-min brain dump.{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-              대충 털어놓으세요.
+              Never forget your wins.
             </span>
           </h1>
 
           <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            형식 고민 없이 한 주간 한 일과 이슈를 입력하면, AI가 <strong>주간보고</strong> · <strong>연봉협상 Brag Sheet</strong> · <strong>이직용 STAR 포트폴리오</strong>로 자동 변환하여 누적합니다.
+            Write rough notes without worrying about structure. AI synthesizes it into <strong>Weekly Snippets</strong>, an annual <strong>Brag Document</strong>, and <strong>STAR Resume bullets</strong>.
           </p>
 
-          {/* 3 Drawers Mini Feature Badges */}
+          {/* 3 Drawers Badges */}
           <div className="pt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs text-zinc-600 dark:text-zinc-400">
             <span className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
               <span className="w-2 h-2 rounded-full bg-indigo-500" />
-              단기: 주간보고 (개조식)
+              Short-Term: Weekly Snippets (PPP)
             </span>
             <span className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              중기: Brag Sheet (수치 임팩트)
+              Mid-Term: Brag Doc (Google XYZ)
             </span>
             <span className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
               <span className="w-2 h-2 rounded-full bg-amber-500" />
-              장기: STAR 포트폴리오 (NDA 마스킹)
+              Long-Term: STAR Resume & NDA Masking
             </span>
           </div>
         </section>
 
         {/* Screen 1: Quick Logger */}
         <section className="space-y-4">
-          <QuickLogger
+          <QuickLoggerEn
             onTransform={handleTransform}
             isLoading={isLoading}
             existingRecords={records}
@@ -278,34 +279,27 @@ export default function Home() {
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                 <Layers className="w-5 h-5 text-indigo-500" />
-                <span>3-Way 커리어 대시보드</span>
+                <span>3-Way Career Dashboard</span>
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                상단 탭을 전환하여 목적에 맞는 산출물을 확인하고 바로 복사·내보내기 하세요.
+                Switch tabs to view your short-term syncs, mid-term achievements, or interview case studies.
               </p>
             </div>
           </div>
 
-          {isClientLoaded && (
-            <DashboardTabs
-              records={records}
-              onDeleteRecord={handleDeleteRecord}
-              jobRole={jobRole}
-              toneManner={toneManner}
-              onJobRoleChange={handleJobRoleChange}
-              onToneMannerChange={handleToneMannerChange}
-            />
-          )}
+          <DashboardTabsEn
+            records={records}
+            onDeleteRecord={handleDeleteRecord}
+            jobRole={jobRole}
+            toneManner={toneManner}
+            onJobRoleChange={handleJobRoleChange}
+            onToneMannerChange={handleToneMannerChange}
+          />
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400">
-        <p>© 2026 CareerPulse. 1-Input 3-Output 커리어 운영체제.</p>
-      </footer>
-
       {/* Settings Modal */}
-      <SettingsModal
+      <SettingsModalEn
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onDataReset={handleDataReset}
@@ -314,8 +308,8 @@ export default function Home() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-3 rounded-2xl shadow-xl text-xs sm:text-sm font-semibold animate-in slide-in-from-bottom-5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xl text-xs font-semibold animate-in slide-in-from-bottom-3 duration-200">
+          <Sparkles className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}

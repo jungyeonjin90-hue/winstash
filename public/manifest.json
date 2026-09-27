@@ -1,0 +1,18 @@
+{
+  "name": "CareerPulse - 1분 주간 기록 기반 3-Way 커리어 OS",
+  "short_name": "CareerPulse",
+  "description": "금요일 1분 메모로 완성하는 주간업무보고, 성과평가 Brag Sheet, 이직용 STAR 포트폴리오",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
