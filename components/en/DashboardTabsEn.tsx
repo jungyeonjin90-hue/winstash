@@ -100,8 +100,8 @@ export function DashboardTabsEn({
 
       {/* Tab Panels */}
       <div>
-        {activeTab === "weekly" && latestRecord && (
-          <WeeklySnippetsTab record={latestRecord} />
+        {activeTab === "weekly" && records.length > 0 && (
+          <WeeklySnippetsTab records={records} />
         )}
 
         {activeTab === "brag" && (

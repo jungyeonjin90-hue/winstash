@@ -1,37 +1,81 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Clock, Calendar, Check, MessageSquare, Mail, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  Calendar,
+  Check,
+  MessageSquare,
+  Mail,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  History,
+} from "lucide-react";
 import { CareerRecord } from "@/types/career";
 
 interface WeeklySnippetsTabProps {
-  record: CareerRecord;
+  records: CareerRecord[];
+  initialRecordId?: string;
 }
 
-export function WeeklySnippetsTab({ record }: WeeklySnippetsTabProps) {
+export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTabProps) {
+  const [selectedRecordId, setSelectedRecordId] = useState<string>(
+    initialRecordId || records[0]?.id || ""
+  );
   const [copiedType, setCopiedType] = useState<"slack" | "email" | null>(null);
   const [showRawMemo, setShowRawMemo] = useState(false);
 
-  const formattedDate = new Date(record.createdAt).toLocaleDateString("en-US", {
+  // Active selected record or fallback to first record
+  const currentIndex = records.findIndex((r) => r.id === selectedRecordId);
+  const activeRecord = (currentIndex >= 0 ? records[currentIndex] : records[0]) || null;
+
+  if (!activeRecord) {
+    return (
+      <div className="p-12 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 text-sm">
+        No weekly logs found. Enter your first Friday note above!
+      </div>
+    );
+  }
+
+  const formattedDate = new Date(activeRecord.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
     weekday: "short",
   });
 
-  const weekLabel = record.target_week?.label || formattedDate;
+  const weekLabel = activeRecord.target_week?.label || formattedDate;
+
+  // Navigation handlers
+  const hasOlder = currentIndex < records.length - 1;
+  const hasNewer = currentIndex > 0;
+
+  const handleOlder = () => {
+    if (hasOlder) {
+      setSelectedRecordId(records[currentIndex + 1].id);
+    }
+  };
+
+  const handleNewer = () => {
+    if (hasNewer) {
+      setSelectedRecordId(records[currentIndex - 1].id);
+    }
+  };
 
   const generateSlackMarkdown = () => {
     return `📢 *[Weekly Snippets] ${weekLabel} (${formattedDate})*
 
 ✅ *Progress (Completed)*
-${record.weekly_report.done.map((item) => `• ${item}`).join("\n")}
+${activeRecord.weekly_report.done.map((item) => `• ${item}`).join("\n")}
 
 ⏳ *In-Flight & Bottlenecks*
-${record.weekly_report.in_progress.map((item) => `• ${item}`).join("\n")}
+${activeRecord.weekly_report.in_progress.map((item) => `• ${item}`).join("\n")}
 
 🗓️ *Plans & Next Priorities*
-${record.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}`;
+${activeRecord.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}`;
   };
 
   const generateEmailText = () => {
@@ -40,13 +84,13 @@ ${record.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}`;
 Here is my weekly status update for ${weekLabel} (${formattedDate}):
 
 [Progress / Key Accomplishments]
-${record.weekly_report.done.map((item) => `- ${item}`).join("\n")}
+${activeRecord.weekly_report.done.map((item) => `- ${item}`).join("\n")}
 
 [In-Flight & Active Tracking]
-${record.weekly_report.in_progress.map((item) => `- ${item}`).join("\n")}
+${activeRecord.weekly_report.in_progress.map((item) => `- ${item}`).join("\n")}
 
 [Next Week Priorities]
-${record.weekly_report.next_week.map((item) => `- ${item}`).join("\n")}
+${activeRecord.weekly_report.next_week.map((item) => `- ${item}`).join("\n")}
 
 Best regards`;
   };
@@ -63,7 +107,7 @@ Best regards`;
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Top Banner & Quick Copy Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 no-print">
         <div>
@@ -120,6 +164,68 @@ Best regards`;
         </div>
       </div>
 
+      {/* Week Selection Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print text-xs">
+        {/* Dropdown Week Picker */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 shrink-0">
+            <History className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Week Log:</span>
+          </span>
+
+          <select
+            value={activeRecord.id}
+            onChange={(e) => setSelectedRecordId(e.target.value)}
+            className="w-full sm:w-auto px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
+          >
+            {records.map((r, idx) => {
+              const label = r.target_week?.label || new Date(r.createdAt).toLocaleDateString("en-US");
+              const isLatest = idx === 0;
+              return (
+                <option key={r.id} value={r.id} className="bg-white dark:bg-zinc-900">
+                  {label} {isLatest ? "(Latest)" : ""}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        {/* Older / Newer Quick Buttons */}
+        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+          <button
+            onClick={handleOlder}
+            disabled={!hasOlder}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold transition-all ${
+              hasOlder
+                ? "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                : "opacity-40 cursor-not-allowed text-zinc-400"
+            }`}
+            title="View previous week"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>Older Week</span>
+          </button>
+
+          <span className="text-zinc-400 font-mono text-[11px]">
+            {currentIndex + 1} of {records.length}
+          </span>
+
+          <button
+            onClick={handleNewer}
+            disabled={!hasNewer}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-semibold transition-all ${
+              hasNewer
+                ? "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                : "opacity-40 cursor-not-allowed text-zinc-400"
+            }`}
+            title="View newer week"
+          >
+            <span>Newer Week</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
       {/* Structured 3 Sections Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* 1. Done */}
@@ -129,7 +235,7 @@ Best regards`;
             <span>Progress (Completed)</span>
           </div>
           <ul className="space-y-2.5">
-            {record.weekly_report.done.map((item, idx) => (
+            {activeRecord.weekly_report.done.map((item, idx) => (
               <li
                 key={idx}
                 className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed flex items-start gap-2"
@@ -148,7 +254,7 @@ Best regards`;
             <span>In-Flight & Bottlenecks</span>
           </div>
           <ul className="space-y-2.5">
-            {record.weekly_report.in_progress.map((item, idx) => (
+            {activeRecord.weekly_report.in_progress.map((item, idx) => (
               <li
                 key={idx}
                 className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed flex items-start gap-2"
@@ -167,7 +273,7 @@ Best regards`;
             <span>Plans & Next Priorities</span>
           </div>
           <ul className="space-y-2.5">
-            {record.weekly_report.next_week.map((item, idx) => (
+            {activeRecord.weekly_report.next_week.map((item, idx) => (
               <li
                 key={idx}
                 className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed flex items-start gap-2"
@@ -192,7 +298,7 @@ Best regards`;
 
         {showRawMemo && (
           <div className="mt-3 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-mono whitespace-pre-wrap animate-in fade-in">
-            {record.raw_memo}
+            {activeRecord.raw_memo}
           </div>
         )}
       </div>
