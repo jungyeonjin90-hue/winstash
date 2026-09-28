@@ -43,8 +43,8 @@ CRITICAL RULES:
 - Consolidate related weekly incremental tasks into cohesive, major milestones.
 - Use Google XYZ format: "Accomplished [X], as measured by [Y], by doing [Z]".
 - Filter out trivial noise and elevate true business and engineering leverage.
-- IMPORTANT LANGUAGE RULE: You MUST write the generated output values in the SAME language that the user predominantly used in the "Input Weekly Records" (e.g., if Korean, write in Korean).
-- DO NOT translate the JSON keys. The JSON keys MUST remain exactly as specified in the schema (e.g. "metric_summary", "business_impact").
+- OUTPUT LANGUAGE: You MUST write ALL output values in ENGLISH ONLY, regardless of the language of the input records. This is the English-only API endpoint.
+- DO NOT translate the JSON keys. The JSON keys MUST remain exactly as specified in the schema.
 Required JSON Schema:
 {
   "items": [
@@ -76,7 +76,7 @@ CRITICAL RULES:
 - Group related weekly PRs and sprints into complete, impactful end-to-end projects.
 - Use strong active verbs (Spearheaded, Architected, Slashed, Optimized, Deployed).
 - Mask confidential clients or proprietary internal tooling into generic equivalents if applicable.
-- IMPORTANT LANGUAGE RULE: You MUST write the generated output values in the SAME language that the user predominantly used in the "Input Weekly Records" (e.g., if Korean, write in Korean).
+- OUTPUT LANGUAGE: You MUST write ALL output values in ENGLISH ONLY, regardless of the language of the input records. This is the English-only API endpoint.
 - DO NOT translate the JSON keys. The JSON keys MUST remain exactly as specified in the schema.
 Required JSON Schema:
 {
