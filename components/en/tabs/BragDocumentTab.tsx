@@ -9,10 +9,14 @@ import {
   Check,
   Filter,
   FileSpreadsheet,
+  Share2,
+  Printer,
+  Sparkles,
 } from "lucide-react";
-import { CareerRecord, SynthesisScale, JobRole, ToneManner } from "@/types/career";
+import { CareerRecord, SynthesisScale, JobRole, ToneManner, SynthesizedBragItem } from "@/types/career";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { synthesizeBragItems } from "@/lib/synthesizer";
+import { formatNotionMarkdownBrag } from "@/lib/exportFormatters";
 
 interface BragDocumentTabProps {
   records: CareerRecord[];
@@ -31,9 +35,9 @@ export function BragDocumentTab({
 }: BragDocumentTabProps) {
   const [selectedQuarter, setSelectedQuarter] = useState<string>("ALL");
   const [isCopied, setIsCopied] = useState(false);
+  const [isNotionCopied, setIsNotionCopied] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // Multi-scale synthesis settings (3 / 5 / 10 / ALL)
+  const [linkedInCopiedId, setLinkedInCopiedId] = useState<string | null>(null);
   const [scale, setScale] = useState<SynthesisScale>(5);
 
   const handleRoleChange = (r: JobRole) => {
@@ -85,11 +89,44 @@ ${synthesizedItems
     }
   };
 
+  const copyNotionMarkdown = async () => {
+    const text = formatNotionMarkdownBrag(synthesizedItems, jobRole, selectedQuarter);
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsNotionCopied(true);
+      setTimeout(() => setIsNotionCopied(false), 2500);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const copySingleItem = async (id: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const copyLinkedInSnippet = async (item: SynthesizedBragItem) => {
+    const text = `🏆 Proud of what our team shipped during ${item.quarter_span}:
+
+"${item.metric_summary}"
+
+📌 Strategic Impact:
+${item.business_impact}
+
+Key milestones:
+${item.key_highlights.map((h) => `• ${h}`).join("\n")}
+
+#CareerWins #EngineeringLeadership #BuildingInPublic #Impact`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setLinkedInCopiedId(item.id);
+      setTimeout(() => setLinkedInCopiedId(null), 2500);
     } catch (err) {
       console.error(err);
     }
@@ -114,10 +151,14 @@ ${synthesizedItems
     URL.revokeObjectURL(url);
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner & Strategy Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 no-print">
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
@@ -133,7 +174,37 @@ ${synthesizedItems
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {/* Notion Markdown Copy */}
+          <button
+            onClick={copyNotionMarkdown}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
+            title="Copy optimized Markdown with callouts and checklists for Notion"
+          >
+            {isNotionCopied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Copied for Notion!</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Notion Format</span>
+              </>
+            )}
+          </button>
+
+          {/* Print */}
+          <button
+            onClick={handlePrint}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
+            title="Print or Save as Clean PDF"
+          >
+            <Printer className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+            <span>Print</span>
+          </button>
+
+          {/* Standard Markdown Copy */}
           <button
             onClick={copyAllMarkdown}
             className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
@@ -151,26 +222,29 @@ ${synthesizedItems
             )}
           </button>
 
+          {/* CSV Export */}
           <button
             onClick={downloadCSV}
             className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
+            <span>CSV</span>
           </button>
         </div>
       </div>
 
       {/* Persona Customizer */}
-      <PersonaSelectorEn
-        currentRole={jobRole}
-        currentTone={toneManner}
-        onRoleChange={handleRoleChange}
-        onToneChange={handleToneChange}
-      />
+      <div className="no-print">
+        <PersonaSelectorEn
+          currentRole={jobRole}
+          currentTone={toneManner}
+          onRoleChange={handleRoleChange}
+          onToneChange={handleToneChange}
+        />
+      </div>
 
       {/* Synthesis Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print">
         {/* Scale Picker */}
         <div className="flex items-center gap-2 text-xs">
           <span className="font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
@@ -218,7 +292,7 @@ ${synthesizedItems
         {synthesizedItems.map((item, idx) => (
           <div
             key={item.id}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 space-y-3.5 shadow-xs transition-all hover:border-emerald-500/40"
+            className="print-page-break bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 space-y-3.5 shadow-xs transition-all hover:border-emerald-500/40"
           >
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
@@ -234,19 +308,42 @@ ${synthesizedItems
                 </span>
               </div>
 
-              <button
-                onClick={() =>
-                  copySingleItem(item.id, `• ${item.metric_summary}\n  - ${item.business_impact}`)
-                }
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Copy achievement bullet"
-              >
-                {copiedId === item.id ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-              </button>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5 no-print">
+                {/* LinkedIn Share Snippet */}
+                <button
+                  onClick={() => copyLinkedInSnippet(item)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900 transition-colors cursor-pointer"
+                  title="Copy achievement for LinkedIn post"
+                >
+                  {linkedInCopiedId === item.id ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-sky-600" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5 text-sky-600" />
+                      <span>LinkedIn</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Single Item Copy */}
+                <button
+                  onClick={() =>
+                    copySingleItem(item.id, `• ${item.metric_summary}\n  - ${item.business_impact}`)
+                  }
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Copy achievement bullet"
+                >
+                  {copiedId === item.id ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Metric Summary (Google XYZ Formula) */}

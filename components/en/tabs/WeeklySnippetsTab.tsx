@@ -65,7 +65,7 @@ Best regards`;
   return (
     <div className="space-y-6">
       {/* Top Banner & Quick Copy Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 no-print">
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-indigo-950 dark:text-indigo-200">

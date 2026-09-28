@@ -24,3 +24,34 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ATS Clean Print & PDF Export Styles */
+@media print {
+  header,
+  footer,
+  .no-print,
+  button,
+  select,
+  #dashboard-section > div:first-child,
+  .quick-logger-section {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-page-break {
+    page-break-inside: avoid;
+  }
+}
+

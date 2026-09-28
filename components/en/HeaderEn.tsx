@@ -58,9 +58,9 @@ export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEn
             </div>
           )}
 
-          {/* Language Switcher back to Korean */}
+          {/* Language Switcher back to Korean Archive */}
           <Link
-            href="/"
+            href="/ko"
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
             title="한국어 버전으로 전환"
           >
