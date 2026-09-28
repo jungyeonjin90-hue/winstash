@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mic, MicOff, Sparkles, CornerDownLeft, RotateCcw, Lightbulb } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { WeekSpan, CareerRecord } from "@/types/career";
@@ -9,7 +9,13 @@ import { WeekPicker } from "./WeekPicker";
 import { CreditStatus } from "@/lib/creditService";
 
 interface QuickLoggerProps {
-  onTransform: (rawMemo: string, targetWeek: WeekSpan) => Promise<void>;
+  onTransform: (
+    rawMemo: string,
+    targetWeek?: WeekSpan,
+    role?: any,
+    tone?: any,
+    existingRecordId?: string
+  ) => Promise<void>;
   isLoading: boolean;
   existingRecords?: CareerRecord[];
   creditStatus?: CreditStatus | null;
@@ -33,6 +39,32 @@ const PRESET_MEMOS = [
     text: "수작업으로 하던 주간 매출 정산 검증 엑셀 작업을 파이썬 스크립트랑 사내 슬랙봇으로 자동화 완료함. 재무팀이랑 3번 미팅해서 예외 케이스 8개 다 반영했고, 매주 금요일마다 4시간씩 걸리던 수작업이 이제 버튼 한 번으로 3분 만에 끝남. 데이터 오류율 0% 달성.",
   },
 ];
+
+const LOADING_MESSAGES_KO = [
+  "AI가 거친 메모를 분석 중입니다...",
+  "성과 지표와 임팩트를 추출하고 있습니다...",
+  "STAR 기법으로 케이스를 구조화합니다...",
+  "민감한 정보를 마스킹 중입니다...",
+  "거의 다 되었습니다! 서랍에 넣는 중..."
+];
+
+function LoadingMessages() {
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIdx((prev) => (prev + 1) % LOADING_MESSAGES_KO.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <Sparkles className="w-4 h-4 animate-spin text-white/80" />
+      <span className="text-white min-w-[210px] text-center">{LOADING_MESSAGES_KO[msgIdx]}</span>
+    </div>
+  );
+}
 
 export function QuickLogger({
   onTransform,
@@ -63,11 +95,30 @@ export function QuickLogger({
     }
   };
 
+  const existingRecord = existingRecords?.find((record) => {
+    if (record.target_week) {
+      return (
+        record.target_week.year === selectedWeek.year &&
+        record.target_week.month === selectedWeek.month &&
+        record.target_week.weekOfMonth === selectedWeek.weekOfMonth
+      );
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (existingRecord) {
+      setMemo(existingRecord.raw_memo);
+    } else {
+      setMemo("");
+    }
+  }, [selectedWeek.year, selectedWeek.month, selectedWeek.weekOfMonth, existingRecord?.id, existingRecord?.raw_memo]);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!memo.trim() || isLoading) return;
     if (isListening) stopListening();
-    await onTransform(memo.trim(), selectedWeek);
+    await onTransform(memo.trim(), selectedWeek, undefined, undefined, existingRecord?.id);
   };
 
   return (
@@ -205,11 +256,17 @@ export function QuickLogger({
                 type="button"
                 onClick={() => handleSubmit()}
                 disabled={!memo.trim() || isLoading}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="flex items-center justify-center min-w-[200px] gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 animate-spin-slow" />
-                <span>{isLoading ? "3-Way 변환 중..." : `${selectedWeek.month}월 ${selectedWeek.weekOfMonth}주차 서랍에 저장`}</span>
-                <CornerDownLeft className="w-3.5 h-3.5 opacity-70 hidden sm:inline" />
+                {isLoading ? (
+                  <LoadingMessages />
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 animate-spin-slow" />
+                    <span>{existingRecord ? `${selectedWeek.month}월 ${selectedWeek.weekOfMonth}주차 수정 및 재생성` : `${selectedWeek.month}월 ${selectedWeek.weekOfMonth}주차 서랍에 저장`}</span>
+                    <CornerDownLeft className="w-3.5 h-3.5 opacity-70 hidden sm:inline" />
+                  </>
+                )}
               </button>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mic, MicOff, Sparkles, CornerDownLeft, RotateCcw, Lightbulb } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { WeekSpan, CareerRecord } from "@/types/career";
@@ -9,7 +9,13 @@ import { WeekPickerEn } from "./WeekPickerEn";
 import { CreditStatus } from "@/lib/creditService";
 
 interface QuickLoggerEnProps {
-  onTransform: (rawMemo: string, targetWeek: WeekSpan) => Promise<void>;
+  onTransform: (
+    rawMemo: string,
+    targetWeek?: WeekSpan,
+    role?: any,
+    tone?: any,
+    existingRecordId?: string
+  ) => Promise<void>;
   isLoading: boolean;
   existingRecords?: CareerRecord[];
   creditStatus?: CreditStatus | null;
@@ -33,6 +39,32 @@ const PRESET_MEMOS_EN = [
     text: "Automated manual weekly financial reconciliation using a Python pipeline and corporate Slack Bot. Codified 8 edge cases with finance. Slashed Friday manual review time from 4 hours to 3 minutes with 0% error discrepancy.",
   },
 ];
+
+const LOADING_MESSAGES_EN = [
+  "AI is analyzing your raw memo...",
+  "Extracting impact & metrics...",
+  "Drafting STAR case studies...",
+  "Masking sensitive information...",
+  "Almost there! Polishing..."
+];
+
+function LoadingMessagesEn() {
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIdx((prev) => (prev + 1) % LOADING_MESSAGES_EN.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <Sparkles className="w-4 h-4 animate-spin text-white/80" />
+      <span className="text-white min-w-[160px] text-center">{LOADING_MESSAGES_EN[msgIdx]}</span>
+    </div>
+  );
+}
 
 export function QuickLoggerEn({
   onTransform,
@@ -63,11 +95,34 @@ export function QuickLoggerEn({
     }
   };
 
+  const existingRecord = existingRecords?.find((record) => {
+    if (record.target_week) {
+      return (
+        record.target_week.year === selectedWeek.year &&
+        record.target_week.month === selectedWeek.month &&
+        record.target_week.weekOfMonth === selectedWeek.weekOfMonth
+      );
+    }
+    return false;
+  });
+
+  // When selectedWeek changes, if there's an existing record, populate the textarea.
+  // If there's no existing record, clear the textarea to start fresh.
+  useEffect(() => {
+    if (existingRecord) {
+      setMemo(existingRecord.raw_memo);
+    } else {
+      setMemo("");
+    }
+  }, [selectedWeek.year, selectedWeek.month, selectedWeek.weekOfMonth, existingRecord?.id, existingRecord?.raw_memo]);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!memo.trim() || isLoading) return;
     if (isListening) stopListening();
-    await onTransform(memo.trim(), selectedWeek);
+    
+    // Pass existingRecord.id if we are editing an already logged week.
+    await onTransform(memo.trim(), selectedWeek, undefined, undefined, existingRecord?.id);
   };
 
   return (
@@ -208,11 +263,17 @@ export function QuickLoggerEn({
                 type="button"
                 onClick={() => handleSubmit()}
                 disabled={!memo.trim() || isLoading}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="flex items-center justify-center min-w-[140px] gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 animate-spin-slow" />
-                <span>{isLoading ? "Synthesizing 3 Drawers..." : `Save to ${selectedWeek.label}`}</span>
-                <CornerDownLeft className="w-3.5 h-3.5 opacity-70 hidden sm:inline" />
+                {isLoading ? (
+                  <LoadingMessagesEn />
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 animate-spin-slow" />
+                    <span>{existingRecord ? `Update ${selectedWeek.label}` : `Save to ${selectedWeek.label}`}</span>
+                    <CornerDownLeft className="w-3.5 h-3.5 opacity-70 hidden sm:inline" />
+                  </>
+                )}
               </button>
             )}
           </div>

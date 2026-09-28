@@ -76,11 +76,14 @@ export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTa
 
   // 3. Weeks available matching selected Year and Month
   const matchingRecords = useMemo(() => {
-    return recordsWithDateInfo.filter((item) => {
+    const filtered = recordsWithDateInfo.filter((item) => {
       if (selectedYear !== "ALL" && item.dateInfo.year !== selectedYear) return false;
       if (selectedMonth !== "ALL" && item.dateInfo.month !== selectedMonth) return false;
       return true;
     });
+    
+    // Sort ascending by week number (Week 1, Week 2, ...)
+    return filtered.sort((a, b) => a.dateInfo.weekNum - b.dateInfo.weekNum);
   }, [recordsWithDateInfo, selectedYear, selectedMonth]);
 
   // If currently selected record is not in matching weeks, select the first matching one
@@ -134,17 +137,11 @@ export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTa
     );
   }
 
-  const formattedDate = new Date(activeRecord.createdAt).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    weekday: "short",
-  });
-
-  const weekLabel = activeRecord.target_week?.label || formattedDate;
+  const activeDateInfo = getDetailedRecordDateInfo(activeRecord);
+  const historyTitle = `${activeDateInfo.year} ${activeDateInfo.monthLong}, ${activeDateInfo.displayLabel}`;
 
   const generateSlackMarkdown = () => {
-    return `📢 *[Weekly Snippets] ${weekLabel} (${formattedDate})*
+    return `📢 *[Weekly Snippets] ${historyTitle}*
 
 ✅ *Progress (Completed)*
 ${activeRecord.weekly_report.done.map((item) => `• ${item}`).join("\n")}
@@ -159,7 +156,7 @@ ${activeRecord.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}`
   const generateEmailText = () => {
     return `Hi Team,
 
-Here is my weekly status update for ${weekLabel} (${formattedDate}):
+Here is my weekly status update for ${historyTitle}:
 
 [Progress / Key Accomplishments]
 ${activeRecord.weekly_report.done.map((item) => `- ${item}`).join("\n")}
@@ -191,7 +188,7 @@ Best regards`;
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-indigo-950 dark:text-indigo-200">
-              Drawer 1: Weekly Snippets (PPP Framework)
+              {historyTitle}
             </span>
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-200/60 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300">
               Short-Term
@@ -244,73 +241,64 @@ Best regards`;
 
       {/* 3-Tier Hierarchical Dropdown Toolbar: Year ✕ Month ✕ Week */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print text-xs">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 font-bold text-zinc-700 dark:text-zinc-300">
-            <Filter className="w-3.5 h-3.5 text-indigo-500" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 shrink-0">
+            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
             <span>Select Log:</span>
           </div>
 
-          {/* 1. Year Dropdown */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
-            <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-zinc-500 font-medium">Year:</span>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* 1. Year Dropdown */}
             <select
               value={selectedYear}
               onChange={(e) => {
                 setSelectedYear(e.target.value);
                 setSelectedMonth("ALL"); // Reset month
               }}
-              className="bg-transparent font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
+              className="bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
+              <option value="ALL">All Years</option>
               {availableYears.map((y) => (
-                <option key={y} value={y} className="bg-white dark:bg-zinc-900">
+                <option key={y} value={y}>
                   {y}
                 </option>
               ))}
             </select>
-          </div>
 
-          {/* 2. Month Dropdown */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
-            <Clock className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-zinc-500 font-medium">Month:</span>
+            {/* 2. Month Dropdown */}
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
+              className="bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
-              <option value="ALL" className="bg-white dark:bg-zinc-900">
-                All Months
-              </option>
+              <option value="ALL">All Months</option>
               {availableMonths.map((m) => (
-                <option key={m.monthNum} value={m.monthNum} className="bg-white dark:bg-zinc-900">
-                  {m.long} ({m.short})
+                <option key={m.monthNum} value={m.monthNum}>
+                  {m.short}
                 </option>
               ))}
             </select>
-          </div>
 
-          {/* 3. Week / Date Dropdown */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
-            <span className="text-zinc-500 font-medium">Week:</span>
-            <select
-              value={selectedRecordId}
-              onChange={(e) => setSelectedRecordId(e.target.value)}
-              className="bg-transparent font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none cursor-pointer"
-            >
-              {matchingRecords.map((item, idx) => {
-                const isLatestOverall = item.record.id === records[0]?.id;
-                return (
-                  <option
-                    key={item.record.id}
-                    value={item.record.id}
-                    className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
-                  >
-                    {item.dateInfo.displayLabel} {isLatestOverall ? "(Latest)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            {/* 3. Week / Date Dropdown */}
+            <div className="relative flex items-center group">
+              <select
+                value={selectedRecordId}
+                onChange={(e) => setSelectedRecordId(e.target.value)}
+                className="bg-zinc-50 dark:bg-zinc-950 pl-2.5 pr-8 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-indigo-500 cursor-pointer appearance-none flex-1"
+              >
+                {matchingRecords.map((item) => {
+                  const isLatestOverall = item.record.id === records[0]?.id;
+                  return (
+                    <option key={item.record.id} value={item.record.id}>
+                      {item.dateInfo.displayLabel} {isLatestOverall ? "(Latest)" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="absolute right-2.5 pointer-events-none flex items-center gap-1.5">
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+              </div>
+            </div>
           </div>
         </div>
 

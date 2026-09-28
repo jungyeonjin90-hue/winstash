@@ -38,6 +38,8 @@ export function formatLinkedInPost(
     product: "🚀",
     marketing: "📈",
     operations: "⚙️",
+    design: "🎨",
+    sales: "🤝",
   };
 
   const emoji = roleEmojiMap[jobRole] || "💡";

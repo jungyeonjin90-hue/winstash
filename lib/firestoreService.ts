@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   setDoc,
+  getDoc,
   deleteDoc,
   onSnapshot,
   query,
@@ -46,10 +47,13 @@ export function subscribeUserRecords(
           return {
             id: docSnap.id,
             createdAt: data.createdAt,
+            target_week: data.target_week,
             raw_memo: data.raw_memo,
             weekly_report: data.weekly_report,
             brag_sheet_item: data.brag_sheet_item,
             star_portfolio: data.star_portfolio,
+            jobRole: data.jobRole,
+            toneManner: data.toneManner,
           } as CareerRecord;
         });
 
@@ -136,6 +140,37 @@ export async function saveUserPersonaToFirestore(
   } else {
     localStorage.setItem(`career_pulse_persona_${userId}`, JSON.stringify({ jobRole, toneManner }));
   }
+}
+
+/**
+ * 사용자 페르소나 설정 불러오기 (Firestore)
+ */
+export async function getUserPersonaFromFirestore(
+  userId: string,
+  isDemo: boolean
+): Promise<{ jobRole: JobRole; toneManner: ToneManner } | null> {
+  if (isFirebaseConfigured && db && !isDemo) {
+    try {
+      const docRef = doc(db, "users", userId, "settings", "persona");
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data.jobRole && data.toneManner) {
+          return { jobRole: data.jobRole as JobRole, toneManner: data.toneManner as ToneManner };
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch persona from Firestore:", e);
+    }
+  } else if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(`career_pulse_persona_${userId}`);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {
+      console.warn("Failed to parse local persona:", e);
+    }
+  }
+  return null;
 }
 
 // ---------------- 로컬 폴백 헬퍼 ----------------

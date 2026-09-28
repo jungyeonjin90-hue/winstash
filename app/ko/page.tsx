@@ -89,7 +89,8 @@ export default function HomeKo() {
     rawMemo: string,
     targetWeek?: WeekSpan,
     role: JobRole = jobRole,
-    tone: ToneManner = toneManner
+    tone: ToneManner = toneManner,
+    existingRecordId?: string
   ) => {
     if (!user) {
       alert("로그인이 필요합니다.");
@@ -130,14 +131,37 @@ export default function HomeKo() {
 
       const output: TransformationOutput = await res.json();
 
-      const recordDate = targetWeek
-        ? `${targetWeek.endDate}T09:00:00.000Z`
-        : new Date().toISOString();
+      let finalTargetWeek = targetWeek;
+      let recordDate = new Date().toISOString();
+      let finalExistingRecordId = existingRecordId;
+
+      // Ensure we only have one record per week
+      if (!finalExistingRecordId && targetWeek) {
+        const duplicate = records.find((r) => 
+          r.target_week &&
+          r.target_week.year === targetWeek.year &&
+          r.target_week.month === targetWeek.month &&
+          r.target_week.weekOfMonth === targetWeek.weekOfMonth
+        );
+        if (duplicate) {
+          finalExistingRecordId = duplicate.id;
+        }
+      }
+
+      if (finalExistingRecordId) {
+        const existingRecord = records.find((r) => r.id === finalExistingRecordId);
+        if (existingRecord) {
+          finalTargetWeek = existingRecord.target_week;
+          recordDate = existingRecord.createdAt;
+        }
+      } else if (targetWeek) {
+        recordDate = `${targetWeek.endDate}T09:00:00.000Z`;
+      }
 
       const newRecord: CareerRecord = {
-        id: `rec-${Date.now()}`,
+        id: finalExistingRecordId || `rec-${Date.now()}`,
         createdAt: recordDate,
-        target_week: targetWeek,
+        target_week: finalTargetWeek,
         raw_memo: rawMemo,
         weekly_report: output.weekly_report,
         brag_sheet_item: output.brag_sheet_item,
@@ -149,7 +173,11 @@ export default function HomeKo() {
       const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));
       setCreditStatus(updatedCredit);
 
-      showToast(`🎉 ${targetWeek ? targetWeek.label : "이번 주"} 3-Way 커리어 OS로 성공적으로 변환 및 동기화 완료!`);
+      showToast(
+        finalExistingRecordId
+          ? "🎉 주간 기록이 성공적으로 수정 및 업데이트 되었습니다!"
+          : `🎉 ${targetWeek ? targetWeek.label : "이번 주"} 3-Way 커리어 OS로 성공적으로 변환 및 동기화 완료!`
+      );
 
       const dashElement = document.getElementById("dashboard-section");
       if (dashElement) {
@@ -283,6 +311,9 @@ export default function HomeKo() {
             <DashboardTabs
               records={records}
               onDeleteRecord={handleDeleteRecord}
+              onEditRecord={async (memo, id) => {
+                await handleTransform(memo, undefined, jobRole, toneManner, id);
+              }}
               jobRole={jobRole}
               toneManner={toneManner}
               onJobRoleChange={handleJobRoleChange}

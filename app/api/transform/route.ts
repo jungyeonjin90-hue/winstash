@@ -11,6 +11,8 @@ function buildSystemPromptEn(jobRole: JobRole = "engineering", toneManner: ToneM
     product: "Senior / Staff Product Manager (PM/PO) perspective (user problem framing, funnel conversion rate CVR, feature shipping velocity, roadmap governance, business ROI)",
     marketing: "Growth Marketing Lead perspective (ROAS, CAC, retention, acquisition funnel optimization, viral loops, campaign ROI)",
     operations: "BizOps / Operations / Finance perspective (process automation, SLA compression, zero human error, cost efficiencies)",
+    design: "Product Designer / UX Researcher perspective (usability, design systems, user interviews, conversion rate lift)",
+    sales: "Account Executive / Sales BD perspective (deal closing, pipeline generation, partnership expansions, quarterly quota attainment)",
   };
 
   const toneDescriptions: Record<ToneManner, string> = {
@@ -31,7 +33,8 @@ CRITICAL RULES:
 - Use strong active verbs (Spearheaded, Architected, Slashed, Optimized, Deployed, Accelerated, Eliminated).
 - Adhere to the Google XYZ Formula: "Accomplished [X], as measured by [Y], by doing [Z]".
 - Tone must feel completely natural, fluent, and commanding to US hiring managers, staff engineers, and executives.
-
+- IMPORTANT LANGUAGE RULE: You MUST write the generated output values in the SAME language that the user wrote the rough weekly brain dump in (e.g., if Korean, write in Korean).
+- DO NOT translate the JSON keys. The JSON keys MUST remain exactly as specified in the schema.
 [Output Specifications]
 1. weekly_report (Weekly Snippets - PPP Framework):
    - Executive-ready bullet points for managers and skip-level syncs.

@@ -25,7 +25,7 @@ export interface TransformationOutput {
   star_portfolio: StarPortfolio;
 }
 
-export type JobRole = 'engineering' | 'product' | 'marketing' | 'operations';
+export type JobRole = 'engineering' | 'product' | 'marketing' | 'operations' | 'design' | 'sales';
 
 export type ToneManner = 'impact' | 'problem_solving' | 'stability' | 'leadership';
 

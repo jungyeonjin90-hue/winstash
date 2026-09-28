@@ -11,6 +11,7 @@ import { TimelineArchiveTabEn } from "./tabs/TimelineArchiveTabEn";
 interface DashboardTabsEnProps {
   records: CareerRecord[];
   onDeleteRecord?: (id: string) => void;
+  onEditRecord?: (rawMemo: string, existingRecordId: string) => Promise<void>;
   jobRole?: JobRole;
   toneManner?: ToneManner;
   onJobRoleChange?: (role: JobRole) => void;
@@ -22,6 +23,7 @@ export type TabType = "weekly" | "brag" | "vault" | "archive";
 export function DashboardTabsEn({
   records,
   onDeleteRecord,
+  onEditRecord,
   jobRole = "engineering",
   toneManner = "impact",
   onJobRoleChange,
@@ -39,13 +41,13 @@ export function DashboardTabsEn({
         {/* Tab 1: Weekly Snippets */}
         <button
           onClick={() => setActiveTab("weekly")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
             activeTab === "weekly"
               ? "bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
               : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
           }`}
         >
-          <MessageSquare className="w-4 h-4 text-indigo-500" />
+          <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-500" />
           <span>Weekly Snippets</span>
           <span className="hidden md:inline-block text-[10px] font-normal px-1.5 py-0.2 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
             Slack Sync
@@ -55,13 +57,13 @@ export function DashboardTabsEn({
         {/* Tab 2: Brag Document */}
         <button
           onClick={() => setActiveTab("brag")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
             activeTab === "brag"
               ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-xs"
               : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
           }`}
         >
-          <TrendingUp className="w-4 h-4 text-emerald-500" />
+          <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
           <span>Brag Document</span>
           <span className="hidden md:inline-block text-[10px] font-normal px-1.5 py-0.2 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
             Reviews
@@ -71,13 +73,13 @@ export function DashboardTabsEn({
         {/* Tab 3: STAR Resume */}
         <button
           onClick={() => setActiveTab("vault")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
             activeTab === "vault"
               ? "bg-white dark:bg-zinc-800 text-amber-600 dark:text-amber-400 shadow-xs"
               : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
           }`}
         >
-          <ShieldCheck className="w-4 h-4 text-amber-500" />
+          <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
           <span>STAR Resume</span>
           <span className="hidden md:inline-block text-[10px] font-normal px-1.5 py-0.2 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
             LinkedIn
@@ -87,13 +89,13 @@ export function DashboardTabsEn({
         {/* Tab 4: Archive */}
         <button
           onClick={() => setActiveTab("archive")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 ml-auto cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 ml-auto cursor-pointer ${
             activeTab === "archive"
               ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs"
               : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
           }`}
         >
-          <History className="w-4 h-4" />
+          <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>History ({records.length})</span>
         </button>
       </div>
@@ -128,6 +130,7 @@ export function DashboardTabsEn({
           <TimelineArchiveTabEn
             records={records}
             onDeleteRecord={onDeleteRecord}
+            onEditRecord={onEditRecord}
           />
         )}
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Database, Download, Upload, RotateCcw, Sparkles } from "lucide-react";
+import { JobRole } from "@/types/career";
 import {
   exportRecordsAsJSON,
   importRecordsFromJSON,
@@ -13,6 +14,8 @@ interface SettingsModalEnProps {
   onClose: () => void;
   onDataReset: () => void;
   onDataImported: () => void;
+  jobRole?: JobRole;
+  onJobRoleChange?: (role: JobRole) => void;
 }
 
 export function SettingsModalEn({
@@ -20,6 +23,8 @@ export function SettingsModalEn({
   onClose,
   onDataReset,
   onDataImported,
+  jobRole,
+  onJobRoleChange,
 }: SettingsModalEnProps) {
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
@@ -105,6 +110,30 @@ export function SettingsModalEn({
           <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
             CareerPulse features a native Google Gemini 2.0 transformation pipeline. You don&apos;t need complex API keys—the service automatically structures your entries into polished executive English.
           </p>
+        </div>
+
+        {/* Section 1.5: Persona Configuration */}
+        <div className="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+            <span>Primary Job Role</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Your job role determines the focus and structure of your synthesized Brag Document and STAR Portfolio. Changing this will only affect newly generated summaries, keeping your past history intact.
+            </p>
+            <select
+              value={jobRole || "engineering"}
+              onChange={(e) => onJobRoleChange?.(e.target.value as JobRole)}
+              className="bg-zinc-50 dark:bg-zinc-950 px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer max-w-xs"
+            >
+              <option value="engineering">Engineering (Software, QA, Data)</option>
+              <option value="product">Product Management</option>
+              <option value="design">Design (UX/UI, Research)</option>
+              <option value="marketing">Marketing (Growth, Brand)</option>
+              <option value="sales">Sales & BD</option>
+              <option value="operations">Operations (HR, Finance)</option>
+            </select>
+          </div>
         </div>
 
         {/* Section 2: Storage & Sync */}

@@ -14,6 +14,8 @@ import {
   ArrowRight,
   LayoutGrid,
   List,
+  Pencil,
+  Loader2,
 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
 import { PeriodFilter, PeriodPreset } from "@/components/PeriodFilter";
@@ -22,12 +24,14 @@ import { filterRecordsByPeriod } from "@/lib/dateFilter";
 interface TimelineArchiveTabProps {
   records: CareerRecord[];
   onDeleteRecord: (id: string) => void;
+  onEditRecord?: (rawMemo: string, existingRecordId: string) => Promise<void>;
   onSelectRecordForWeekly: (id: string) => void;
 }
 
 export function TimelineArchiveTab({
   records,
   onDeleteRecord,
+  onEditRecord,
   onSelectRecordForWeekly,
 }: TimelineArchiveTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,10 +40,38 @@ export function TimelineArchiveTab({
   const [customEnd, setCustomEnd] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(records[0]?.id || null);
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editMemo, setEditMemo] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
   // View count & Density settings
   const [limit, setLimit] = useState<number | "ALL">(5);
   const [density, setDensity] = useState<"detailed" | "compact">("detailed");
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const startEdit = (record: CareerRecord) => {
+    setEditingId(record.id);
+    setEditMemo(record.raw_memo);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditMemo("");
+  };
+
+  const handleSave = async (id: string) => {
+    if (!onEditRecord) return;
+    if (!editMemo.trim()) return;
+    setIsSaving(true);
+    try {
+      await onEditRecord(editMemo, id);
+      setEditingId(null);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // 1. Period filter
   const periodFiltered = useMemo(() => {
@@ -299,17 +331,57 @@ export function TimelineArchiveTab({
                 </div>
 
                 {/* Raw Memo Quote Box (Compact vs Detailed) */}
-                <div className="bg-zinc-50 dark:bg-zinc-950/70 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/80">
-                  <span className="text-[10px] font-semibold text-zinc-400 block mb-1 uppercase tracking-wider">
-                    📝 금요일에 작성한 날것의 원문 메모
-                  </span>
-                  <p
-                    className={`text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-mono ${
-                      density === "compact" && !isExpanded ? "line-clamp-2" : "whitespace-pre-wrap"
-                    }`}
-                  >
-                    {rec.raw_memo}
-                  </p>
+                <div className="bg-zinc-50 dark:bg-zinc-950/70 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/80 group">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      📝 금요일에 작성한 날것의 원문 메모
+                    </span>
+                    {editingId !== rec.id && (
+                      <button
+                        onClick={() => startEdit(rec)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] flex items-center gap-1 font-bold text-zinc-500 hover:text-indigo-600 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-md shadow-sm"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        수정
+                      </button>
+                    )}
+                  </div>
+                  
+                  {editingId === rec.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editMemo}
+                        onChange={(e) => setEditMemo(e.target.value)}
+                        className="w-full h-28 bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-900 rounded-lg p-2.5 text-xs text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none font-mono"
+                        autoFocus
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={cancelEdit}
+                          disabled={isSaving}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                        >
+                          취소
+                        </button>
+                        <button
+                          onClick={() => handleSave(rec.id)}
+                          disabled={isSaving || !editMemo.trim() || editMemo === rec.raw_memo}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors disabled:opacity-50"
+                        >
+                          {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                          수정하여 3 Drawers 다시 생성
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p
+                      className={`text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-mono ${
+                        density === "compact" && !isExpanded ? "line-clamp-2" : "whitespace-pre-wrap"
+                      }`}
+                    >
+                      {rec.raw_memo}
+                    </p>
+                  )}
                 </div>
 
                 {/* Expanded 3-Way Summary Grid */}

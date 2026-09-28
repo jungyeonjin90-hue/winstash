@@ -16,7 +16,6 @@ import { maskSynthesizedStarItem } from "@/lib/masking";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
-import { synthesizeStarItems } from "@/lib/synthesizer";
 import { formatLinkedInPost, formatAtsResumeMarkdown } from "@/lib/exportFormatters";
 import { filterRecordsByPeriod } from "@/lib/periodUtils";
 import {
@@ -102,6 +101,8 @@ export function StarResumeTab({
     return isSummaryStale(cachedEntry, currentRecordIds);
   }, [cachedEntry, currentRecordIds]);
 
+  const needsGeneration = !cachedEntry || isStale;
+
   // 5. Trigger AI Synthesis on-demand
   const handleSynthesizeWithAi = async () => {
     if (filteredRecords.length === 0) return;
@@ -152,14 +153,13 @@ export function StarResumeTab({
     }
   };
 
-  // 6. Base Synthesized STAR items
+  // 6. Base Synthesized STAR items: Only show actual cached AI items (no fake local fallback)
   const baseItems = useMemo<SynthesizedStarItem[]>(() => {
     if (cachedEntry && Array.isArray(cachedEntry.items) && cachedEntry.items.length > 0) {
       return cachedEntry.items as SynthesizedStarItem[];
     }
-    // High-performance instantaneous local synthesis while cache is empty (0 API cost)
-    return synthesizeStarItems(filteredRecords, scale, jobRole, toneManner);
-  }, [cachedEntry, filteredRecords, scale, jobRole, toneManner]);
+    return [];
+  }, [cachedEntry]);
 
   // Unique domain tags
   const allTags = useMemo(() => {
@@ -183,6 +183,8 @@ export function StarResumeTab({
     return list;
   }, [baseItems, selectedTag, isNdaMasked]);
 
+  const activeJobRole = cachedEntry ? cachedEntry.jobRole : jobRole;
+
   const copySingleItem = async (id: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -194,7 +196,7 @@ export function StarResumeTab({
   };
 
   const copyLinkedInPostItem = async (item: SynthesizedStarItem) => {
-    const post = formatLinkedInPost(item, jobRole);
+    const post = formatLinkedInPost(item, activeJobRole);
     try {
       await navigator.clipboard.writeText(post);
       setLinkedInCopiedId(item.id);
@@ -205,7 +207,7 @@ export function StarResumeTab({
   };
 
   const copyAllMarkdown = async () => {
-    const text = formatAtsResumeMarkdown(displayedItems, jobRole);
+    const text = formatAtsResumeMarkdown(displayedItems, activeJobRole);
     try {
       await navigator.clipboard.writeText(text);
       setIsAllCopied(true);
@@ -217,7 +219,7 @@ export function StarResumeTab({
 
   return (
     <div className="space-y-5">
-      {/* Top Banner & Action Controls */}
+      {/* 1. Top Banner (Title Only) */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 no-print">
         <div>
           <div className="flex items-center gap-2">
@@ -232,65 +234,18 @@ export function StarResumeTab({
             Synthesizes half-year and yearly projects into resume case studies with smart on-demand AI caching.
           </p>
         </div>
+      </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          {/* NDA Shield Toggle */}
-          <button
-            onClick={() => setIsNdaMasked(!isNdaMasked)}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-              isNdaMasked
-                ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 ring-2 ring-amber-500/20"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-transparent hover:text-zinc-800"
-            }`}
-            title="Toggle confidential client and company masking"
-          >
-            {isNdaMasked ? <ShieldCheck className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
-            <span>{isNdaMasked ? "NDA Shield: ON" : "NDA Shield: OFF"}</span>
-          </button>
-
-          {/* ATS Print / PDF Export */}
-          <button
-            onClick={() => window.print()}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
-            title="Print or Save as Clean ATS PDF"
-          >
-            <Printer className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-            <span>Print / PDF</span>
-          </button>
-
-          {/* Copy All Resume Markdown */}
-          <button
-            onClick={copyAllMarkdown}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
-          >
-            {isAllCopied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Copied All!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy for Resume</span>
-              </>
-            )}
-          </button>
+      {/* 2. Unified Configuration Panel */}
+      <div className="bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4 no-print">
+        <div className="flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-2">
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+            Synthesis Configuration
+          </span>
         </div>
-      </div>
-
-      {/* Persona & Narrative Tone Selector */}
-      <div className="no-print">
-        <PersonaSelectorEn
-          currentRole={jobRole}
-          currentTone={toneManner}
-          onRoleChange={(r) => onJobRoleChange?.(r)}
-          onToneChange={(t) => onToneMannerChange?.(t)}
-        />
-      </div>
-
-      {/* 1. Period Dropdown Filters (Year & Half - Quarters Excluded) */}
-      <div className="no-print">
+        
+        {/* Period Filter */}
         <PeriodFilterEn
           records={records}
           selectedYear={selectedYear}
@@ -300,10 +255,16 @@ export function StarResumeTab({
           showQuarter={false}
           filteredCount={filteredRecords.length}
         />
-      </div>
 
-      {/* 2. Scope & Density View Controls (Executive 3 / Core 5 / Dossier 10 & Detailed vs Compact) */}
-      <div className="no-print">
+        {/* Persona & Tone */}
+        <PersonaSelectorEn
+          currentRole={jobRole}
+          currentTone={toneManner}
+          onRoleChange={(r) => onJobRoleChange?.(r)}
+          onToneChange={(t) => onToneMannerChange?.(t)}
+        />
+
+        {/* View Density & Scope Controls */}
         <ViewControlsEn
           scale={scale}
           onScaleChange={setScale}
@@ -316,6 +277,102 @@ export function StarResumeTab({
           accentColor="amber"
         />
       </div>
+
+      {/* 3. Synthesis Action & Export Toolbar */}
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print">
+        {/* Synthesize Button */}
+        <div className="w-full xl:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <button
+            onClick={handleSynthesizeWithAi}
+            disabled={isSynthesizing || filteredRecords.length === 0}
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${
+              needsGeneration && filteredRecords.length > 0
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-amber-500/25 ring-2 ring-amber-500/30 animate-pulse"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isSynthesizing ? (
+              <Sparkles className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Sparkles className={`w-4 h-4 ${needsGeneration && filteredRecords.length > 0 ? "text-white" : "text-amber-500"}`} />
+            )}
+            <span>
+              {isSynthesizing
+                ? "Synthesizing AI Resumes..."
+                : filteredRecords.length === 0
+                ? "No Weekly Logs in this Period"
+                : !cachedEntry
+                ? `Generate STAR Resume (${filteredRecords.length} Logs)`
+                : isStale
+                ? `Update Resume (${filteredRecords.length} Logs)`
+                : "Re-Generate Resume"}
+            </span>
+          </button>
+          
+          {!needsGeneration && cachedEntry && (
+            <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-800">
+              ✓ Up to date (Cached)
+            </span>
+          )}
+        </div>
+
+        {/* Export Buttons */}
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 border-zinc-100 dark:border-zinc-800">
+          <span className="text-[11px] font-semibold text-zinc-400 mr-1 hidden sm:inline-block">Options:</span>
+          
+          {/* NDA Shield Toggle */}
+          <button
+            onClick={() => setIsNdaMasked(!isNdaMasked)}
+            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+              isNdaMasked
+                ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 ring-1 ring-amber-500/20"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-transparent hover:text-zinc-800 dark:hover:text-zinc-300"
+            }`}
+            title="Toggle confidential client and company masking"
+          >
+            {isNdaMasked ? <ShieldCheck className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{isNdaMasked ? "NDA Shield: ON" : "NDA Shield: OFF"}</span>
+          </button>
+
+          <button
+            onClick={copyAllMarkdown}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
+          >
+            {isAllCopied ? (
+              <><Check className="w-3.5 h-3.5 text-emerald-500" /><span>Copied All!</span></>
+            ) : (
+              <><Copy className="w-3.5 h-3.5" /><span>Copy for Resume</span></>
+            )}
+          </button>
+          
+          <button
+            onClick={() => window.print()}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
+            title="Print or Save as Clean ATS PDF"
+          >
+            <Printer className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" /><span>Print / PDF</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Stale Notification Banner when new logs are added */}
+      {displayedItems.length > 0 && isStale && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 no-print">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              New weekly logs detected ({filteredRecords.length} records total). Click <strong>&quot;Update Resume&quot;</strong> to incorporate new project achievements.
+            </span>
+          </div>
+          <button
+            onClick={handleSynthesizeWithAi}
+            disabled={isSynthesizing}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors shrink-0 cursor-pointer"
+          >
+            {isSynthesizing ? "Updating..." : "Update Now"}
+          </button>
+        </div>
+      )}
 
       {/* STAR Cards List */}
       <div className="space-y-4">
@@ -455,9 +512,42 @@ export function StarResumeTab({
         ))}
 
         {displayedItems.length === 0 && (
-          <div className="p-12 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 text-xs">
-            <Briefcase className="w-8 h-8 mx-auto mb-2 text-zinc-300 dark:text-zinc-600" />
-            No case studies found for the selected period.
+          <div className="p-10 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 space-y-3">
+            {filteredRecords.length === 0 ? (
+              <>
+                <Briefcase className="w-9 h-9 mx-auto text-zinc-300 dark:text-zinc-600" />
+                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  No weekly logs found for the selected period
+                </p>
+                <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                  Log your weekly accomplishments in the Weekly Snippets drawer first, or adjust your year/half filters.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    Ready to Synthesize {filteredRecords.length} Weekly Accomplishments into STAR Projects
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                    Aggregate your weekly engineering & product PRs into {scale} polished STAR resume case studies tailored for your {jobRole} career vault.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={handleSynthesizeWithAi}
+                    disabled={isSynthesizing}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/20 transition-all cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Generate AI STAR Case Studies Now</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

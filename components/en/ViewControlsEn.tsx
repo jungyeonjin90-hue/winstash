@@ -133,51 +133,14 @@ export function ViewControlsEn({
               <span>Compact</span>
             </button>
           </div>
-
-          {/* AI Cache Status / Regenerate Button */}
-          {onRegenerateAi && (
-            <button
-              onClick={onRegenerateAi}
-              disabled={isSynthesizing}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                isStale
-                  ? "bg-amber-500 hover:bg-amber-600 text-white shadow-xs animate-pulse"
-                  : "bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
-              }`}
-              title={isStale ? "New logs available, click to update AI synthesis" : "Re-run AI Synthesis"}
-            >
-              {isSynthesizing ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Synthesizing...</span>
-                </>
-              ) : isStale ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Update AI Summary</span>
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>AI Regenerate</span>
-                </>
-              )}
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Helper description for active scale & Stale alert */}
+      {/* Helper description for active scale */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-200/50 dark:border-zinc-800/60 gap-1.5">
         <span className="font-medium text-zinc-700 dark:text-zinc-300">
           🎯 {activeScaleDesc}
         </span>
-
-        {isStale && (
-          <span className="text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200/60 dark:border-amber-900/40">
-            ⚡ New weekly logs detected. Click &quot;Update AI Summary&quot; to refresh.
-          </span>
-        )}
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ function buildSystemPromptKo(jobRole: JobRole = "engineering", toneManner: ToneM
     product: "기획자/프로덕트 매니저(PM/PO) 관점 (유저 문제 정의, 퍼널 전환율 CVR, 기능 런칭, 로드맵 리딩 및 비즈니스 가치 창출 강조)",
     marketing: "마케터/그로스 스페셜리스트 관점 (ROAS, CAC, 리텐션, 캠페인 ROI 및 고객 획득 퍼널 최적화 강조)",
     operations: "운영/재무/경영지원 관점 (프로세스 표준화, 마감 단축, 휴먼에러 제로화 및 비용 효율 강조)",
+    design: "디자이너/UX 연구원 관점 (사용성 개선, 디자인 시스템 구축, 사용자 인터뷰 인사이트, 전환율 기여도 강조)",
+    sales: "영업/사업개발 관점 (딜 클로징, 어카운트 확장, 파트너십 구축, 분기 매출 달성 및 파이프라인 가치 강조)",
   };
 
   const toneDescriptions: Record<ToneManner, string> = {

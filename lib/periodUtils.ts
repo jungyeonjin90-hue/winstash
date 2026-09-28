@@ -72,32 +72,40 @@ export function getDetailedRecordDateInfo(record: CareerRecord): DetailedRecordD
     date = new Date();
   }
 
-  const year = String(date.getFullYear());
-  const monthRaw = date.getMonth() + 1;
-  const month = monthRaw < 10 ? `0${monthRaw}` : `${monthRaw}`;
-  const monthShort = date.toLocaleDateString("en-US", { month: "short" });
-  const monthLong = date.toLocaleDateString("en-US", { month: "long" });
+  let yearStr = "";
+  let monthRaw = 1;
+  let weekNum = 1;
 
-  let weekNum = record.target_week?.weekOfMonth || 1;
+  const { getWeekSpanFromDateEn, formatWeekDateRangeEn } = require("./weekUtilsEn");
+
+  if (record.target_week) {
+    yearStr = String(record.target_week.year);
+    monthRaw = record.target_week.month;
+    weekNum = record.target_week.weekOfMonth;
+  } else {
+    const span = getWeekSpanFromDateEn(date);
+    yearStr = String(span.year);
+    monthRaw = span.month;
+    weekNum = span.weekOfMonth;
+  }
+
+  const year = yearStr;
+  const month = monthRaw < 10 ? `0${monthRaw}` : `${monthRaw}`;
+  
+  const dummyDate = new Date(Number(yearStr), monthRaw - 1, 15);
+  const monthShort = dummyDate.toLocaleDateString("en-US", { month: "short" });
+  const monthLong = dummyDate.toLocaleDateString("en-US", { month: "long" });
+
   let dateRange = "";
 
   if (record.target_week?.startDate && record.target_week?.endDate) {
-    const start = new Date(record.target_week.startDate).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-    const end = new Date(record.target_week.endDate).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-    dateRange = `${start} – ${end}`;
+    dateRange = formatWeekDateRangeEn(record.target_week.startDate, record.target_week.endDate);
   } else {
-    dateRange = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const span = getWeekSpanFromDateEn(date);
+    dateRange = formatWeekDateRangeEn(span.startDate, span.endDate);
   }
 
-  const displayLabel = record.target_week?.label
-    ? record.target_week.label.replace(/^\d{4}-/, "") // "W12 (Mar 16 – Mar 20)"
-    : `Week ${weekNum} (${dateRange})`;
+  const displayLabel = `Week ${weekNum}: ${dateRange}`;
 
   return {
     id: record.id,

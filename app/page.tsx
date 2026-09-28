@@ -6,6 +6,7 @@ import { QuickLoggerEn } from "@/components/en/QuickLoggerEn";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { DashboardTabsEn } from "@/components/en/DashboardTabsEn";
 import { SettingsModalEn } from "@/components/en/SettingsModalEn";
+import { OnboardingModalEn } from "@/components/en/OnboardingModalEn";
 import { LandingPageEn } from "@/components/en/LandingPageEn";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -31,20 +32,34 @@ export default function Home() {
   const [isClientLoaded, setIsClientLoaded] = useState(false);
   const [jobRole, setJobRole] = useState<JobRole>(() => getSettings().jobRole || "engineering");
   const [toneManner, setToneManner] = useState<ToneManner>(() => getSettings().toneManner || "impact");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isPersonaLoaded, setIsPersonaLoaded] = useState(false);
 
-  // Subscribe to user records & credit status
+  // Subscribe to user records & credit status, load persona
   useEffect(() => {
     if (!user) return;
+
+    const loadPersona = async () => {
+      const { getUserPersonaFromFirestore } = await import("@/lib/firestoreService");
+      const persona = await getUserPersonaFromFirestore(user.uid, Boolean(user.isDemo));
+      if (persona) {
+        setJobRole(persona.jobRole);
+        setToneManner(persona.toneManner);
+        const current = getSettings();
+        saveSettings({ ...current, jobRole: persona.jobRole, toneManner: persona.toneManner });
+      } else {
+        setShowOnboarding(true);
+      }
+      setIsPersonaLoaded(true);
+    };
+
+    loadPersona();
 
     const unsubscribeRecords = subscribeUserRecords(
       user.uid,
       Boolean(user.isDemo),
       (syncedRecords) => {
-        if (!syncedRecords || syncedRecords.length === 0) {
-          setRecords(INITIAL_CAREER_RECORDS_EN);
-        } else {
-          setRecords(syncedRecords);
-        }
+        setRecords(syncedRecords || []);
         setIsClientLoaded(true);
       },
       (error) => {
@@ -93,7 +108,8 @@ export default function Home() {
     rawMemo: string,
     targetWeek?: WeekSpan,
     role: JobRole = jobRole,
-    tone: ToneManner = toneManner
+    tone: ToneManner = toneManner,
+    existingRecordId?: string
   ) => {
     if (!user) {
       alert("Sign-in required to continue.");
@@ -134,14 +150,38 @@ export default function Home() {
 
       const output: TransformationOutput = await res.json();
 
-      const recordDate = targetWeek
-        ? `${targetWeek.endDate}T09:00:00.000Z`
-        : new Date().toISOString();
+      let finalTargetWeek = targetWeek;
+      let recordDate = new Date().toISOString();
+
+      let finalExistingRecordId = existingRecordId;
+
+      // Ensure we only have one record per week
+      if (!finalExistingRecordId && targetWeek) {
+        const duplicate = records.find((r) => 
+          r.target_week &&
+          r.target_week.year === targetWeek.year &&
+          r.target_week.month === targetWeek.month &&
+          r.target_week.weekOfMonth === targetWeek.weekOfMonth
+        );
+        if (duplicate) {
+          finalExistingRecordId = duplicate.id;
+        }
+      }
+
+      if (finalExistingRecordId) {
+        const existingRecord = records.find((r) => r.id === finalExistingRecordId);
+        if (existingRecord) {
+          finalTargetWeek = existingRecord.target_week;
+          recordDate = existingRecord.createdAt;
+        }
+      } else if (targetWeek) {
+        recordDate = `${targetWeek.endDate}T09:00:00.000Z`;
+      }
 
       const newRecord: CareerRecord = {
-        id: `rec-en-${Date.now()}`,
+        id: finalExistingRecordId || `rec-en-${Date.now()}`,
         createdAt: recordDate,
-        target_week: targetWeek,
+        target_week: finalTargetWeek,
         raw_memo: rawMemo,
         weekly_report: output.weekly_report,
         brag_sheet_item: output.brag_sheet_item,
@@ -150,10 +190,15 @@ export default function Home() {
 
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
 
+      // Deduct credit for updates as well
       const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));
       setCreditStatus(updatedCredit);
 
-      showToast(`🎉 ${targetWeek ? targetWeek.label : "Weekly entry"} successfully transformed and synced!`);
+      showToast(
+        finalExistingRecordId
+          ? "🎉 Record successfully updated!"
+          : `🎉 ${targetWeek ? targetWeek.label : "Weekly entry"} successfully transformed and synced!`
+      );
 
       const dashElement = document.getElementById("dashboard-section");
       if (dashElement) {
@@ -290,6 +335,9 @@ export default function Home() {
             <DashboardTabsEn
               records={records}
               onDeleteRecord={handleDeleteRecord}
+              onEditRecord={async (memo, id) => {
+                await handleTransform(memo, undefined, jobRole, toneManner, id);
+              }}
               jobRole={jobRole}
               toneManner={toneManner}
               onJobRoleChange={handleJobRoleChange}
@@ -310,7 +358,20 @@ export default function Home() {
         onClose={() => setIsSettingsOpen(false)}
         onDataReset={handleDataReset}
         onDataImported={handleDataImported}
+        jobRole={jobRole}
+        onJobRoleChange={handleJobRoleChange}
       />
+
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <OnboardingModalEn
+          isOpen={showOnboarding}
+          onSave={(role) => {
+            handleJobRoleChange(role);
+            setShowOnboarding(false);
+          }}
+        />
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (

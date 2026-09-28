@@ -15,7 +15,6 @@ import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem } from "@/types/
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
-import { synthesizeBragItems } from "@/lib/synthesizer";
 import { formatNotionMarkdownBrag } from "@/lib/exportFormatters";
 import { filterRecordsByPeriod } from "@/lib/periodUtils";
 import {
@@ -101,6 +100,8 @@ export function BragDocumentTab({
     return isSummaryStale(cachedEntry, currentRecordIds);
   }, [cachedEntry, currentRecordIds]);
 
+  const needsGeneration = !cachedEntry || isStale;
+
   // 5. Trigger AI Synthesis on-demand (costs 1 API call, then cached permanently)
   const handleSynthesizeWithAi = async () => {
     if (filteredRecords.length === 0) return;
@@ -153,18 +154,19 @@ export function BragDocumentTab({
     }
   };
 
-  // 6. Active items to display: Cache items if present; otherwise instant local synthesizer items
+  // 6. Active items to display: Only show actual cached AI items (no fake local fallback)
   const displayedItems = useMemo<SynthesizedBragItem[]>(() => {
     if (cachedEntry && Array.isArray(cachedEntry.items) && cachedEntry.items.length > 0) {
       return cachedEntry.items as SynthesizedBragItem[];
     }
-    // High-performance instantaneous local synthesis while cache is empty (0 API cost)
-    return synthesizeBragItems(filteredRecords, scale, jobRole, toneManner);
-  }, [cachedEntry, filteredRecords, scale, jobRole, toneManner]);
+    return [];
+  }, [cachedEntry]);
+
+  const activeJobRole = cachedEntry ? cachedEntry.jobRole : jobRole;
 
   const copyAllMarkdown = async () => {
     const text = `# Brag Document · Performance Review Summary
-Role Persona: ${jobRole.toUpperCase()} | Tone: ${toneManner.toUpperCase()}
+Role Persona: ${activeJobRole.toUpperCase()} | Tone: ${toneManner.toUpperCase()}
 Generated on: ${new Date().toLocaleDateString("en-US")}
 
 ${displayedItems
@@ -187,7 +189,7 @@ ${displayedItems
   };
 
   const copyNotionMarkdown = async () => {
-    const text = formatNotionMarkdownBrag(displayedItems, jobRole, `${selectedYear} ${selectedQuarter}`);
+    const text = formatNotionMarkdownBrag(displayedItems, activeJobRole, `${selectedYear} ${selectedQuarter}`);
     try {
       await navigator.clipboard.writeText(text);
       setIsNotionCopied(true);
@@ -243,14 +245,14 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `brag_document_${jobRole}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `brag_document_${activeJobRole}_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <div className="space-y-5">
-      {/* Top Banner & Export Actions */}
+      {/* 1. Top Banner (Title Only) */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 no-print">
         <div>
           <div className="flex items-center gap-2">
@@ -265,78 +267,9 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
             Synthesizes your weekly brain dumps into Google XYZ achievements with smart on-demand AI caching.
           </p>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          {/* Notion Markdown Copy */}
-          <button
-            onClick={copyNotionMarkdown}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
-            title="Copy optimized Markdown with callouts and checklists for Notion"
-          >
-            {isNotionCopied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Copied for Notion!</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Notion Format</span>
-              </>
-            )}
-          </button>
-
-          {/* Print */}
-          <button
-            onClick={() => window.print()}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
-            title="Print or Save as Clean PDF"
-          >
-            <Printer className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-            <span>Print</span>
-          </button>
-
-          {/* Standard Markdown Copy */}
-          <button
-            onClick={copyAllMarkdown}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
-          >
-            {isCopied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-white" />
-                <span>Copied All!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Markdown</span>
-              </>
-            )}
-          </button>
-
-          {/* CSV Export */}
-          <button
-            onClick={downloadCSV}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>CSV</span>
-          </button>
-        </div>
       </div>
 
-      {/* Persona & Narrative Tone Selector */}
-      <div className="no-print">
-        <PersonaSelectorEn
-          currentRole={jobRole}
-          currentTone={toneManner}
-          onRoleChange={(r) => onJobRoleChange?.(r)}
-          onToneChange={(t) => onToneMannerChange?.(t)}
-        />
-      </div>
-
-      {/* 1. Period Dropdown Filters (Year / Half / Quarter) */}
+      {/* 1. Period Dropdown Filters (Data Source Selection) */}
       <div className="no-print">
         <PeriodFilterEn
           records={records}
@@ -351,7 +284,17 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
         />
       </div>
 
-      {/* 2. Scope & Density View Controls (Executive 3 / Core 5 / Dossier 10 & Detailed vs Compact) */}
+      {/* 2. Persona & Narrative Tone Selector (Synthesis Shaping) */}
+      <div className="no-print">
+        <PersonaSelectorEn
+          currentRole={jobRole}
+          currentTone={toneManner}
+          onRoleChange={(r) => onJobRoleChange?.(r)}
+          onToneChange={(t) => onToneMannerChange?.(t)}
+        />
+      </div>
+
+      {/* 3. Scope & Density View Controls (Generation & Display) */}
       <div className="no-print">
         <ViewControlsEn
           scale={scale}
@@ -365,6 +308,102 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
           accentColor="emerald"
         />
       </div>
+
+      {/* 4. Synthesis Action & Export Toolbar */}
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print">
+        {/* Synthesize Button */}
+        <div className="w-full xl:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <button
+            onClick={handleSynthesizeWithAi}
+            disabled={isSynthesizing || filteredRecords.length === 0}
+            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${
+              needsGeneration && filteredRecords.length > 0
+                ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25 ring-2 ring-emerald-500/30 animate-pulse"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isSynthesizing ? (
+              <Sparkles className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Sparkles className={`w-4 h-4 ${needsGeneration && filteredRecords.length > 0 ? "text-white" : "text-emerald-500"}`} />
+            )}
+            <span>
+              {isSynthesizing
+                ? "Synthesizing AI Summary..."
+                : filteredRecords.length === 0
+                ? "No Weekly Logs in this Period"
+                : !cachedEntry
+                ? `Generate Brag Summary (${filteredRecords.length} Logs)`
+                : isStale
+                ? `Update Summary (${filteredRecords.length} Logs)`
+                : "Re-Generate Summary"}
+            </span>
+          </button>
+          
+          {!needsGeneration && cachedEntry && (
+            <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              ✓ Up to date (Cached)
+            </span>
+          )}
+        </div>
+
+        {/* Export Buttons */}
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 border-zinc-100 dark:border-zinc-800">
+          <span className="text-[11px] font-semibold text-zinc-400 mr-1 hidden sm:inline-block">Export Options:</span>
+          <button
+            onClick={copyNotionMarkdown}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
+            title="Copy optimized Markdown with callouts and checklists for Notion"
+          >
+            {isNotionCopied ? (
+              <><Check className="w-3.5 h-3.5 text-emerald-500" /><span>Copied for Notion!</span></>
+            ) : (
+              <><Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /><span>Notion Format</span></>
+            )}
+          </button>
+          <button
+            onClick={copyAllMarkdown}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
+          >
+            {isCopied ? (
+              <><Check className="w-3.5 h-3.5 text-white" /><span>Copied All!</span></>
+            ) : (
+              <><Copy className="w-3.5 h-3.5" /><span>Copy Markdown</span></>
+            )}
+          </button>
+          <button
+            onClick={downloadCSV}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" /><span>CSV</span>
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
+          >
+            <Printer className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" /><span>Print</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Stale Notification Banner when new logs are added */}
+      {displayedItems.length > 0 && isStale && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 no-print">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              New weekly logs detected ({filteredRecords.length} records total). Click <strong>&quot;Update Summary&quot;</strong> to refresh with the latest accomplishments.
+            </span>
+          </div>
+          <button
+            onClick={handleSynthesizeWithAi}
+            disabled={isSynthesizing}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors shrink-0 cursor-pointer"
+          >
+            {isSynthesizing ? "Updating..." : "Update Now"}
+          </button>
+        </div>
+      )}
 
       {/* Synthesized Brag Cards List */}
       <div className="space-y-3.5">
@@ -466,9 +505,42 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
         ))}
 
         {displayedItems.length === 0 && (
-          <div className="p-12 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 text-xs">
-            <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 text-zinc-300 dark:text-zinc-600" />
-            No achievements logged for the selected period.
+          <div className="p-10 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 space-y-3">
+            {filteredRecords.length === 0 ? (
+              <>
+                <FileSpreadsheet className="w-9 h-9 mx-auto text-zinc-300 dark:text-zinc-600" />
+                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  No weekly logs found for the selected period
+                </p>
+                <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                  Log your weekly accomplishments in the Weekly Snippets drawer first, or adjust your year/quarter filters.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    Ready to Synthesize {filteredRecords.length} Weekly Accomplishments
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                    Transform your raw weekly notes into {scale} executive-level Google XYZ metric achievements for your {jobRole} performance review.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={handleSynthesizeWithAi}
+                    disabled={isSynthesizing}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Generate AI Brag Summary Now</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

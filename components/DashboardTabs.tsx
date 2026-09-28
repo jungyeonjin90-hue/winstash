@@ -11,6 +11,7 @@ import { TimelineArchiveTab } from "./tabs/TimelineArchiveTab";
 interface DashboardTabsProps {
   records: CareerRecord[];
   onDeleteRecord: (id: string) => void;
+  onEditRecord?: (rawMemo: string, existingRecordId: string) => Promise<void>;
   jobRole?: JobRole;
   toneManner?: ToneManner;
   onJobRoleChange?: (role: JobRole) => void;
@@ -20,6 +21,7 @@ interface DashboardTabsProps {
 export function DashboardTabs({
   records,
   onDeleteRecord,
+  onEditRecord,
   jobRole,
   toneManner,
   onJobRoleChange,
@@ -201,6 +203,7 @@ export function DashboardTabs({
           <TimelineArchiveTab
             records={records}
             onDeleteRecord={onDeleteRecord}
+            onEditRecord={onEditRecord}
             onSelectRecordForWeekly={handleSelectRecordForWeekly}
           />
         )}
