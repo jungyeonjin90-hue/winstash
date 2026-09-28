@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -12,9 +12,10 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  History,
+  Filter,
 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
+import { getDetailedRecordDateInfo, DetailedRecordDateInfo } from "@/lib/periodUtils";
 
 interface WeeklySnippetsTabProps {
   records: CareerRecord[];
@@ -22,15 +23,108 @@ interface WeeklySnippetsTabProps {
 }
 
 export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTabProps) {
-  const [selectedRecordId, setSelectedRecordId] = useState<string>(
-    initialRecordId || records[0]?.id || ""
-  );
   const [copiedType, setCopiedType] = useState<"slack" | "email" | null>(null);
   const [showRawMemo, setShowRawMemo] = useState(false);
 
-  // Active selected record or fallback to first record
+  // Parse all records with detailed Year, Month, Week info
+  const recordsWithDateInfo = useMemo(() => {
+    return records.map((r) => ({
+      record: r,
+      dateInfo: getDetailedRecordDateInfo(r),
+    }));
+  }, [records]);
+
+  // Initial Year, Month, and RecordId
+  const latestDateInfo = recordsWithDateInfo[0]?.dateInfo;
+  const [selectedYear, setSelectedYear] = useState<string>(
+    latestDateInfo?.year || String(new Date().getFullYear())
+  );
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    latestDateInfo?.month || "ALL"
+  );
+  const [selectedRecordId, setSelectedRecordId] = useState<string>(
+    initialRecordId || records[0]?.id || ""
+  );
+
+  // 1. Available Years from records
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    recordsWithDateInfo.forEach((item) => years.add(item.dateInfo.year));
+    return Array.from(years).sort().reverse();
+  }, [recordsWithDateInfo]);
+
+  // 2. Available Months for the selected Year
+  const availableMonths = useMemo(() => {
+    const monthMap = new Map<string, { short: string; long: string }>();
+    recordsWithDateInfo
+      .filter((item) => selectedYear === "ALL" || item.dateInfo.year === selectedYear)
+      .forEach((item) => {
+        monthMap.set(item.dateInfo.month, {
+          short: item.dateInfo.monthShort,
+          long: item.dateInfo.monthLong,
+        });
+      });
+
+    return Array.from(monthMap.entries())
+      .map(([mNum, names]) => ({
+        monthNum: mNum,
+        short: names.short,
+        long: names.long,
+      }))
+      .sort((a, b) => Number(b.monthNum) - Number(a.monthNum)); // reverse chronological
+  }, [recordsWithDateInfo, selectedYear]);
+
+  // 3. Weeks available matching selected Year and Month
+  const matchingRecords = useMemo(() => {
+    return recordsWithDateInfo.filter((item) => {
+      if (selectedYear !== "ALL" && item.dateInfo.year !== selectedYear) return false;
+      if (selectedMonth !== "ALL" && item.dateInfo.month !== selectedMonth) return false;
+      return true;
+    });
+  }, [recordsWithDateInfo, selectedYear, selectedMonth]);
+
+  // If currently selected record is not in matching weeks, select the first matching one
+  useEffect(() => {
+    if (matchingRecords.length > 0) {
+      const isCurrentInMatching = matchingRecords.some(
+        (m) => m.record.id === selectedRecordId
+      );
+      if (!isCurrentInMatching) {
+        setSelectedRecordId(matchingRecords[0].record.id);
+      }
+    }
+  }, [matchingRecords, selectedRecordId]);
+
+  // Active selected record
+  const activeRecord = useMemo(() => {
+    const found = recordsWithDateInfo.find((item) => item.record.id === selectedRecordId);
+    return found ? found.record : records[0] || null;
+  }, [recordsWithDateInfo, selectedRecordId, records]);
+
+  // Current global index for Older / Newer buttons
   const currentIndex = records.findIndex((r) => r.id === selectedRecordId);
-  const activeRecord = (currentIndex >= 0 ? records[currentIndex] : records[0]) || null;
+  const hasOlder = currentIndex < records.length - 1;
+  const hasNewer = currentIndex > 0;
+
+  const handleOlder = () => {
+    if (hasOlder) {
+      const nextRecord = records[currentIndex + 1];
+      setSelectedRecordId(nextRecord.id);
+      const nextInfo = getDetailedRecordDateInfo(nextRecord);
+      setSelectedYear(nextInfo.year);
+      setSelectedMonth(nextInfo.month);
+    }
+  };
+
+  const handleNewer = () => {
+    if (hasNewer) {
+      const prevRecord = records[currentIndex - 1];
+      setSelectedRecordId(prevRecord.id);
+      const prevInfo = getDetailedRecordDateInfo(prevRecord);
+      setSelectedYear(prevInfo.year);
+      setSelectedMonth(prevInfo.month);
+    }
+  };
 
   if (!activeRecord) {
     return (
@@ -48,22 +142,6 @@ export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTa
   });
 
   const weekLabel = activeRecord.target_week?.label || formattedDate;
-
-  // Navigation handlers
-  const hasOlder = currentIndex < records.length - 1;
-  const hasNewer = currentIndex > 0;
-
-  const handleOlder = () => {
-    if (hasOlder) {
-      setSelectedRecordId(records[currentIndex + 1].id);
-    }
-  };
-
-  const handleNewer = () => {
-    if (hasNewer) {
-      setSelectedRecordId(records[currentIndex - 1].id);
-    }
-  };
 
   const generateSlackMarkdown = () => {
     return `📢 *[Weekly Snippets] ${weekLabel} (${formattedDate})*
@@ -164,34 +242,80 @@ Best regards`;
         </div>
       </div>
 
-      {/* Week Selection Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print text-xs">
-        {/* Dropdown Week Picker */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 shrink-0">
-            <History className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Week Log:</span>
-          </span>
+      {/* 3-Tier Hierarchical Dropdown Toolbar: Year ✕ Month ✕ Week */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print text-xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-1.5 font-bold text-zinc-700 dark:text-zinc-300">
+            <Filter className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Select Log:</span>
+          </div>
 
-          <select
-            value={activeRecord.id}
-            onChange={(e) => setSelectedRecordId(e.target.value)}
-            className="w-full sm:w-auto px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
-          >
-            {records.map((r, idx) => {
-              const label = r.target_week?.label || new Date(r.createdAt).toLocaleDateString("en-US");
-              const isLatest = idx === 0;
-              return (
-                <option key={r.id} value={r.id} className="bg-white dark:bg-zinc-900">
-                  {label} {isLatest ? "(Latest)" : ""}
+          {/* 1. Year Dropdown */}
+          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="text-zinc-500 font-medium">Year:</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(e.target.value);
+                setSelectedMonth("ALL"); // Reset month
+              }}
+              className="bg-transparent font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
+            >
+              {availableYears.map((y) => (
+                <option key={y} value={y} className="bg-white dark:bg-zinc-900">
+                  {y}
                 </option>
-              );
-            })}
-          </select>
+              ))}
+            </select>
+          </div>
+
+          {/* 2. Month Dropdown */}
+          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <Clock className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="text-zinc-500 font-medium">Month:</span>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-transparent font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
+            >
+              <option value="ALL" className="bg-white dark:bg-zinc-900">
+                All Months
+              </option>
+              {availableMonths.map((m) => (
+                <option key={m.monthNum} value={m.monthNum} className="bg-white dark:bg-zinc-900">
+                  {m.long} ({m.short})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 3. Week / Date Dropdown */}
+          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <span className="text-zinc-500 font-medium">Week:</span>
+            <select
+              value={selectedRecordId}
+              onChange={(e) => setSelectedRecordId(e.target.value)}
+              className="bg-transparent font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none cursor-pointer"
+            >
+              {matchingRecords.map((item, idx) => {
+                const isLatestOverall = item.record.id === records[0]?.id;
+                return (
+                  <option
+                    key={item.record.id}
+                    value={item.record.id}
+                    className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
+                  >
+                    {item.dateInfo.displayLabel} {isLatestOverall ? "(Latest)" : ""}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
 
-        {/* Older / Newer Quick Buttons */}
-        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+        {/* Older / Newer Quick Navigation */}
+        <div className="flex items-center gap-2 self-stretch md:self-auto justify-end border-t md:border-t-0 pt-2 md:pt-0 border-zinc-200/60 dark:border-zinc-800">
           <button
             onClick={handleOlder}
             disabled={!hasOlder}
@@ -200,10 +324,10 @@ Best regards`;
                 ? "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer"
                 : "opacity-40 cursor-not-allowed text-zinc-400"
             }`}
-            title="View previous week"
+            title="Jump to previous week"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
-            <span>Older Week</span>
+            <span>Older</span>
           </button>
 
           <span className="text-zinc-400 font-mono text-[11px]">
@@ -218,9 +342,9 @@ Best regards`;
                 ? "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer"
                 : "opacity-40 cursor-not-allowed text-zinc-400"
             }`}
-            title="View newer week"
+            title="Jump to newer week"
           >
-            <span>Newer Week</span>
+            <span>Newer</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>

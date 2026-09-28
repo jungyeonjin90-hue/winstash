@@ -8,6 +8,18 @@ export interface PeriodInfo {
   halfLabel: string; // "2026-H1"
 }
 
+export interface DetailedRecordDateInfo {
+  id: string;
+  year: string; // "2026"
+  month: string; // "03"
+  monthShort: string; // "Mar"
+  monthLong: string; // "March"
+  weekNum: number;
+  dateRange: string; // "Mar 16 – Mar 20"
+  displayLabel: string; // "W12 (Mar 16 – Mar 20)"
+  rawDate: Date;
+}
+
 /**
  * Extracts Year, Half (H1/H2), and Quarter (Q1-Q4) from a CareerRecord
  */
@@ -22,7 +34,6 @@ export function getRecordPeriodInfo(record: CareerRecord): PeriodInfo {
     date = new Date();
   }
 
-  // Handle invalid dates
   if (isNaN(date.getTime())) {
     date = new Date();
   }
@@ -40,6 +51,64 @@ export function getRecordPeriodInfo(record: CareerRecord): PeriodInfo {
     quarter,
     quarterLabel: `${year}-${quarter}`,
     halfLabel: `${year}-${half}`,
+  };
+}
+
+/**
+ * Extracts Year, Month, and Week/Date details for weekly history dropdowns
+ */
+export function getDetailedRecordDateInfo(record: CareerRecord): DetailedRecordDateInfo {
+  let date: Date;
+
+  if (record.target_week?.endDate) {
+    date = new Date(record.target_week.endDate);
+  } else if (record.createdAt) {
+    date = new Date(record.createdAt);
+  } else {
+    date = new Date();
+  }
+
+  if (isNaN(date.getTime())) {
+    date = new Date();
+  }
+
+  const year = String(date.getFullYear());
+  const monthRaw = date.getMonth() + 1;
+  const month = monthRaw < 10 ? `0${monthRaw}` : `${monthRaw}`;
+  const monthShort = date.toLocaleDateString("en-US", { month: "short" });
+  const monthLong = date.toLocaleDateString("en-US", { month: "long" });
+
+  let weekNum = record.target_week?.weekOfMonth || 1;
+  let dateRange = "";
+
+  if (record.target_week?.startDate && record.target_week?.endDate) {
+    const start = new Date(record.target_week.startDate).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const end = new Date(record.target_week.endDate).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    dateRange = `${start} – ${end}`;
+  } else {
+    dateRange = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  const displayLabel = record.target_week?.label
+    ? record.target_week.label.replace(/^\d{4}-/, "") // "W12 (Mar 16 – Mar 20)"
+    : `Week ${weekNum} (${dateRange})`;
+
+  return {
+    id: record.id,
+    year,
+    month,
+    monthShort,
+    monthLong,
+    weekNum,
+    dateRange,
+    displayLabel,
+    rawDate: date,
   };
 }
 
