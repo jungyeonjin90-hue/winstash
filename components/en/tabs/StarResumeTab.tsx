@@ -1,23 +1,32 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   ShieldCheck,
   Eye,
   Copy,
   Check,
   Briefcase,
-  Tag,
-  TrendingUp,
   Share2,
   Printer,
   Sparkles,
 } from "lucide-react";
-import { CareerRecord, SynthesisScale, JobRole, ToneManner, SynthesizedStarItem } from "@/types/career";
+import { CareerRecord, JobRole, ToneManner, SynthesizedStarItem } from "@/types/career";
 import { maskSynthesizedStarItem } from "@/lib/masking";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
+import { PeriodFilterEn } from "../PeriodFilterEn";
+import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
 import { synthesizeStarItems } from "@/lib/synthesizer";
 import { formatLinkedInPost, formatAtsResumeMarkdown } from "@/lib/exportFormatters";
+import { filterRecordsByPeriod } from "@/lib/periodUtils";
+import {
+  buildSummaryCacheKey,
+  getSummaryCache,
+  saveSummaryCache,
+  isSummaryStale,
+  SummaryCacheEntry,
+} from "@/lib/summaryCacheService";
+import { useAuth } from "@/context/AuthContext";
 
 interface StarResumeTabProps {
   records: CareerRecord[];
@@ -34,47 +43,145 @@ export function StarResumeTab({
   onJobRoleChange,
   onToneMannerChange,
 }: StarResumeTabProps) {
+  const { user } = useAuth();
+  const userId = user?.uid || "guest";
+  const isDemo = Boolean(user?.isDemo);
+
+  // Period Filters (Year & Half only; Quarters excluded for Portfolios)
+  const currentYear = String(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<string>(currentYear);
+  const [selectedHalf, setSelectedHalf] = useState<string>("ALL");
+
+  // Professional Scope (3 | 5 | 10) & View Density ("detailed" | "compact")
+  const [scale, setScale] = useState<3 | 5 | 10>(3);
+  const [density, setDensity] = useState<ViewDensity>("detailed");
+
+  // Masking & Action states
   const [isNdaMasked, setIsNdaMasked] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string>("ALL");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isAllCopied, setIsAllCopied] = useState(false);
   const [linkedInCopiedId, setLinkedInCopiedId] = useState<string | null>(null);
-  const [scale, setScale] = useState<SynthesisScale>(3);
 
-  const handleRoleChange = (r: JobRole) => {
-    if (onJobRoleChange) onJobRoleChange(r);
+  // Cached summary state
+  const [cachedEntry, setCachedEntry] = useState<SummaryCacheEntry | null>(null);
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+
+  // 1. Filter raw records by dropdown periods (Year & Half)
+  const filteredRecords = useMemo(() => {
+    return filterRecordsByPeriod(records, selectedYear, selectedHalf, "ALL");
+  }, [records, selectedYear, selectedHalf]);
+
+  const currentRecordIds = useMemo(() => filteredRecords.map((r) => r.id), [filteredRecords]);
+
+  // 2. Deterministic cache key including Persona & Tone
+  const cacheKey = useMemo(() => {
+    return buildSummaryCacheKey(
+      "star",
+      selectedYear,
+      selectedHalf,
+      "ALL",
+      scale,
+      jobRole,
+      toneManner
+    );
+  }, [selectedYear, selectedHalf, scale, jobRole, toneManner]);
+
+  // 3. Load from cache whenever key changes
+  const loadCache = useCallback(async () => {
+    const cached = await getSummaryCache(userId, isDemo, cacheKey);
+    setCachedEntry(cached);
+  }, [userId, isDemo, cacheKey]);
+
+  useEffect(() => {
+    loadCache();
+  }, [loadCache]);
+
+  // 4. Stale check
+  const isStale = useMemo(() => {
+    return isSummaryStale(cachedEntry, currentRecordIds);
+  }, [cachedEntry, currentRecordIds]);
+
+  // 5. Trigger AI Synthesis on-demand
+  const handleSynthesizeWithAi = async () => {
+    if (filteredRecords.length === 0) return;
+    setIsSynthesizing(true);
+    try {
+      const periodLabel = `${selectedYear} ${selectedHalf !== "ALL" ? selectedHalf : "Full Year"}`.trim();
+
+      const res = await fetch("/api/synthesize/en", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "star",
+          scope: scale,
+          jobRole,
+          toneManner,
+          periodLabel,
+          records: filteredRecords,
+        }),
+      });
+
+      if (!res.ok) throw new Error("AI Synthesis request failed");
+      const data = await res.json();
+      const items: SynthesizedStarItem[] = data.items || [];
+
+      // Save into cache
+      const newEntry: SummaryCacheEntry = {
+        cacheKey,
+        type: "star",
+        year: selectedYear,
+        half: selectedHalf,
+        quarter: "ALL",
+        scope: scale,
+        jobRole,
+        toneManner,
+        items,
+        sourceRecordIds: currentRecordIds,
+        sourceRecordCount: currentRecordIds.length,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await saveSummaryCache(userId, isDemo, newEntry);
+      setCachedEntry(newEntry);
+    } catch (err) {
+      console.error("AI STAR Synthesis error:", err);
+    } finally {
+      setIsSynthesizing(false);
+    }
   };
 
-  const handleToneChange = (t: ToneManner) => {
-    if (onToneMannerChange) onToneMannerChange(t);
-  };
-
-  // Synthesized STAR items
-  const synthesizedItems = useMemo(() => {
-    return synthesizeStarItems(records, scale, jobRole, toneManner);
-  }, [records, scale, jobRole, toneManner]);
+  // 6. Base Synthesized STAR items
+  const baseItems = useMemo<SynthesizedStarItem[]>(() => {
+    if (cachedEntry && Array.isArray(cachedEntry.items) && cachedEntry.items.length > 0) {
+      return cachedEntry.items as SynthesizedStarItem[];
+    }
+    // High-performance instantaneous local synthesis while cache is empty (0 API cost)
+    return synthesizeStarItems(filteredRecords, scale, jobRole, toneManner);
+  }, [cachedEntry, filteredRecords, scale, jobRole, toneManner]);
 
   // Unique domain tags
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    synthesizedItems.forEach((item) => {
+    baseItems.forEach((item) => {
       item.nda_tags.forEach((t) => tags.add(t));
     });
     return Array.from(tags);
-  }, [synthesizedItems]);
+  }, [baseItems]);
 
-  // Tag filter
+  // Tag filter & NDA Masking
   const displayedItems = useMemo(() => {
     const list =
       selectedTag === "ALL"
-        ? synthesizedItems
-        : synthesizedItems.filter((i) => i.nda_tags.includes(selectedTag));
+        ? baseItems
+        : baseItems.filter((i) => i.nda_tags.includes(selectedTag));
 
     if (isNdaMasked) {
       return list.map((item) => maskSynthesizedStarItem(item));
     }
     return list;
-  }, [synthesizedItems, selectedTag, isNdaMasked]);
+  }, [baseItems, selectedTag, isNdaMasked]);
 
   const copySingleItem = async (id: string, text: string) => {
     try {
@@ -108,13 +215,9 @@ export function StarResumeTab({
     }
   };
 
-  const handlePrintAts = () => {
-    window.print();
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Top Banner & Confidentiality Shield Toggle */}
+    <div className="space-y-5">
+      {/* Top Banner & Action Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 no-print">
         <div>
           <div className="flex items-center gap-2">
@@ -126,7 +229,7 @@ export function StarResumeTab({
             </span>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            Engineered for LinkedIn experience bullets, tech resumes, and senior behavioral interviews.
+            Synthesizes half-year and yearly projects into resume case studies with smart on-demand AI caching.
           </p>
         </div>
 
@@ -148,7 +251,7 @@ export function StarResumeTab({
 
           {/* ATS Print / PDF Export */}
           <button
-            onClick={handlePrintAts}
+            onClick={() => window.print()}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
             title="Print or Save as Clean ATS PDF"
           >
@@ -176,66 +279,52 @@ export function StarResumeTab({
         </div>
       </div>
 
-      {/* Persona Customizer */}
+      {/* Persona & Narrative Tone Selector */}
       <div className="no-print">
         <PersonaSelectorEn
           currentRole={jobRole}
           currentTone={toneManner}
-          onRoleChange={handleRoleChange}
-          onToneChange={handleToneChange}
+          onRoleChange={(r) => onJobRoleChange?.(r)}
+          onToneChange={(t) => onToneMannerChange?.(t)}
         />
       </div>
 
-      {/* Controls Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print">
-        {/* Scale Picker */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-            <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
-            <span>Synthesis Scope:</span>
-          </span>
-          <div className="flex items-center p-0.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700">
-            {([3, 5, 10, "ALL"] as SynthesisScale[]).map((val) => (
-              <button
-                key={String(val)}
-                onClick={() => setScale(val)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  scale === val
-                    ? "bg-white dark:bg-zinc-900 text-amber-600 dark:text-amber-400 shadow-xs"
-                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                }`}
-              >
-                {val === "ALL" ? "All Weeks" : `Last ${val} Wks`}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* 1. Period Dropdown Filters (Year & Half - Quarters Excluded) */}
+      <div className="no-print">
+        <PeriodFilterEn
+          records={records}
+          selectedYear={selectedYear}
+          selectedHalf={selectedHalf}
+          onYearChange={setSelectedYear}
+          onHalfChange={setSelectedHalf}
+          showQuarter={false}
+          filteredCount={filteredRecords.length}
+        />
+      </div>
 
-        {/* Tag Filter */}
-        <div className="flex items-center gap-2 text-xs">
-          <Tag className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-zinc-500 dark:text-zinc-400 font-medium">Domain:</span>
-          <select
-            value={selectedTag}
-            onChange={(e) => setSelectedTag(e.target.value)}
-            className="px-2.5 py-1 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-800 dark:text-zinc-200 font-semibold focus:outline-none"
-          >
-            <option value="ALL">All Competencies ({displayedItems.length})</option>
-            {allTags.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* 2. Scope & Density View Controls (Executive 3 / Core 5 / Dossier 10 & Detailed vs Compact) */}
+      <div className="no-print">
+        <ViewControlsEn
+          scale={scale}
+          onScaleChange={setScale}
+          density={density}
+          onDensityChange={setDensity}
+          isStale={isStale}
+          onRegenerateAi={handleSynthesizeWithAi}
+          isSynthesizing={isSynthesizing}
+          isCached={Boolean(cachedEntry)}
+          accentColor="amber"
+        />
       </div>
 
       {/* STAR Cards List */}
       <div className="space-y-4">
         {displayedItems.map((item, idx) => (
           <div
-            key={item.id}
-            className="print-page-break bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs transition-all hover:border-amber-500/40"
+            key={item.id || idx}
+            className={`print-page-break bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xs transition-all hover:border-amber-500/40 ${
+              density === "compact" ? "p-4 space-y-3" : "p-5 sm:p-6 space-y-4"
+            }`}
           >
             {/* Headline Header */}
             <div className="flex items-start justify-between gap-3">
@@ -255,7 +344,6 @@ export function StarResumeTab({
 
               {/* Action Buttons for Card */}
               <div className="flex items-center gap-1.5 no-print">
-                {/* LinkedIn Viral Post Copy Button */}
                 <button
                   onClick={() => copyLinkedInPostItem(item)}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900 transition-colors cursor-pointer"
@@ -274,7 +362,6 @@ export function StarResumeTab({
                   )}
                 </button>
 
-                {/* Bullet Text Copy */}
                 <button
                   onClick={() =>
                     copySingleItem(
@@ -294,44 +381,64 @@ export function StarResumeTab({
               </div>
             </div>
 
-            {/* STAR Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
-                <span className="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-[11px] block">
-                  S · Situation
-                </span>
-                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  {item.situation}
-                </p>
+            {/* Compact Mode: High-density scan view */}
+            {density === "compact" ? (
+              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1.5 text-xs">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-bold text-rose-600 dark:text-rose-400 text-[11px] uppercase tracking-wider shrink-0">
+                    Result:
+                  </span>
+                  <p className="text-zinc-700 dark:text-zinc-200 font-medium">
+                    {item.result}
+                  </p>
+                </div>
+                <div className="flex items-baseline gap-2 text-zinc-500 dark:text-zinc-400">
+                  <span className="font-semibold text-zinc-400 text-[11px] uppercase tracking-wider shrink-0">
+                    Action:
+                  </span>
+                  <p className="line-clamp-1">{item.action}</p>
+                </div>
               </div>
+            ) : (
+              /* Detailed Mode: Complete 4-Quadrant STAR Grid */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+                <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
+                  <span className="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-[11px] block">
+                    S · Situation
+                  </span>
+                  <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                    {item.situation}
+                  </p>
+                </div>
 
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
-                <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-[11px] block">
-                  T · Task
-                </span>
-                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  {item.task}
-                </p>
-              </div>
+                <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-[11px] block">
+                    T · Task
+                  </span>
+                  <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                    {item.task}
+                  </p>
+                </div>
 
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-[11px] block">
-                  A · Action
-                </span>
-                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  {item.action}
-                </p>
-              </div>
+                <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-[11px] block">
+                    A · Action
+                  </span>
+                  <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                    {item.action}
+                  </p>
+                </div>
 
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
-                <span className="font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider text-[11px] block">
-                  R · Result (Google XYZ)
-                </span>
-                <p className="text-zinc-600 dark:text-zinc-300 font-medium leading-relaxed">
-                  {item.result}
-                </p>
+                <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 space-y-1">
+                  <span className="font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider text-[11px] block">
+                    R · Result (Google XYZ)
+                  </span>
+                  <p className="text-zinc-600 dark:text-zinc-300 font-medium leading-relaxed">
+                    {item.result}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Tags Footer */}
             <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
@@ -350,7 +457,7 @@ export function StarResumeTab({
         {displayedItems.length === 0 && (
           <div className="p-12 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 text-xs">
             <Briefcase className="w-8 h-8 mx-auto mb-2 text-zinc-300 dark:text-zinc-600" />
-            No case studies found for the selected competency tag.
+            No case studies found for the selected period.
           </div>
         )}
       </div>
