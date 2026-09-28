@@ -340,9 +340,15 @@ export async function POST(req: NextRequest) {
       ? "[User's Friday Raw Brain Dump Notes]:\n"
       : "[사용자의 주간 메모 원자재]:\n";
 
-    // 1. Google Gemini API 연동 (최신 gemini-2.0-flash 우선, 실패 시 gemini-1.5-flash 폴백)
+    // 1. Google Gemini API 연동 (가장 저렴한 초저가 gemini-3.1-flash-lite 최우선)
     if (provider === "gemini" && apiKey) {
-      const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash"];
+      const modelsToTry = [
+        "gemini-3.1-flash-lite",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+        "gemini-flash-latest",
+      ];
       for (const model of modelsToTry) {
         try {
           const response = await fetch(
