@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem, SynthesizedStarItem } from "@/types/career";
-import { synthesizeBragItems, synthesizeStarItems } from "@/lib/synthesizer";
 
 /**
- * Builds the AI Synthesis prompt based on type, scope, persona, and tone
+ * Builds the AI Synthesis prompt with strict factual grounding & dynamic scope rules
  */
 function buildSynthesisPrompt(
   type: "brag" | "star",
@@ -14,37 +13,49 @@ function buildSynthesisPrompt(
   records: CareerRecord[]
 ): string {
   const scopeNames: Record<number, string> = {
-    3: "Executive Brief (Top 3 highest-impact strategic achievements for C-Suite & VP syncs)",
-    5: "Core Highlights (Top 5 standard achievements for direct manager performance review & promo)",
-    10: "Comprehensive Dossier (Top 10 detailed project milestones for full annual audit & career vault)",
+    3: "Executive Brief (Top strategic achievements for C-Suite & VP syncs)",
+    5: "Core Highlights (Standard achievements for performance review & promotion)",
+    10: "Comprehensive Dossier (Detailed project milestones for career vault)",
   };
 
+  // Inject user's ACTUAL raw memo as primary source of truth
   const recordsContext = records
     .map((r, i) => {
       const weekLabel = r.target_week?.label || new Date(r.createdAt).toISOString().slice(0, 10);
-      const metric = r.brag_sheet_item.metric_summary;
-      const impact = r.brag_sheet_item.business_impact;
-      const star = `${r.star_portfolio.title}: S(${r.star_portfolio.situation}) T(${r.star_portfolio.task}) A(${r.star_portfolio.action}) R(${r.star_portfolio.result})`;
-      return `[Log #${i + 1} (${weekLabel})]\n- Metric: ${metric}\n- Impact: ${impact}\n- STAR: ${star}`;
+      const raw = r.raw_memo ? r.raw_memo.trim() : "No raw text";
+      const done = r.weekly_report?.done ? r.weekly_report.done.join("; ") : "";
+      const metric = r.brag_sheet_item?.metric_summary || "";
+
+      return `[Weekly Log #${i + 1} (${weekLabel})]
+- User's Actual Raw Notes: "${raw}"
+${done ? `- Key Completed Actions: ${done}` : ""}
+${metric ? `- Initial Metric Draft: ${metric}` : ""}`;
     })
     .join("\n\n");
 
   if (type === "brag") {
     return `You are an elite Silicon Valley executive career coach and Staff PM / Engineering Director.
-You have been provided with ${records.length} raw weekly accomplishments from ${periodLabel}.
-Your goal is to SYNTHESIZE, DEDUPLICATE, and CONDENSE these entries into exactly ${scope} high-impact Brag Document items.
+You have been provided with ${records.length} real weekly accomplishment records from ${periodLabel}.
+Your goal is to SYNTHESIZE, DEDUPLICATE, and ELEVATE these entries into high-impact Brag Document items (Target: up to ${scope} items).
 
 Target Output Level: ${scopeNames[scope] || `${scope} items`}
 Target Role Persona: ${jobRole.toUpperCase()}
 Narrative Tone & Voice: ${toneManner.toUpperCase()}
 
-CRITICAL RULES:
-- Output valid JSON ONLY. No markdown ticks, no commentary.
-- Consolidate related weekly incremental tasks into cohesive, major milestones.
-- Use Google XYZ format: "Accomplished [X], as measured by [Y], by doing [Z]".
-- Filter out trivial noise and elevate true business and engineering leverage.
-- OUTPUT LANGUAGE: You MUST write ALL output values in ENGLISH ONLY, regardless of the language of the input records. This is the English-only API endpoint.
-- DO NOT translate the JSON keys. The JSON keys MUST remain exactly as specified in the schema.
+CRITICAL ACCURACY & GROUNDING RULES:
+1. STRICT FACTUAL GROUNDING (NO HALLUCINATION):
+   - You MUST ONLY synthesize projects, achievements, and metrics that are EXPLICITLY grounded in the "Input Weekly Records" below.
+   - NEVER invent unmentioned client names, fictional systems, or fabricated metrics that have no basis in the user's notes.
+2. DYNAMIC SCOPE (DO NOT FORCE FICTIONAL ITEMS):
+   - The user has provided ${records.length} weekly log(s). If there are fewer logs than the requested maximum (${scope}), DO NOT hallucinate additional fictional projects to fill the quota!
+   - Output ONLY as many items as can legitimately be derived from the user's actual notes (maximum ${scope} items, minimum 1 item).
+3. GOOGLE XYZ FORMULA:
+   - Each metric_summary must adhere to: "Accomplished [X], as measured by [Y], by doing [Z]".
+4. OUTPUT LANGUAGE:
+   - You MUST write ALL output values in ENGLISH ONLY.
+5. JSON KEYS INTEGRITY:
+   - Output valid JSON ONLY. DO NOT translate the JSON keys. The keys must remain exactly as specified in the schema.
+
 Required JSON Schema:
 {
   "items": [
@@ -64,20 +75,29 @@ ${recordsContext}`;
   } else {
     // type === "star"
     return `You are an elite Silicon Valley executive career coach and Staff PM / Engineering Director.
-You have been provided with ${records.length} raw weekly accomplishments from ${periodLabel}.
-Your goal is to SYNTHESIZE, DEDUPLICATE, and ELEVATE these entries into exactly ${scope} resume-worthy STAR Case Studies.
+You have been provided with ${records.length} real weekly accomplishment records from ${periodLabel}.
+Your goal is to SYNTHESIZE, DEDUPLICATE, and ELEVATE these entries into resume-worthy STAR Case Studies (Target: up to ${scope} items).
 
 Target Output Level: ${scopeNames[scope] || `${scope} items`}
 Target Role Persona: ${jobRole.toUpperCase()}
 Narrative Tone & Voice: ${toneManner.toUpperCase()}
 
-CRITICAL RULES:
-- Output valid JSON ONLY. No markdown ticks, no commentary.
-- Group related weekly PRs and sprints into complete, impactful end-to-end projects.
-- Use strong active verbs (Spearheaded, Architected, Slashed, Optimized, Deployed).
-- Mask confidential clients or proprietary internal tooling into generic equivalents if applicable.
-- OUTPUT LANGUAGE: You MUST write ALL output values in ENGLISH ONLY, regardless of the language of the input records. This is the English-only API endpoint.
-- DO NOT translate the JSON keys. The JSON keys MUST remain exactly as specified in the schema.
+CRITICAL ACCURACY & GROUNDING RULES:
+1. STRICT FACTUAL GROUNDING (NO HALLUCINATION):
+   - You MUST ONLY synthesize projects, situations, tasks, actions, and results that are EXPLICITLY grounded in the "Input Weekly Records" below.
+   - NEVER invent unmentioned client names, fictional outages, or fabricated tools that have no basis in the user's notes.
+2. DYNAMIC SCOPE (DO NOT FORCE FICTIONAL ITEMS):
+   - The user has provided ${records.length} weekly log(s). If there are fewer logs than the requested maximum (${scope}), DO NOT hallucinate additional fictional projects to fill the quota!
+   - Output ONLY as many items as can legitimately be derived from the user's actual notes (maximum ${scope} items, minimum 1 item).
+3. EXECUTIVE STAR FRAMEWORK:
+   - Group related PRs or sprint notes into cohesive end-to-end projects.
+   - Use strong active verbs (Spearheaded, Architected, Slashed, Optimized, Deployed).
+   - If confidential clients or proprietary internal tooling appear in user notes, mask them into generic equivalents (e.g. "[Fintech Gateway]").
+4. OUTPUT LANGUAGE:
+   - You MUST write ALL output values in ENGLISH ONLY.
+5. JSON KEYS INTEGRITY:
+   - Output valid JSON ONLY. DO NOT translate the JSON keys.
+
 Required JSON Schema:
 {
   "items": [
@@ -126,13 +146,13 @@ export async function POST(req: NextRequest) {
       records as CareerRecord[]
     );
 
-    // Call ultra low-cost gemini-3.1-flash-lite
+    // Call official Google Gemini models
     if (apiKey) {
       const modelsToTry = [
-        "gemini-3.1-flash-lite",
-        "gemini-3.1-flash-lite-preview",
-        "gemini-flash-lite-latest",
-        "gemini-3.8-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-flash-latest",
       ];
 
       for (const model of modelsToTry) {
@@ -151,7 +171,7 @@ export async function POST(req: NextRequest) {
                 ],
                 generationConfig: {
                   responseMimeType: "application/json",
-                  temperature: 0.2,
+                  temperature: 0.1, // Low temperature for high factual accuracy
                 },
               }),
               signal: AbortSignal.timeout(15000),
@@ -169,28 +189,36 @@ export async function POST(req: NextRequest) {
             }
           }
         } catch (err) {
-          console.warn(`Synthesis error with model ${model}, trying next:`, err);
+          console.warn(`Gemini synthesis error with model ${model}, trying next:`, err);
         }
       }
     }
 
-    // High-reliability local fallback synthesis
+    // Pure 100% User-Record Fallback (Zero hardcoded fake projects)
+    // If AI generation is temporarily unavailable, directly map the user's actual weekly records
     if (type === "brag") {
-      const fallbackItems = synthesizeBragItems(
-        records,
-        scope as 3 | 5 | 10,
-        jobRole,
-        toneManner
-      );
-      return NextResponse.json({ items: fallbackItems });
+      const directItems: SynthesizedBragItem[] = records.map((r, idx) => ({
+        id: `direct-brag-${idx + 1}`,
+        quarter_span: r.brag_sheet_item?.quarter || periodLabel,
+        metric_summary: r.brag_sheet_item?.metric_summary || (r.raw_memo ? r.raw_memo.slice(0, 100) : "Accomplishment logged"),
+        business_impact: r.brag_sheet_item?.business_impact || "Key business impact delivered.",
+        key_highlights: r.weekly_report?.done?.length ? r.weekly_report.done : [r.raw_memo ? r.raw_memo.slice(0, 80) : "Delivered"],
+        source_record_count: 1,
+      }));
+      return NextResponse.json({ items: directItems.slice(0, scope) });
     } else {
-      const fallbackItems = synthesizeStarItems(
-        records,
-        scope as 3 | 5 | 10,
-        jobRole,
-        toneManner
-      );
-      return NextResponse.json({ items: fallbackItems });
+      const directItems: SynthesizedStarItem[] = records.map((r, idx) => ({
+        id: `direct-star-${idx + 1}`,
+        title: r.star_portfolio?.title || "Key Accomplishment",
+        situation: r.star_portfolio?.situation || (r.raw_memo ? r.raw_memo.slice(0, 120) : "Context logged"),
+        task: r.star_portfolio?.task || "Drive core operational delivery.",
+        action: r.star_portfolio?.action || (r.weekly_report?.done?.join("; ") || r.raw_memo || "Executed"),
+        result: r.star_portfolio?.result || (r.brag_sheet_item?.metric_summary || "Successful outcome"),
+        nda_tags: r.star_portfolio?.nda_tags || ["#Execution", "#Initiative"],
+        period_span: periodLabel,
+        source_record_count: 1,
+      }));
+      return NextResponse.json({ items: directItems.slice(0, scope) });
     }
   } catch (error) {
     console.error("Synthesis API error:", error);

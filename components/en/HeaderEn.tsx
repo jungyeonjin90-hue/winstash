@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+
 import { Sparkles, Settings, Briefcase, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { CreditStatus } from "@/lib/creditService";
@@ -58,16 +58,6 @@ export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEn
             </div>
           )}
 
-          {/* Language Switcher back to Korean Archive */}
-          <Link
-            href="/ko"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-            title="한국어 버전으로 전환"
-          >
-            <span>🇰🇷</span>
-            <span className="hidden sm:inline">한국어</span>
-            <span className="sm:hidden">KR</span>
-          </Link>
 
           {/* Record Count Badge */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 text-xs text-zinc-600 dark:text-zinc-400 border border-zinc-200/70 dark:border-zinc-800">

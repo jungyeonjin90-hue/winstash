@@ -147,7 +147,7 @@ export function SettingsModalEn({
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>Real-Time Cloud Synchronization Active</span>
             </div>
-            All Friday notes and synthesized drawers are encrypted and securely synchronized with your Google UID. Access your records anytime across devices.
+            All Friday notes and synthesized drawers are encrypted and securely synchronized with your authenticated account. Access your records anytime across devices.
           </div>
         </div>
 

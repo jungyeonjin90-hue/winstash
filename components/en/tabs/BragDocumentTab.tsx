@@ -472,7 +472,7 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
                   <span>Google XYZ Metric Punch</span>
                 </div>
               )}
-              <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+              <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-50 leading-snug">
                 {item.metric_summary}
               </h3>
             </div>
@@ -491,7 +491,7 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
                 <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">
                   Key Milestones:
                 </span>
-                <ul className="space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <ul className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
                   {item.key_highlights.map((h, hIdx) => (
                     <li key={hIdx} className="flex items-start gap-1.5">
                       <span className="text-emerald-500 font-bold">•</span>

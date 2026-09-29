@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mic, MicOff, Sparkles, CornerDownLeft, RotateCcw, Lightbulb } from "lucide-react";
-import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { Sparkles, CornerDownLeft, RotateCcw, Lightbulb } from "lucide-react";
 import { WeekSpan, CareerRecord } from "@/types/career";
 import { getCurrentWeekSpanEn } from "@/lib/weekUtilsEn";
 import { WeekPickerEn } from "./WeekPickerEn";
@@ -75,26 +74,6 @@ export function QuickLoggerEn({
   const [memo, setMemo] = useState("");
   const [selectedWeek, setSelectedWeek] = useState<WeekSpan>(getCurrentWeekSpanEn());
 
-  const {
-    isListening,
-    isSupported,
-    startListening,
-    stopListening,
-    error: speechError,
-  } = useSpeechRecognition({
-    onResult: (transcribed) => {
-      setMemo((prev) => (prev ? `${prev} ${transcribed}` : transcribed));
-    },
-  });
-
-  const handleToggleMic = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  };
-
   const existingRecord = existingRecords?.find((record) => {
     if (record.target_week) {
       return (
@@ -119,7 +98,6 @@ export function QuickLoggerEn({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!memo.trim() || isLoading) return;
-    if (isListening) stopListening();
     
     // Pass existingRecord.id if we are editing an already logged week.
     await onTransform(memo.trim(), selectedWeek, undefined, undefined, existingRecord?.id);
@@ -194,47 +172,16 @@ export function QuickLoggerEn({
             }
           }}
           placeholder="e.g. Hotfixed payment gateway timeouts by tuning HikariCP connection pool and deploying Redis caching. Cut p99 latency from 1.2s to 85ms (-93%). Zero dropped transactions during peak sale. Next week: Grafana alerts."
-          className="w-full h-32 sm:h-36 p-4 text-xs sm:text-sm bg-transparent placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none resize-none leading-relaxed text-zinc-900 dark:text-zinc-100"
+          className="w-full h-32 sm:h-36 p-4 text-base sm:text-sm bg-transparent placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none resize-none leading-relaxed text-zinc-900 dark:text-zinc-100"
         />
 
         {/* Bottom Toolbar inside input */}
         <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-t border-zinc-200/60 dark:border-zinc-800/80 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-sm rounded-b-2xl">
-          {/* Voice Input Button */}
+          {/* Left info badge / shortcut hint */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleToggleMic}
-              title={
-                !isSupported
-                  ? "Browser speech recognition is not supported."
-                  : isListening
-                  ? "Stop Dictation"
-                  : "Voice Dictation"
-              }
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                isListening
-                  ? "bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30 ring-2 ring-rose-400"
-                  : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
-              }`}
-            >
-              {isListening ? (
-                <>
-                  <MicOff className="w-3.5 h-3.5" />
-                  <span>Listening... (Click to stop)</span>
-                </>
-              ) : (
-                <>
-                  <Mic className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>Voice Dictation (STT)</span>
-                </>
-              )}
-            </button>
-
-            {speechError && (
-              <span className="text-[11px] text-rose-500 font-medium">
-                {speechError}
-              </span>
-            )}
+            <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-mono hidden sm:inline-block">
+              Press ⌘+Enter to submit
+            </span>
           </div>
 
           {/* Transform & Submit Button or Out of Credits Warning */}

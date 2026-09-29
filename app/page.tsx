@@ -272,14 +272,14 @@ export default function Home() {
             <span>1-Input, 3-Output Career Operating System</span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight text-balance">
             Friday 1-min brain dump.{" "}
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
               Never forget your wins.
             </span>
           </h1>
 
-          <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
+          <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed text-balance">
             Write rough notes without worrying about structure. AI synthesizes it into <strong>Weekly Snippets</strong>, an annual <strong>Brag Document</strong>, and <strong>STAR Resume bullets</strong>.
           </p>
 

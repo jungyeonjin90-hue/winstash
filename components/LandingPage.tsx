@@ -247,15 +247,15 @@ export function LandingPage() {
                 누구도 열어볼 수 없도록 철저히 격리됩니다.
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                CareerPulse는 Google Identity 기반의 본인 인증을 거친 사용자만 고유 Firestore 컬렉션에 접근할 수 있도록 보안 규칙(Security Rules)이 적용되어 있습니다. 타 사용자나 비인가자의 접근이 원천 차단됩니다.
+                CareerPulse는 Google 보안 인증 기반의 엄격한 데이터 격리 체계와 엔터프라이즈 보안 프로토콜을 준수합니다. 타 사용자나 제3자의 접근이 원천 차단됩니다.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-white block font-semibold">Google OAuth & 사용자별 격리 DB</strong>
-                    <span className="text-zinc-400">계정별 고유 UID로 분리된 클라우드 문서 저장소</span>
+                    <strong className="text-white block font-semibold">계정별 데이터 격리 & 클라우드 암호화</strong>
+                    <span className="text-zinc-400">금융권 수준의 AES-256 저장 암호화 및 교차 접근 차단</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
@@ -310,7 +310,7 @@ export function LandingPage() {
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-2">
         <p>© 2026 CareerPulse. 직장인을 위한 1분 주간 기록 3-Way 커리어 OS.</p>
         <p className="text-[11px] text-zinc-400">
-          Powered by Next.js 16, Google Firebase Authentication & Cloud Firestore.
+          엔터프라이즈급 데이터 보안, AES-256 저장 암호화 및 AI 모델 미학습 보증
         </p>
       </footer>
     </div>
