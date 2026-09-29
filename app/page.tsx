@@ -349,7 +349,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400">
-        <p>© 2026 CareerPulse. 1-Input, 3-Output Career Operating System for Global Builders.</p>
+        <p>© 2026 WinStash. 1-Input, 3-Output Career Operating System for Global Builders.</p>
       </footer>
 
       {/* Settings Modal */}

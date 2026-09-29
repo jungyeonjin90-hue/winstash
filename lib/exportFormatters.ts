@@ -92,7 +92,7 @@ export function formatNotionMarkdownBrag(
 
   return `# 🏆 Performance Review & Brag Document
 > **Role Persona**: ${jobRole.toUpperCase()} | **Span**: ${quarter} | **Last Updated**: ${dateStr}
-> *Exported from CareerPulse 3-Way OS*
+> *Exported from WinStash 3-Way OS*
 
 ---
 

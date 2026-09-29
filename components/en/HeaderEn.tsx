@@ -25,7 +25,7 @@ export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEn
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-50">
-                CareerPulse
+                WinStash
               </span>
               <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
                 3-Way Career OS

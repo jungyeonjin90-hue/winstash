@@ -42,7 +42,7 @@ export function OnboardingModalEn({ isOpen, onSave }: OnboardingModalEnProps) {
             <Sparkles className="w-7 h-7" />
           </div>
           <h2 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
-            Welcome to CareerPulse
+            Welcome to WinStash
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Let's personalize your AI engine. Select your primary job role. 
@@ -89,7 +89,7 @@ export function OnboardingModalEn({ isOpen, onSave }: OnboardingModalEnProps) {
           disabled={isSaving}
           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-70 disabled:cursor-wait cursor-pointer"
         >
-          {isSaving ? "Configuring AI Engine..." : "Start Using CareerPulse"}
+          {isSaving ? "Configuring AI Engine..." : "Start Using WinStash"}
         </button>
 
       </div>

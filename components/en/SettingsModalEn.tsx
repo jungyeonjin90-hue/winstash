@@ -86,7 +86,7 @@ export function SettingsModalEn({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                CareerPulse Settings
+                WinStash Settings
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 AI engine specifications, cloud backup, and data management.
@@ -108,7 +108,7 @@ export function SettingsModalEn({
             <span>High-Performance AI Engine (Gemini 2.0)</span>
           </div>
           <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            CareerPulse features a native Google Gemini 2.0 transformation pipeline. You don&apos;t need complex API keys—the service automatically structures your entries into polished executive English.
+            WinStash features a native Google Gemini 2.0 transformation pipeline. You don&apos;t need complex API keys—the service automatically structures your entries into polished executive English.
           </p>
         </div>
 

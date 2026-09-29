@@ -220,7 +220,7 @@ export function LandingPageEn() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg tracking-tight">CareerPulse</span>
+                <span className="font-extrabold text-lg tracking-tight">WinStash</span>
                 <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
                   Global Edition
                 </span>
@@ -258,7 +258,7 @@ export function LandingPageEn() {
           </h1>
 
           <p className="text-sm sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed font-normal text-balance">
-            Brain-dump what you shipped, broke, or solved without worrying about structure. CareerPulse instantly transforms raw thoughts into <strong>manager-ready weekly check-ins</strong>, an annual <strong>Google XYZ Brag Sheet</strong>, and an <strong>Amazon STAR Resume vault</strong>.
+            Brain-dump what you shipped, broke, or solved without worrying about structure. WinStash instantly transforms raw thoughts into <strong>manager-ready weekly check-ins</strong>, an annual <strong>Google XYZ Brag Sheet</strong>, and an <strong>Amazon STAR Resume vault</strong>.
           </p>
 
           {/* CTA Buttons */}
@@ -696,7 +696,7 @@ export function LandingPageEn() {
                 Your proprietary company data stays confidential. Period.
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                Logging sensitive internal projects shouldn&apos;t keep you up at night. CareerPulse enforces zero-knowledge access controls, client anonymity masking, and bank-grade data isolation.
+                Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash enforces zero-knowledge access controls, client anonymity masking, and bank-grade data isolation.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
@@ -764,7 +764,7 @@ export function LandingPageEn() {
               Frequently Asked Questions
             </h2>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-              Everything you need to know about CareerPulse free trial, privacy, and export formats.
+              Everything you need to know about WinStash free trial, privacy, and export formats.
             </p>
           </div>
 
@@ -775,8 +775,8 @@ export function LandingPageEn() {
                 a: "Yes, completely free. You get 5 full transformations right upon signing in with your Google account. We do not ask for a credit card. You can test and experience all three outputs risk-free.",
               },
               {
-                q: "Can I use CareerPulse if I am a Product Manager or Marketer?",
-                a: "Absolutely. CareerPulse supports 6 dedicated career personas (Engineering, Product, Marketing, Sales, Operations, Design) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). AI tunes metrics and jargon specifically for your domain.",
+                q: "Can I use WinStash if I am a Product Manager or Marketer?",
+                a: "Absolutely. WinStash supports 6 dedicated career personas (Engineering, Product, Marketing, Sales, Operations, Design) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). AI tunes metrics and jargon specifically for your domain.",
               },
               {
                 q: "How does the NDA Confidentiality Shield protect my company's secrets?",
@@ -787,8 +787,8 @@ export function LandingPageEn() {
                 a: "Yes. In 1 click, you can copy structured Markdown formatted with callouts and checklists for Notion, download clean CSV spreadsheets, or print an ATS-optimized clean PDF.",
               },
               {
-                q: "How much time does CareerPulse take every Friday?",
-                a: "Only about 60 seconds. You don't need to format anything—just brain-dump what you worked on, shipped, or fixed. CareerPulse categorizes it into your 3 career drawers automatically.",
+                q: "How much time does WinStash take every Friday?",
+                a: "Only about 60 seconds. You don't need to format anything—just brain-dump what you worked on, shipped, or fixed. WinStash categorizes it into your 3 career drawers automatically.",
               },
             ].map((faq, idx) => (
               <div
@@ -842,7 +842,7 @@ export function LandingPageEn() {
 
       {/* Footer */}
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-2">
-        <p>© 2026 CareerPulse. The 1-Input, 3-Output Career Operating System.</p>
+        <p>© 2026 WinStash. The 1-Input, 3-Output Career Operating System.</p>
         <p className="text-[11px] text-zinc-400">
           Enterprise-grade security, AES-256 encryption, and zero model training guaranteed.
         </p>

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CareerPulse - 1분 주간 기록 기반 3-Way 커리어 OS",
+  title: "WinStash - The 1-Input, 3-Output Career Operating System",
   description:
-    "직장인이 매주 금요일 1분간 입력한 거친 주간 업무 메모를 주간보고, 성과평가 Brag Sheet, STAR 포트폴리오로 자동 변환·누적하는 PWA 커리어 OS",
+    "Dump 1 min on Friday. Never forget your wins. Transform raw thoughts into manager-ready weekly check-ins, an annual Google XYZ Brag Sheet, and an Amazon STAR Resume vault.",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
