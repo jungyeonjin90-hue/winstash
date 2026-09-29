@@ -199,16 +199,19 @@ export async function POST(req: NextRequest) {
     if (type === "brag") {
       const directItems: SynthesizedBragItem[] = records.map((r, idx) => ({
         id: `direct-brag-${idx + 1}`,
-        quarter_span: r.brag_sheet_item?.quarter || periodLabel,
+        rank: idx + 1,
+        title: r.brag_sheet_item?.metric_summary || "Weekly Achievement",
         metric_summary: r.brag_sheet_item?.metric_summary || (r.raw_memo ? r.raw_memo.slice(0, 100) : "Accomplishment logged"),
         business_impact: r.brag_sheet_item?.business_impact || "Key business impact delivered.",
+        quarter_span: r.brag_sheet_item?.quarter || periodLabel,
         key_highlights: r.weekly_report?.done?.length ? r.weekly_report.done : [r.raw_memo ? r.raw_memo.slice(0, 80) : "Delivered"],
-        source_record_count: 1,
+        nda_tags: r.star_portfolio?.nda_tags || ["#Execution", "#Impact"],
       }));
       return NextResponse.json({ items: directItems.slice(0, scope) });
     } else {
       const directItems: SynthesizedStarItem[] = records.map((r, idx) => ({
         id: `direct-star-${idx + 1}`,
+        rank: idx + 1,
         title: r.star_portfolio?.title || "Key Accomplishment",
         situation: r.star_portfolio?.situation || (r.raw_memo ? r.raw_memo.slice(0, 120) : "Context logged"),
         task: r.star_portfolio?.task || "Drive core operational delivery.",
@@ -216,7 +219,6 @@ export async function POST(req: NextRequest) {
         result: r.star_portfolio?.result || (r.brag_sheet_item?.metric_summary || "Successful outcome"),
         nda_tags: r.star_portfolio?.nda_tags || ["#Execution", "#Initiative"],
         period_span: periodLabel,
-        source_record_count: 1,
       }));
       return NextResponse.json({ items: directItems.slice(0, scope) });
     }
