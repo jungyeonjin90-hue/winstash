@@ -164,11 +164,35 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
-        {/* 6. Contact & Data Protection Officer */}
+        {/* 6. AI-Generated Output & Professional Disclaimer */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2.5 text-zinc-900 dark:text-zinc-100 font-bold text-lg sm:text-xl">
+            <Sparkles className="w-5 h-5 text-indigo-500 shrink-0" />
+            <h2>6. AI-Generated Output & Professional Disclaimer</h2>
+          </div>
+          <div className="p-5 rounded-2xl bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 space-y-3 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+            <p>
+              WinStash leverages advanced Large Language Models (LLMs) to synthesize raw notes into structured professional artifacts (Weekly Snippets, XYZ Brag Documents, and STAR Case Studies). By using the Service, you acknowledge and agree to the following terms:
+            </p>
+            <ul className="space-y-2 list-disc list-inside">
+              <li>
+                <strong>Reference and Draft Purposes Only:</strong> All AI-generated suggestions, summaries, and metrics are intended exclusively as drafts for personal review and reference. They do not constitute certified career coaching, legal advice, or official employment verification.
+              </li>
+              <li>
+                <strong>No Guarantee of Factual Accuracy:</strong> While our algorithms strive for high fidelity, AI models may occasionally misinterpret nuance or extrapolate quantitative figures. WinStash does not warrant or guarantee the complete factual accuracy or veracity of synthesized output.
+              </li>
+              <li>
+                <strong>User Responsibility to Verify:</strong> You retain sole responsibility for reviewing, fact-checking, and editing all synthesized content before submitting it to managers, promotion committees, recruiters, or public platforms such as LinkedIn.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* 7. Contact & Data Protection Officer */}
         <section className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2.5 text-zinc-900 dark:text-zinc-100 font-bold text-lg sm:text-xl">
             <Mail className="w-5 h-5 text-indigo-500 shrink-0" />
-            <h2>6. Contact Us & Data Requests</h2>
+            <h2>7. Contact Us & Data Requests</h2>
           </div>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
             If you have questions, feedback, or wish to submit a data erasure or access request, please reach out directly to our team:

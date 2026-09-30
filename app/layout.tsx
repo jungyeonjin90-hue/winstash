@@ -14,9 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://winstash.xyz"),
   title: "WinStash - AI Career Memory for Everything You Do",
   description:
     "Never lose track of what you achieved. Dump 1 minute on Friday. WinStash automatically turns raw work notes into manager-ready weekly updates, promotion reviews, and career portfolios.",
+  verification: {
+    google: "qKa_dC23HOY2U3XVvOP3rdC4nyvltfy_dgjghEXxKPQ",
+  },
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",

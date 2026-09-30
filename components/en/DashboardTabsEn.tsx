@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, TrendingUp, ShieldCheck, History } from "lucide-react";
+import { MessageSquare, TrendingUp, ShieldCheck, History, Sparkles } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner } from "@/types/career";
 import { trackEvent } from "@/lib/analytics";
 import { WeeklySnippetsTab } from "./tabs/WeeklySnippetsTab";
@@ -146,6 +146,16 @@ export function DashboardTabsEn({
           </div>
         )}
       </div>
+
+      {/* AI Draft Review Reminder Nudge (no-print) */}
+      {records.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-100/70 dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800/60 text-xs text-zinc-500 dark:text-zinc-400 no-print text-center">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+          <span>
+            AI-generated drafts are designed for reference. Please review and verify factual numbers before official submission or export.
+          </span>
+        </div>
+      )}
     </div>
   );
 }
