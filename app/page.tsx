@@ -15,7 +15,7 @@ import {
   deleteUserRecordFromFirestore,
   saveUserPersonaToFirestore,
 } from "@/lib/firestoreService";
-import { clearUserSummaryCache } from "@/lib/summaryCacheService";
+import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCacheService";
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
@@ -40,6 +40,9 @@ export default function Home() {
   // Subscribe to user records & credit status, load persona
   useEffect(() => {
     if (!user) return;
+
+    // Purge legacy unkeyed caches immediately to prevent ghost summaries
+    purgeLegacySummaryCaches();
 
     const loadPersona = async () => {
       const { getUserPersonaFromFirestore } = await import("@/lib/firestoreService");
@@ -190,6 +193,8 @@ export default function Home() {
         star_portfolio: output.star_portfolio,
       };
 
+      // Optimistic local state update for instantaneous reactivity
+      setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
 
       trackEvent("memo_transformed", {
@@ -231,8 +236,11 @@ export default function Home() {
   const handleDeleteRecord = async (id: string) => {
     if (!user) return;
     try {
+      // 1. Immediately remove from local React state for instantaneous UI sync
+      setRecords((prev) => prev.filter((r) => r.id !== id));
+
       await deleteUserRecordFromFirestore(user.uid, Boolean(user.isDemo), id);
-      // Immediately clear summary cache so deleted record never lingers in Brag or Vault
+      // 2. Immediately clear summary cache so deleted record never lingers in Brag or Vault
       await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
       showToast("Record successfully deleted.");
     } catch (err) {
@@ -242,7 +250,7 @@ export default function Home() {
   };
 
   const handleDataReset = async () => {
-    setRecords(INITIAL_CAREER_RECORDS_EN);
+    setRecords([]);
     if (user) {
       await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
     }

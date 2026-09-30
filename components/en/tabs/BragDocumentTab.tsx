@@ -80,7 +80,7 @@ export function BragDocumentTab({
 
   const currentRecordIds = useMemo(() => filteredRecords.map((r) => r.id), [filteredRecords]);
 
-  // 2. Deterministic cache key including Persona & Tone
+  // 2. Deterministic Content-Addressable cache key strictly bound to current record IDs
   const cacheKey = useMemo(() => {
     return buildSummaryCacheKey(
       "brag",
@@ -89,9 +89,10 @@ export function BragDocumentTab({
       selectedQuarter,
       scale,
       jobRole,
-      toneManner
+      toneManner,
+      currentRecordIds
     );
-  }, [selectedYear, selectedHalf, selectedQuarter, scale, jobRole, toneManner]);
+  }, [selectedYear, selectedHalf, selectedQuarter, scale, jobRole, toneManner, currentRecordIds]);
 
   // 3. Load from cache whenever key changes
   const loadCache = useCallback(async () => {

@@ -43,9 +43,11 @@ Target Role Persona: ${jobRole.toUpperCase()}
 Narrative Tone & Voice: ${toneManner.toUpperCase()}
 
 CRITICAL ACCURACY & GROUNDING RULES:
-1. STRICT FACTUAL GROUNDING (NO HALLUCINATION):
+1. STRICT FACTUAL GROUNDING & RECORD ISOLATION:
    - You MUST ONLY synthesize projects, achievements, and metrics that are EXPLICITLY grounded in the "Input Weekly Records" below.
    - NEVER invent unmentioned client names, fictional systems, or fabricated metrics that have no basis in the user's notes.
+   - DO NOT reference, borrow, or hallucinate ANY external sample projects (e.g. Payment Gateway, HikariCP, Redis L2, Onboarding Funnel, CAC Ads) unless they are EXPLICITLY written in the user's notes below.
+   - Output items derived 100% EXCLUSIVELY from the ${records.length} provided log(s).
 2. DYNAMIC SCOPE (DO NOT FORCE FICTIONAL ITEMS):
    - The user has provided ${records.length} weekly log(s). If there are fewer logs than the requested maximum (${scope}), DO NOT hallucinate additional fictional projects to fill the quota!
    - Output ONLY as many items as can legitimately be derived from the user's actual notes (maximum ${scope} items, minimum 1 item).
@@ -85,9 +87,11 @@ Target Role Persona: ${jobRole.toUpperCase()}
 Narrative Tone & Voice: ${toneManner.toUpperCase()}
 
 CRITICAL ACCURACY & GROUNDING RULES:
-1. STRICT FACTUAL GROUNDING (NO HALLUCINATION):
+1. STRICT FACTUAL GROUNDING & RECORD ISOLATION:
    - You MUST ONLY synthesize projects, situations, tasks, actions, and results that are EXPLICITLY grounded in the "Input Weekly Records" below.
    - NEVER invent unmentioned client names, fictional outages, or fabricated tools that have no basis in the user's notes.
+   - DO NOT reference, borrow, or hallucinate ANY external sample projects (e.g. Payment Gateway, HikariCP, Redis L2, Onboarding Funnel, CAC Ads) unless they are EXPLICITLY written in the user's notes below.
+   - Output case studies derived 100% EXCLUSIVELY from the ${records.length} provided log(s).
 2. DYNAMIC SCOPE (DO NOT FORCE FICTIONAL ITEMS):
    - The user has provided ${records.length} weekly log(s). If there are fewer logs than the requested maximum (${scope}), DO NOT hallucinate additional fictional projects to fill the quota!
    - Output ONLY as many items as can legitimately be derived from the user's actual notes (maximum ${scope} items, minimum 1 item).

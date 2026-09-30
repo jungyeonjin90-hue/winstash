@@ -27,7 +27,9 @@ export interface SummaryCacheEntry {
 }
 
 /**
- * Builds a deterministic cache key that incorporates Narrative Tone & Voice and JobRole
+ * Builds a deterministic Content-Addressable cache key that strictly incorporates
+ * the exact list of current record IDs. If any record is added or deleted,
+ * the cache key changes immediately, preventing ghost records from ever surfacing.
  */
 export function buildSummaryCacheKey(
   type: "brag" | "star",
@@ -36,12 +38,35 @@ export function buildSummaryCacheKey(
   quarter: string = "ALL",
   scope: 3 | 5 | 10,
   jobRole: JobRole = "engineering",
-  toneManner: ToneManner = "impact"
+  toneManner: ToneManner = "impact",
+  recordIds: string[] = []
 ): string {
-  return `${type}_${year}_${half}_${quarter}_${scope}_${jobRole}_${toneManner}`;
+  const sortedIds = recordIds.slice().sort().join("_");
+  return `${type}_${year}_${half}_${quarter}_${scope}_${jobRole}_${toneManner}_records:[${sortedIds || "none"}]`;
 }
 
-const LOCAL_STORAGE_CACHE_PREFIX = "career_pulse_summary_cache_";
+const LOCAL_STORAGE_CACHE_PREFIX = "career_pulse_summary_cache_v2_";
+const LEGACY_STORAGE_CACHE_PREFIX = "career_pulse_summary_cache_";
+
+/**
+ * Purges all legacy unkeyed or stale summary caches from localStorage
+ */
+export function purgeLegacySummaryCaches(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      // If it's the old prefix and not the new v2 prefix, or doesn't have records:[
+      if (key && key.startsWith(LEGACY_STORAGE_CACHE_PREFIX) && !key.startsWith(LOCAL_STORAGE_CACHE_PREFIX)) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {
+    console.warn("Failed to purge legacy summary caches:", e);
+  }
+}
 
 /**
  * Retrieves cached summary from Firestore or LocalStorage
@@ -198,7 +223,11 @@ export async function clearUserSummaryCache(
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith(userPrefix) || key.startsWith(LOCAL_STORAGE_CACHE_PREFIX))) {
+        if (
+          key &&
+          (key.startsWith(LOCAL_STORAGE_CACHE_PREFIX) ||
+            key.startsWith(LEGACY_STORAGE_CACHE_PREFIX))
+        ) {
           keysToRemove.push(key);
         }
       }
