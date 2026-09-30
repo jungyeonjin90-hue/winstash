@@ -7,7 +7,6 @@ import {
   Copy,
   Check,
   Briefcase,
-  Share2,
   Sparkles,
 } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner, SynthesizedStarItem } from "@/types/career";
@@ -15,7 +14,7 @@ import { maskSynthesizedStarItem } from "@/lib/masking";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
-import { formatLinkedInPost, formatStarPortfolio, formatSingleStarItem } from "@/lib/exportFormatters";
+import { formatStarPortfolio, formatSingleStarItem } from "@/lib/exportFormatters";
 import { filterRecordsByPeriod } from "@/lib/periodUtils";
 import {
   buildSummaryCacheKey,
@@ -67,7 +66,6 @@ export function StarResumeTab({
   const [selectedTag, setSelectedTag] = useState<string>("ALL");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isAllCopied, setIsAllCopied] = useState(false);
-  const [linkedInCopiedId, setLinkedInCopiedId] = useState<string | null>(null);
 
   // Cached summary state
   const [cachedEntry, setCachedEntry] = useState<SummaryCacheEntry | null>(null);
@@ -246,17 +244,6 @@ export function StarResumeTab({
       await navigator.clipboard.writeText(text);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const copyLinkedInPostItem = async (item: SynthesizedStarItem) => {
-    const post = formatLinkedInPost(item, activeJobRole);
-    try {
-      await navigator.clipboard.writeText(post);
-      setLinkedInCopiedId(item.id);
-      setTimeout(() => setLinkedInCopiedId(null), 2500);
     } catch (err) {
       console.error(err);
     }
@@ -456,24 +443,6 @@ export function StarResumeTab({
 
               {/* Action Buttons for Card */}
               <div className="flex items-center gap-1.5 no-print">
-                <button
-                  onClick={() => copyLinkedInPostItem(item)}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900 transition-colors cursor-pointer"
-                  title="Generate viral LinkedIn post from this case study"
-                >
-                  {linkedInCopiedId === item.id ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-sky-600" />
-                      <span>Copied Post!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-3.5 h-3.5 text-sky-600" />
-                      <span>LinkedIn Post</span>
-                    </>
-                  )}
-                </button>
-
                 <button
                   onClick={() => copySingleItem(item.id, formatSingleStarItem(item))}
                   className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
