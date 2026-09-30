@@ -110,6 +110,8 @@ Required JSON Schema:
       "result": "Quantifiable outcomes, efficiency gains, and lasting impact",
       "nda_tags": ["#TechStack", "#DomainCompetency"],
       "period_span": "${periodLabel}",
+      "impactCategory": "efficiency",
+      "impactMagnitude": "medium",
       "source_record_count": ${records.length}
     }
   ]
@@ -219,6 +221,8 @@ export async function POST(req: NextRequest) {
         result: r.star_portfolio?.result || (r.brag_sheet_item?.metric_summary || "Successful outcome"),
         nda_tags: r.star_portfolio?.nda_tags || ["#Execution", "#Initiative"],
         period_span: periodLabel,
+        impactCategory: r.star_portfolio?.impactCategory || "efficiency",
+        impactMagnitude: r.star_portfolio?.impactMagnitude || "medium",
       }));
       return NextResponse.json({ items: directItems.slice(0, scope) });
     }

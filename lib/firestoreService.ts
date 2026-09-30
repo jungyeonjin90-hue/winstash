@@ -9,7 +9,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
-import { CareerRecord, JobRole, ToneManner } from "@/types/career";
+import { CareerRecord, JobRole, ToneManner, PersonaProfile, SeniorityLevel, RegionCode } from "@/types/career";
 import { INITIAL_CAREER_RECORDS } from "./initialData";
 
 const LOCAL_STORAGE_KEY_PREFIX = "career_pulse_records_user_";
@@ -54,6 +54,7 @@ export function subscribeUserRecords(
             star_portfolio: data.star_portfolio,
             jobRole: data.jobRole,
             toneManner: data.toneManner,
+            source: data.source || "web_text",
           } as CareerRecord;
         });
 
@@ -96,13 +97,17 @@ export async function saveUserRecordToFirestore(
   isDemo: boolean,
   record: CareerRecord
 ): Promise<void> {
+  const normalizedRecord: CareerRecord = {
+    ...record,
+    source: record.source || "web_text",
+  };
   if (isFirebaseConfigured && db && !isDemo) {
-    const docRef = doc(db, "users", userId, "records", record.id);
-    await setDoc(docRef, record);
+    const docRef = doc(db, "users", userId, "records", normalizedRecord.id);
+    await setDoc(docRef, normalizedRecord);
   } else {
     // 로컬 스토리지에 저장
     const current = getLocalUserRecords(userId);
-    const updated = [record, ...current.filter((r) => r.id !== record.id)];
+    const updated = [normalizedRecord, ...current.filter((r) => r.id !== normalizedRecord.id)];
     saveLocalUserRecords(userId, updated);
   }
 }
@@ -126,29 +131,41 @@ export async function deleteUserRecordFromFirestore(
 }
 
 /**
- * 사용자 페르소나 설정 저장 (Firestore)
+ * 사용자 페르소나 및 벤치마크 프로필 설정 저장 (Firestore)
  */
 export async function saveUserPersonaToFirestore(
   userId: string,
   isDemo: boolean,
   jobRole: JobRole,
-  toneManner: ToneManner
+  toneManner: ToneManner,
+  extraProfile?: {
+    seniorityLevel?: SeniorityLevel;
+    industry?: string;
+    region?: RegionCode;
+    benchmarkOptIn?: boolean;
+  }
 ): Promise<void> {
+  const payload = {
+    jobRole,
+    toneManner,
+    ...(extraProfile || {}),
+    updatedAt: new Date().toISOString(),
+  };
   if (isFirebaseConfigured && db && !isDemo) {
     const docRef = doc(db, "users", userId, "settings", "persona");
-    await setDoc(docRef, { jobRole, toneManner, updatedAt: new Date().toISOString() }, { merge: true });
+    await setDoc(docRef, payload, { merge: true });
   } else {
-    localStorage.setItem(`career_pulse_persona_${userId}`, JSON.stringify({ jobRole, toneManner }));
+    localStorage.setItem(`career_pulse_persona_${userId}`, JSON.stringify({ jobRole, toneManner, ...(extraProfile || {}) }));
   }
 }
 
 /**
- * 사용자 페르소나 설정 불러오기 (Firestore)
+ * 사용자 페르소나 및 벤치마크 프로필 설정 불러오기 (Firestore)
  */
 export async function getUserPersonaFromFirestore(
   userId: string,
   isDemo: boolean
-): Promise<{ jobRole: JobRole; toneManner: ToneManner } | null> {
+): Promise<PersonaProfile | null> {
   if (isFirebaseConfigured && db && !isDemo) {
     try {
       const docRef = doc(db, "users", userId, "settings", "persona");
@@ -156,7 +173,14 @@ export async function getUserPersonaFromFirestore(
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.jobRole && data.toneManner) {
-          return { jobRole: data.jobRole as JobRole, toneManner: data.toneManner as ToneManner };
+          return {
+            jobRole: data.jobRole as JobRole,
+            toneManner: data.toneManner as ToneManner,
+            seniorityLevel: data.seniorityLevel as SeniorityLevel | undefined,
+            industry: data.industry as string | undefined,
+            region: data.region as RegionCode | undefined,
+            benchmarkOptIn: Boolean(data.benchmarkOptIn),
+          };
         }
       }
     } catch (e) {

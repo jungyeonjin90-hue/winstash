@@ -17,6 +17,8 @@ export interface StarPortfolio {
   action: string;
   result: string;
   nda_tags: string[];
+  impactCategory?: ImpactCategory;
+  impactMagnitude?: ImpactMagnitude;
 }
 
 export interface TransformationOutput {
@@ -29,9 +31,23 @@ export type JobRole = 'engineering' | 'product' | 'marketing' | 'operations' | '
 
 export type ToneManner = 'impact' | 'problem_solving' | 'stability' | 'leadership';
 
+export type SeniorityLevel = 'junior' | 'mid' | 'senior' | 'staff_plus' | 'lead_executive';
+
+export type RegionCode = 'US' | 'KR' | 'EU' | 'APAC' | 'GLOBAL';
+
+export type ImpactCategory = 'efficiency' | 'revenue' | 'quality' | 'leadership' | 'risk_mitigation' | 'other';
+
+export type ImpactMagnitude = 'small' | 'medium' | 'large';
+
+export type RecordSource = 'web_text' | 'slack' | 'jira' | 'github' | 'email_inbound';
+
 export interface PersonaProfile {
   jobRole: JobRole;
   toneManner: ToneManner;
+  seniorityLevel?: SeniorityLevel;
+  industry?: string;
+  region?: RegionCode;
+  benchmarkOptIn?: boolean;
 }
 
 export interface WeekSpan {
@@ -53,6 +69,7 @@ export interface CareerRecord {
   star_portfolio: StarPortfolio;
   jobRole?: JobRole;
   toneManner?: ToneManner;
+  source?: RecordSource;
 }
 
 export type TabType = 'weekly' | 'brag' | 'vault' | 'timeline';
@@ -80,4 +97,6 @@ export interface SynthesizedStarItem {
   result: string;
   nda_tags: string[];
   period_span: string;
+  impactCategory?: ImpactCategory;
+  impactMagnitude?: ImpactMagnitude;
 }

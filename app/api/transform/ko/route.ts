@@ -45,6 +45,8 @@ function buildSystemPromptKo(jobRole: JobRole = "engineering", toneManner: ToneM
    - action: 본인이 직접 주도하여 수행한 구체적 조치 및 기술/도구
    - result: 정량/정성적 성과 및 교훈
    - nda_tags: 직무 전문성을 보여주는 핵심 역량 해시태그 3~4개 (예: ['#성능최적화', '#대용량트래픽', '#업무자동화'])
+   - impactCategory: 조직 기여 범주에 따라 "efficiency", "revenue", "quality", "leadership", "risk_mitigation", "other" 중 정확히 1개 선택
+   - impactMagnitude: 성과 규모에 따라 "small"(단순 완료), "medium"(팀/기능 단위 기여), "large"(전사/고매출/핵심시스템 단위 마일스톤) 중 정확히 1개 선택
 
 응답 JSON 스키마 규격:
 {
@@ -64,7 +66,9 @@ function buildSystemPromptKo(jobRole: JobRole = "engineering", toneManner: ToneM
     "task": "과제",
     "action": "행동",
     "result": "결과",
-    "nda_tags": ["#태그1", "#태그2"]
+    "nda_tags": ["#태그1", "#태그2"],
+    "impactCategory": "efficiency",
+    "impactMagnitude": "medium"
   }
 }`;
 }
@@ -160,6 +164,8 @@ function generateFallbackOutputKo(
       action: `근본적인 병목 구간을 분석한 후 표준화된 개선 조치를 수립하고 실무에 성공적으로 배포/적용함`,
       result: `${detectedMetric} 개선 달성, 조직 전반의 실행 속도 가속화 및 비즈니스 기여`,
       nda_tags: tagList,
+      impactCategory: "efficiency",
+      impactMagnitude: "medium",
     },
   };
 }

@@ -54,6 +54,8 @@ CRITICAL RULES:
    - action: Specific architectural or strategic actions taken (tools, methods, ownership).
    - result: Quantifiable outcomes, efficiency gains, and lasting organizational impact.
    - nda_tags: 3-4 professional domain hashtags (e.g. ["#LatencyOptimization", "#DistributedSystems"]).
+   - impactCategory: Exactly one of "efficiency", "revenue", "quality", "leadership", "risk_mitigation", "other" representing the primary organizational impact.
+   - impactMagnitude: Exactly one of "small", "medium", "large" based on whether it is an incremental task ("small"), a solid feature/team delivery ("medium"), or a major revenue/infrastructure/system-level milestone ("large").
 
 JSON Schema:
 {
@@ -73,7 +75,9 @@ JSON Schema:
     "task": "Objective",
     "action": "Execution",
     "result": "Quantifiable Outcome",
-    "nda_tags": ["#Tag1", "#Tag2"]
+    "nda_tags": ["#Tag1", "#Tag2"],
+    "impactCategory": "efficiency",
+    "impactMagnitude": "medium"
   }
 }`;
 }
@@ -181,6 +185,8 @@ function generateFallbackOutputEn(
       action: `Executed rigorous root cause analysis, deployed caching and concurrency layers, and established automated telemetry.`,
       result: `Delivered ${detectedMetric} improvement, fortified system reliability, and unlocked team shipping speed.`,
       nda_tags: tagList,
+      impactCategory: "efficiency",
+      impactMagnitude: "medium",
     },
   };
 }

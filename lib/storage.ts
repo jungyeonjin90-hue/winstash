@@ -1,4 +1,4 @@
-import { CareerRecord, JobRole, ToneManner } from "@/types/career";
+import { CareerRecord, JobRole, ToneManner, SeniorityLevel, RegionCode } from "@/types/career";
 import { INITIAL_CAREER_RECORDS } from "./initialData";
 
 const STORAGE_KEY = "career_pulse_records_v1";
@@ -8,6 +8,10 @@ export interface AppSettings {
   provider: "gemini" | "openai";
   jobRole: JobRole;
   toneManner: ToneManner;
+  seniorityLevel?: SeniorityLevel;
+  industry?: string;
+  region?: RegionCode;
+  benchmarkOptIn?: boolean;
   firebaseConfig?: {
     apiKey: string;
     authDomain: string;
@@ -23,6 +27,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   provider: "gemini",
   jobRole: "engineering",
   toneManner: "impact",
+  benchmarkOptIn: false,
   enableFirebase: false,
 };
 
