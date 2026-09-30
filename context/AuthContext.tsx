@@ -8,6 +8,7 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
+import { identifyUser, resetUser, trackEvent } from "@/lib/analytics";
 
 export interface AppUser {
   uid: string;
@@ -63,6 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             photoURL: fbUser.photoURL,
             isDemo: false,
           });
+          identifyUser(fbUser.uid, {
+            email: fbUser.email,
+            displayName: fbUser.displayName,
+          });
+          trackEvent("user_authenticated", { method: "google" });
         } else {
           // Firebase 유저가 없으면 데모 유저 확인
           setUser(getStoredDemoUser());
@@ -83,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setLoading(true);
+      trackEvent("sign_in_google_clicked");
       await signInWithPopup(auth, googleProvider);
     } catch (err: unknown) {
       console.error("Google sign in error:", err);
@@ -109,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      trackEvent("user_signed_out");
+      resetUser();
       if (isFirebaseConfigured && auth) {
         await firebaseSignOut(auth);
       }

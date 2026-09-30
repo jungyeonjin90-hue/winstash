@@ -19,6 +19,7 @@ import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
 import { INITIAL_CAREER_RECORDS_EN } from "@/lib/initialDataEn";
+import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
 
 export default function Home() {
@@ -189,6 +190,15 @@ export default function Home() {
       };
 
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
+
+      trackEvent("memo_transformed", {
+        isUpdate: Boolean(finalExistingRecordId),
+        memoLength: rawMemo.length,
+        jobRole: role,
+        toneManner: tone,
+        impactCategory: output.star_portfolio?.impactCategory,
+        impactMagnitude: output.star_portfolio?.impactMagnitude,
+      });
 
       // Deduct credit for updates as well
       const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));

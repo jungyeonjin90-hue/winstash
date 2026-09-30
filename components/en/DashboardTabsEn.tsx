@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MessageSquare, TrendingUp, ShieldCheck, History } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner } from "@/types/career";
+import { trackEvent } from "@/lib/analytics";
 import { WeeklySnippetsTab } from "./tabs/WeeklySnippetsTab";
 import { BragDocumentTab } from "./tabs/BragDocumentTab";
 import { StarResumeTab } from "./tabs/StarResumeTab";
@@ -31,6 +32,11 @@ export function DashboardTabsEn({
 }: DashboardTabsEnProps) {
   const [activeTab, setActiveTab] = useState<TabType>("weekly");
 
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    trackEvent("dashboard_tab_switched", { tab });
+  };
+
   // Most recent record
   const latestRecord = records[0];
 
@@ -40,7 +46,7 @@ export function DashboardTabsEn({
       <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 overflow-x-auto">
         {/* Tab 1: Weekly Snippets */}
         <button
-          onClick={() => setActiveTab("weekly")}
+          onClick={() => handleTabChange("weekly")}
           className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
             activeTab === "weekly"
               ? "bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
@@ -56,7 +62,7 @@ export function DashboardTabsEn({
 
         {/* Tab 2: Brag Document */}
         <button
-          onClick={() => setActiveTab("brag")}
+          onClick={() => handleTabChange("brag")}
           className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
             activeTab === "brag"
               ? "bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-xs"
@@ -72,7 +78,7 @@ export function DashboardTabsEn({
 
         {/* Tab 3: STAR Resume */}
         <button
-          onClick={() => setActiveTab("vault")}
+          onClick={() => handleTabChange("vault")}
           className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
             activeTab === "vault"
               ? "bg-white dark:bg-zinc-800 text-amber-600 dark:text-amber-400 shadow-xs"
@@ -88,7 +94,7 @@ export function DashboardTabsEn({
 
         {/* Tab 4: Archive */}
         <button
-          onClick={() => setActiveTab("archive")}
+          onClick={() => handleTabChange("archive")}
           className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 ml-auto cursor-pointer ${
             activeTab === "archive"
               ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs"

@@ -20,6 +20,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { trackEvent } from "@/lib/analytics";
 
 // Interactive Demo Showcase Datasets by Persona
 interface ShowcaseData {
@@ -193,6 +194,7 @@ export function LandingPageEn() {
 
   const handleGoogleLogin = async () => {
     try {
+      trackEvent("landing_cta_clicked", { location: "hero" });
       setLoading("google");
       await signInWithGoogle();
     } catch (e) {
@@ -205,6 +207,7 @@ export function LandingPageEn() {
 
   const handleCopySnippet = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
+    trackEvent("demo_snippet_copied", { label });
     setCopiedNotification(label);
     setTimeout(() => setCopiedNotification(null), 2500);
   };
