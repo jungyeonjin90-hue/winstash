@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { HeaderEn } from "@/components/en/HeaderEn";
 import { QuickLoggerEn } from "@/components/en/QuickLoggerEn";
-import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { DashboardTabsEn } from "@/components/en/DashboardTabsEn";
 import { SettingsModalEn } from "@/components/en/SettingsModalEn";
 import { OnboardingModalEn } from "@/components/en/OnboardingModalEn";
@@ -349,13 +348,6 @@ export default function Home() {
             creditStatus={creditStatus}
           />
         </section>
-
-        {/* Loading Skeleton */}
-        {isLoading && (
-          <section className="space-y-4 animate-in fade-in duration-300">
-            <LoadingSkeleton />
-          </section>
-        )}
 
         {/* Screen 2: 3-Way Dashboard */}
         <section id="dashboard-section" className="space-y-4 pt-4">
