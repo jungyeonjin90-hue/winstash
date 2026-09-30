@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WinStash - The 1-Input, 3-Output Career Operating System",
+  title: "WinStash - AI Career Memory for Everything You Do",
   description:
-    "Dump 1 min on Friday. Never forget your wins. Transform raw thoughts into manager-ready weekly check-ins, an annual Google XYZ Brag Sheet, and an Amazon STAR Resume vault.",
+    "Never lose track of what you achieved. Dump 1 minute on Friday. WinStash automatically turns raw work notes into manager-ready weekly updates, promotion reviews, and career portfolios.",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",

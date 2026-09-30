@@ -247,45 +247,66 @@ export function LandingPageEn() {
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/80 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm font-semibold shadow-xs">
             <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
-            <span>The 1-Input, 3-Output Career Operating System</span>
+            <span>AI Career Memory for Modern Professionals</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50 text-balance">
-            Stop scrambling at year-end review. <br className="hidden sm:inline" />
+            Never lose track of what you achieved. <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-500 bg-clip-text text-transparent">
-              Dump 1 min on Friday. AI does the rest.
+              Dump 1 minute on Friday. AI builds your career proof.
             </span>
           </h1>
 
-          <p className="text-sm sm:text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed font-normal text-balance">
-            Brain-dump what you shipped, broke, or solved without worrying about structure. WinStash instantly transforms raw thoughts into <strong>manager-ready weekly check-ins</strong>, an annual <strong>Google XYZ Brag Sheet</strong>, and an <strong>Amazon STAR Resume vault</strong>.
-          </p>
+          <div className="max-w-2xl mx-auto space-y-4">
+            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal text-balance">
+              Write what you shipped, solved, or led without worrying about formatting or structure.
+              WinStash automatically turns raw Friday notes into:
+            </p>
+
+            {/* 3단 가로 나열 태그 형태 (깔끔하고 컴팩트함) */}
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs">
+                <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span>Manager-ready weekly updates</span>
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>Promotion-ready reviews</span>
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs">
+                <CheckCircle2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>Interview-ready career stories</span>
+              </span>
+            </div>
+          </div>
 
           {/* CTA Buttons */}
-          <div className="flex items-center justify-center pt-2 max-w-md mx-auto">
+          <div className="flex items-center justify-center pt-3 max-w-md mx-auto">
             <button
               onClick={handleGoogleLogin}
               disabled={loading !== null}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white shadow-xl shadow-indigo-600/30 transition-all cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white shadow-xl shadow-indigo-600/30 transition-all cursor-pointer"
             >
-              <span>Get Started Free with Google</span>
+              <span>Start Building Your Career Proof — Free</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* Trust Guarantees */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+          <div className="pt-1 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             <div className="flex items-center gap-1.5">
               <Check className="w-4 h-4 text-emerald-500" />
-              <span>5 Weekly Transformations Free</span>
+              <span>Free to start</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check className="w-4 h-4 text-emerald-500" />
-              <span>No Credit Card Required</span>
+              <span>No credit card required</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check className="w-4 h-4 text-emerald-500" />
-              <span>NDA Confidentiality Shield</span>
+              <span>1 minute every Friday</span>
             </div>
           </div>
         </section>
@@ -394,7 +415,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Drawer 1: Weekly Snippets (PPP)</span>
+                  <span>Drawer 1: Weekly Check-ins</span>
                 </button>
 
                 <button
@@ -406,7 +427,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <TrendingUp className="w-4 h-4" />
-                  <span>Drawer 2: Brag Doc (Google XYZ)</span>
+                  <span>Drawer 2: Performance Reviews</span>
                 </button>
 
                 <button
@@ -418,7 +439,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Drawer 3: STAR Resume Bullets</span>
+                  <span>Drawer 3: Career Vault & Stories</span>
                 </button>
               </div>
 
@@ -432,7 +453,7 @@ export function LandingPageEn() {
                         <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
                           Short-Term · Monday Sync
                         </span>
-                        <span className="text-xs text-zinc-400">Optimized for Slack / Notion</span>
+                        <span className="text-xs text-zinc-400">Optimized for Slack & 1-on-1s</span>
                       </div>
                       <button
                         onClick={() => handleCopySnippet(activeData.weeklySnippet.done.join("\n"), "Weekly Snippet")}
@@ -476,12 +497,12 @@ export function LandingPageEn() {
                     <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                          Mid-Term · Compensation & Reviews
+                          Mid-Term · Promotion & Compensation
                         </span>
                         <span className="text-xs text-zinc-400">{activeData.bragDoc.quarter} Metric Punch</span>
                       </div>
                       <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-                        Google XYZ Formula
+                        Google XYZ Formula Verified
                       </span>
                     </div>
 
@@ -525,9 +546,9 @@ export function LandingPageEn() {
                     <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                          Long-Term · Interview Vault
+                          Long-Term · Career Vault & Stories
                         </span>
-                        <span className="text-xs text-zinc-400">Amazon STAR Framework</span>
+                        <span className="text-xs text-zinc-400">Amazon STAR Method + NDA Shield</span>
                       </div>
 
                       {/* NDA Toggle Simulation */}
@@ -842,7 +863,7 @@ export function LandingPageEn() {
 
       {/* Footer */}
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-2">
-        <p>© 2026 WinStash. The 1-Input, 3-Output Career Operating System.</p>
+        <p>© 2026 WinStash. AI Career Memory for Everything You Do.</p>
         <p className="text-[11px] text-zinc-400">
           Enterprise-grade security, AES-256 encryption, and zero model training guaranteed.
         </p>
