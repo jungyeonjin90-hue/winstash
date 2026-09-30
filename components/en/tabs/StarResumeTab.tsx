@@ -16,7 +16,7 @@ import { maskSynthesizedStarItem } from "@/lib/masking";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
-import { formatLinkedInPost, formatAtsResumeMarkdown } from "@/lib/exportFormatters";
+import { formatLinkedInPost, formatStarPortfolio, formatSingleStarItem } from "@/lib/exportFormatters";
 import { filterRecordsByPeriod } from "@/lib/periodUtils";
 import {
   buildSummaryCacheKey,
@@ -263,8 +263,8 @@ export function StarResumeTab({
     }
   };
 
-  const copyAllMarkdown = async () => {
-    const text = formatAtsResumeMarkdown(displayedItems, activeJobRole);
+  const copyStarPortfolio = async () => {
+    const text = formatStarPortfolio(displayedItems, activeJobRole);
     try {
       await navigator.clipboard.writeText(text);
       setIsAllCopied(true);
@@ -391,22 +391,32 @@ export function StarResumeTab({
           </button>
 
           <button
-            onClick={copyAllMarkdown}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
+            onClick={copyStarPortfolio}
+            disabled={displayedItems.length === 0}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white shadow-xs hover:shadow-amber-500/20 transition-all cursor-pointer disabled:cursor-not-allowed"
+            title="Copy ATS-optimized STAR Portfolio case studies"
           >
             {isAllCopied ? (
-              <><Check className="w-3.5 h-3.5 text-emerald-500" /><span>Copied All!</span></>
+              <>
+                <Check className="w-3.5 h-3.5 text-white" />
+                <span>Copied STAR Portfolio!</span>
+              </>
             ) : (
-              <><Copy className="w-3.5 h-3.5" /><span>Copy for Resume</span></>
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy STAR Portfolio</span>
+              </>
             )}
           </button>
           
           <button
             onClick={() => window.print()}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
+            disabled={displayedItems.length === 0}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             title="Print or Save as Clean ATS PDF"
           >
-            <Printer className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" /><span>Print / PDF</span>
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print / PDF</span>
           </button>
         </div>
       </div>
@@ -476,14 +486,9 @@ export function StarResumeTab({
                 </button>
 
                 <button
-                  onClick={() =>
-                    copySingleItem(
-                      item.id,
-                      `**${item.title}**\n- Situation: ${item.situation}\n- Task: ${item.task}\n- Action: ${item.action}\n- Result: ${item.result}`
-                    )
-                  }
+                  onClick={() => copySingleItem(item.id, formatSingleStarItem(item))}
                   className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  title="Copy STAR bullet text"
+                  title="Copy STAR case study bullet"
                 >
                   {copiedId === item.id ? (
                     <Check className="w-3.5 h-3.5 text-emerald-500" />

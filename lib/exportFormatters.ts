@@ -1,6 +1,97 @@
 import { SynthesizedStarItem, SynthesizedBragItem, CareerRecord, JobRole } from "@/types/career";
 
 /**
+ * Signature watermark appended to all synthesized clipboard exports.
+ * Protects brand moat, viral distribution loop, and prevents cheap copycat scraping.
+ */
+export const WINSTASH_WATERMARK = "\n\n---\n⚡ Synthesized with WinStash 3-Way Career OS";
+
+/**
+ * Formats a single weekly career record into a universally compatible Markdown snippet.
+ * Works seamlessly in Slack, Teams, Email, Notion, and Jira.
+ */
+export function formatWeeklySnippet(record: CareerRecord, title: string): string {
+  return `📢 [Weekly Snippets] ${title}
+
+✅ Progress (Completed)
+${record.weekly_report.done.map((item) => `• ${item}`).join("\n")}
+
+⏳ In-Flight & Bottlenecks
+${record.weekly_report.in_progress.map((item) => `• ${item}`).join("\n")}
+
+🗓️ Plans & Next Priorities
+${record.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}${WINSTASH_WATERMARK}`;
+}
+
+/**
+ * Formats synthesized Brag items into the Golden Standard Brag Sheet.
+ * Clean, structured Markdown with checkboxes and callouts compatible with Notion, Google Docs, Confluence.
+ */
+export function formatBragSheet(
+  items: SynthesizedBragItem[],
+  jobRole: string,
+  periodSpan: string
+): string {
+  const dateStr = new Date().toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return `# 🏆 Performance Review & Brag Document
+> **Role Persona**: ${jobRole.toUpperCase()} | **Span**: ${periodSpan} | **Last Updated**: ${dateStr}
+
+${items
+  .map(
+    (item, idx) => `### ${idx + 1}. ${item.metric_summary}
+> **Quarter Span**: \`${item.quarter_span}\`
+- **Strategic Impact**: ${item.business_impact}
+- **Key Milestones**:
+${item.key_highlights.map((h) => `  - [x] ${h}`).join("\n")}`
+  )
+  .join("\n\n---\n\n")}${WINSTASH_WATERMARK}`;
+}
+
+/**
+ * Formats synthesized STAR items into a comprehensive Case Study Portfolio.
+ * ATS-optimized, high-impact XYZ structure.
+ */
+export function formatStarPortfolio(
+  items: SynthesizedStarItem[],
+  jobRole: string
+): string {
+  const dateStr = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  return `# 🌟 STAR PORTFOLIO & CASE STUDIES
+**Specialization**: ${jobRole.toUpperCase()} | **Compiled**: ${dateStr}
+
+${items
+  .map(
+    (item, idx) => `## #${idx + 1} ${item.title.toUpperCase()} (${item.period_span})
+- **Situation (Context)**: ${item.situation}
+- **Task (Goal)**: ${item.task}
+- **Action (Execution)**: ${item.action}
+- **Result (XYZ Impact)**: ${item.result}
+- **Competencies / Tags**: ${item.nda_tags.join(" | ")}`
+  )
+  .join("\n\n---\n\n")}${WINSTASH_WATERMARK}`;
+}
+
+/**
+ * Single card STAR formatter
+ */
+export function formatSingleStarItem(item: SynthesizedStarItem): string {
+  return `**${item.title}** (${item.period_span})
+- Situation: ${item.situation}
+- Task: ${item.task}
+- Action: ${item.action}
+- Result: ${item.result}${WINSTASH_WATERMARK}`;
+}
+
+/**
  * Formats a STAR item or Career record into an engaging, high-reach LinkedIn post.
  * Tailored for tech communities (Software Engineers, Product Managers, Growth Marketers).
  */
@@ -16,7 +107,6 @@ export function formatLinkedInPost(
   let tags: string[] = [];
 
   if ("star_portfolio" in item) {
-    // CareerRecord
     title = item.star_portfolio.title;
     situation = item.star_portfolio.situation;
     task = item.star_portfolio.task;
@@ -24,7 +114,6 @@ export function formatLinkedInPost(
     result = item.star_portfolio.result;
     tags = item.star_portfolio.nda_tags || [];
   } else {
-    // SynthesizedStarItem
     title = item.title;
     situation = item.situation;
     task = item.task;
@@ -72,68 +161,10 @@ Focus on root cause bottlenecks first before adding complexity. Small architectu
 
 What are your go-to practices for this? Would love to hear your thoughts below! 👇
 
-${hashtags}
+${hashtags}${WINSTASH_WATERMARK}
 `;
 }
 
-/**
- * Formats Brag items into a clean Notion-optimized Markdown format (with Callouts & Toggles)
- */
-export function formatNotionMarkdownBrag(
-  items: SynthesizedBragItem[],
-  jobRole: string,
-  quarter: string
-): string {
-  const dateStr = new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  return `# 🏆 Performance Review & Brag Document
-> **Role Persona**: ${jobRole.toUpperCase()} | **Span**: ${quarter} | **Last Updated**: ${dateStr}
-> *Exported from WinStash 3-Way OS*
-
----
-
-${items
-  .map(
-    (item, idx) => `### ${idx + 1}. ${item.metric_summary}
-> **Quarter Span**: \`${item.quarter_span}\`
-- **Strategic Impact**: ${item.business_impact}
-- **Milestones**:
-${item.key_highlights.map((h) => `  - [x] ${h}`).join("\n")}
-`
-  )
-  .join("\n---\n\n")}
-`;
-}
-
-/**
- * Formats STAR items into an ATS-friendly Resume Markdown format
- */
-export function formatAtsResumeMarkdown(
-  items: SynthesizedStarItem[],
-  jobRole: string
-): string {
-  const dateStr = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-
-  return `# RELEVANT PROJECT CASE STUDIES & ACHIEVEMENTS
-**Specialization**: ${jobRole.toUpperCase()} | **Compiled**: ${dateStr}
-
-${items
-  .map(
-    (item) => `## ${item.title.toUpperCase()} (${item.period_span})
-**Context & Challenge**: ${item.situation}
-**Core Objective**: ${item.task}
-**Key Technical Execution**: ${item.action}
-**Impact & Quantifiable Results**: ${item.result}
-**Key Competencies**: ${item.nda_tags.join(" | ")}
-`
-  )
-  .join("\n---\n\n")}
-`;
-}
+// Deprecated aliases kept for backwards compatibility if needed
+export const formatNotionMarkdownBrag = formatBragSheet;
+export const formatAtsResumeMarkdown = formatStarPortfolio;

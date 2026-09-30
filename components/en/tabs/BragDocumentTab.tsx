@@ -15,7 +15,7 @@ import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem } from "@/types/
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
-import { formatNotionMarkdownBrag } from "@/lib/exportFormatters";
+import { formatBragSheet } from "@/lib/exportFormatters";
 import { filterRecordsByPeriod } from "@/lib/periodUtils";
 import {
   buildSummaryCacheKey,
@@ -69,7 +69,6 @@ export function BragDocumentTab({
 
   // Action states
   const [isCopied, setIsCopied] = useState(false);
-  const [isNotionCopied, setIsNotionCopied] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [linkedInCopiedId, setLinkedInCopiedId] = useState<string | null>(null);
 
@@ -221,21 +220,11 @@ export function BragDocumentTab({
 
   const activeJobRole = cachedEntry ? cachedEntry.jobRole : jobRole;
 
-  const copyAllMarkdown = async () => {
-    const text = `# Brag Document · Performance Review Summary
-Role Persona: ${activeJobRole.toUpperCase()} | Tone: ${toneManner.toUpperCase()}
-Generated on: ${new Date().toLocaleDateString("en-US")}
-
-${displayedItems
-  .map(
-    (item, idx) => `### ${idx + 1}. ${item.metric_summary}
-- **Quarter Span**: ${item.quarter_span}
-- **Business Value & Scope**: ${item.business_impact}
-- **Key Highlights**: ${item.key_highlights.join("; ")}
-`
-  )
-  .join("\n\n")}`;
-
+  const copyBragSheet = async () => {
+    const periodSpan = `${selectedYear} ${selectedHalf !== "ALL" ? selectedHalf : ""} ${
+      selectedQuarter !== "ALL" ? selectedQuarter : ""
+    }`.trim();
+    const text = formatBragSheet(displayedItems, activeJobRole, periodSpan);
     try {
       await navigator.clipboard.writeText(text);
       setIsCopied(true);
@@ -245,20 +234,9 @@ ${displayedItems
     }
   };
 
-  const copyNotionMarkdown = async () => {
-    const text = formatNotionMarkdownBrag(displayedItems, activeJobRole, `${selectedYear} ${selectedQuarter}`);
-    try {
-      await navigator.clipboard.writeText(text);
-      setIsNotionCopied(true);
-      setTimeout(() => setIsNotionCopied(false), 2500);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const copySingleItem = async (id: string, text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(`${text}\n\n---\n⚡ Synthesized with WinStash 3-Way Career OS`);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
@@ -277,7 +255,10 @@ ${item.business_impact}
 Key milestones:
 ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
 
-#CareerWins #EngineeringLeadership #BuildingInPublic #Impact`;
+#CareerWins #TechLeadership #BuildingInPublic #Impact
+
+---
+⚡ Synthesized with WinStash 3-Way Career OS`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -405,39 +386,41 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
 
         {/* Export Buttons */}
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 border-zinc-100 dark:border-zinc-800">
-          <span className="text-[11px] font-semibold text-zinc-400 mr-1 hidden sm:inline-block">Export Options:</span>
           <button
-            onClick={copyNotionMarkdown}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
-            title="Copy optimized Markdown with callouts and checklists for Notion"
-          >
-            {isNotionCopied ? (
-              <><Check className="w-3.5 h-3.5 text-emerald-500" /><span>Copied for Notion!</span></>
-            ) : (
-              <><Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /><span>Notion Format</span></>
-            )}
-          </button>
-          <button
-            onClick={copyAllMarkdown}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
+            onClick={copyBragSheet}
+            disabled={displayedItems.length === 0}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white shadow-xs hover:shadow-emerald-500/20 transition-all cursor-pointer disabled:cursor-not-allowed"
+            title="Copy Golden Standard Brag Sheet (Notion / Confluence / Docs compatible)"
           >
             {isCopied ? (
-              <><Check className="w-3.5 h-3.5 text-white" /><span>Copied All!</span></>
+              <>
+                <Check className="w-3.5 h-3.5 text-white" />
+                <span>Copied Brag Sheet!</span>
+              </>
             ) : (
-              <><Copy className="w-3.5 h-3.5" /><span>Copy Markdown</span></>
+              <>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Brag Sheet</span>
+              </>
             )}
           </button>
           <button
             onClick={downloadCSV}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
+            disabled={displayedItems.length === 0}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Download CSV table"
           >
-            <Download className="w-3.5 h-3.5" /><span>CSV</span>
+            <Download className="w-3.5 h-3.5" />
+            <span>CSV</span>
           </button>
           <button
             onClick={() => window.print()}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer"
+            disabled={displayedItems.length === 0}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Print or PDF"
           >
-            <Printer className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" /><span>Print</span>
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print</span>
           </button>
         </div>
       </div>

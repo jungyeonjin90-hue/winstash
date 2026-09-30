@@ -6,8 +6,7 @@ import {
   Clock,
   Calendar,
   Check,
-  MessageSquare,
-  Mail,
+  Copy,
   ChevronDown,
   ChevronUp,
   ChevronLeft,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
 import { getDetailedRecordDateInfo, DetailedRecordDateInfo } from "@/lib/periodUtils";
+import { formatWeeklySnippet } from "@/lib/exportFormatters";
 
 interface WeeklySnippetsTabProps {
   records: CareerRecord[];
@@ -23,7 +23,7 @@ interface WeeklySnippetsTabProps {
 }
 
 export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTabProps) {
-  const [copiedType, setCopiedType] = useState<"slack" | "email" | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
   const [showRawMemo, setShowRawMemo] = useState(false);
 
   // Parse all records with detailed Year, Month, Week info
@@ -140,42 +140,12 @@ export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTa
   const activeDateInfo = getDetailedRecordDateInfo(activeRecord);
   const historyTitle = `${activeDateInfo.year} ${activeDateInfo.monthLong}, ${activeDateInfo.displayLabel}`;
 
-  const generateSlackMarkdown = () => {
-    return `📢 *[Weekly Snippets] ${historyTitle}*
-
-✅ *Progress (Completed)*
-${activeRecord.weekly_report.done.map((item) => `• ${item}`).join("\n")}
-
-⏳ *In-Flight & Bottlenecks*
-${activeRecord.weekly_report.in_progress.map((item) => `• ${item}`).join("\n")}
-
-🗓️ *Plans & Next Priorities*
-${activeRecord.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}`;
-  };
-
-  const generateEmailText = () => {
-    return `Hi Team,
-
-Here is my weekly status update for ${historyTitle}:
-
-[Progress / Key Accomplishments]
-${activeRecord.weekly_report.done.map((item) => `- ${item}`).join("\n")}
-
-[In-Flight & Active Tracking]
-${activeRecord.weekly_report.in_progress.map((item) => `- ${item}`).join("\n")}
-
-[Next Week Priorities]
-${activeRecord.weekly_report.next_week.map((item) => `- ${item}`).join("\n")}
-
-Best regards`;
-  };
-
-  const copyToClipboard = async (type: "slack" | "email") => {
-    const text = type === "slack" ? generateSlackMarkdown() : generateEmailText();
+  const handleCopySnippet = async () => {
+    const text = formatWeeklySnippet(activeRecord, historyTitle);
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedType(type);
-      setTimeout(() => setCopiedType(null), 2500);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
     } catch (err) {
       console.error("Clipboard copy failed:", err);
     }
@@ -195,44 +165,26 @@ Best regards`;
             </span>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            Engineered for skip-level status syncs, 1-on-1s, and Slack channel updates.
+            Engineered for skip-level status syncs, 1-on-1s, Slack, and Email team updates.
           </p>
         </div>
 
-        {/* Copy Buttons */}
+        {/* Unified 1-Click Copy Button */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
-            onClick={() => copyToClipboard("slack")}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#4A154B] hover:bg-[#611f69] text-white shadow-xs transition-all cursor-pointer"
-            title="Copy Slack Markdown"
+            onClick={handleCopySnippet}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow-indigo-500/20 transition-all cursor-pointer"
+            title="Copy formatted Weekly Snippet (Slack / Email / Docs compatible)"
           >
-            {copiedType === "slack" ? (
+            {isCopied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Copied to Slack!</span>
+                <Check className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Copied Weekly Snippet!</span>
               </>
             ) : (
               <>
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Copy for Slack</span>
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={() => copyToClipboard("email")}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 shadow-xs transition-all cursor-pointer"
-            title="Copy Email Text"
-          >
-            {copiedType === "email" ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Copied to Email!</span>
-              </>
-            ) : (
-              <>
-                <Mail className="w-3.5 h-3.5" />
-                <span>Copy for Email</span>
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Weekly Snippet</span>
               </>
             )}
           </button>
