@@ -30,11 +30,12 @@ interface StarVault {
 - `entries.source` 타입도 `"web_text" | "web_voice" | "email_inbound"`에서 향후 `"slack" | "jira" | "github"` 추가 가능하도록 union 타입으로 유지 (지금 값 추가 안 해도 되지만, 타입 구조는 확장 가능하게).
 - UI에 노출은 나중에 해도 됨 — 지금은 데이터만 쌓이게.
 
-### [ ] 2. 비용 한도 장치
+### [x] 2. 비용 한도 장치 (완료: 기본 크레딧 5회/전체 1만회 킬스위치 + Brag/STAR 일일 5회 상한 & 10초 쿨다운 적용)
 무료 오픈 시 어뷰징/예상 밖 사용으로 비용이 튈 수 있습니다.
-- `rerollCount`: 사용자당 일일 상한(예: 5회) 또는 주간 상한 설정. 초과 시 "내일 다시 시도해주세요" 안내.
-- 이메일 인바운드: `log+{userToken}@inbound.winstash.app` 주소가 유출/스팸 대상이 될 수 있으니 토큰 유효성 검증 + 분당/시간당 rate limit 적용.
-- LLM API 키에 사용량 상한(budget alert) 설정 — Gemini API 콘솔 또는 GCP 예산 알림 기능 활용.
+- `QuickLogger`: 기본 무료 변환 5회 상한(`MAX_USER_FREE_CREDITS = 5`), 서비스 누적 10,000회 상한(`MAX_GLOBAL_SERVICE_CREDITS = 10000`) 적용 완료.
+- `rerollCount / Synthesis`: Brag/STAR AI 종합 일일 5회 상한(`MAX_DAILY_SYNTHESIS_LIMIT = 5`) 및 연타 방지 쿨다운(`SYNTHESIS_COOLDOWN_MS = 10000`), 최대 레코드 20개 페이로드 캡 적용 완료.
+- 이메일 인바운드: 향후 인바운드 웹훅 개발 시 토큰 유효성 검증 + 분당/시간당 rate limit 필수 적용 예정 (백로그).
+- LLM API 키: Gemini API 콘솔 또는 GCP 결제 예산 알림 설정 권장.
 
 ### [ ] 3. Firestore 자동 백업
 실수로 컬렉션 삭제하는 코드 한 줄이면 서비스 전체 데이터가 날아갑니다.

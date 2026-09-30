@@ -25,6 +25,12 @@ import {
   isSummaryStale,
   SummaryCacheEntry,
 } from "@/lib/summaryCacheService";
+import {
+  checkDailySynthesisLimit,
+  recordDailySynthesisUsage,
+  checkSynthesisCooldown,
+  recordSynthesisCooldown,
+} from "@/lib/rateLimitService";
 import { useAuth } from "@/context/AuthContext";
 
 interface StarResumeTabProps {
@@ -106,7 +112,25 @@ export function StarResumeTab({
   // 5. Trigger AI Synthesis on-demand
   const handleSynthesizeWithAi = async () => {
     if (filteredRecords.length === 0) return;
+
+    // 1. Anti-spam cooldown check (10s)
+    const cooldown = checkSynthesisCooldown(userId);
+    if (cooldown.inCooldown) {
+      alert(`⏳ Please wait ${cooldown.remainingSeconds}s before requesting AI synthesis again.`);
+      return;
+    }
+
+    // 2. Daily synthesis quota check (max 5 per day)
+    const dailyLimit = checkDailySynthesisLimit(userId);
+    if (!dailyLimit.allowed) {
+      alert(
+        `⚠️ Daily AI synthesis limit reached (${dailyLimit.usedCount}/${dailyLimit.maxLimit}).\n\nPlease try again tomorrow or continue using your cached summaries.`
+      );
+      return;
+    }
+
     setIsSynthesizing(true);
+    recordSynthesisCooldown(userId);
     try {
       const periodLabel = `${selectedYear} ${selectedHalf !== "ALL" ? selectedHalf : "Full Year"}`.trim();
 
@@ -126,6 +150,9 @@ export function StarResumeTab({
       if (!res.ok) throw new Error("AI Synthesis request failed");
       const data = await res.json();
       const items: SynthesizedStarItem[] = data.items || [];
+
+      // Record daily usage on success
+      recordDailySynthesisUsage(userId);
 
       // Save into cache
       const newEntry: SummaryCacheEntry = {

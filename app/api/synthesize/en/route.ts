@@ -140,6 +140,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ items: [] });
     }
 
+    const safeRecords = (records as CareerRecord[]).slice(0, 20);
+
     const apiKey = process.env.GEMINI_API_KEY;
     const prompt = buildSynthesisPrompt(
       type as "brag" | "star",
@@ -147,7 +149,7 @@ export async function POST(req: NextRequest) {
       jobRole as JobRole,
       toneManner as ToneManner,
       periodLabel,
-      records as CareerRecord[]
+      safeRecords
     );
 
     // Call official Google Gemini models
