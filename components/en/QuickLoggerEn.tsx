@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, CornerDownLeft, RotateCcw, Lightbulb } from "lucide-react";
+import { Sparkles, CornerDownLeft, RotateCcw, Lightbulb, Lock } from "lucide-react";
 import { WeekSpan, CareerRecord } from "@/types/career";
 import { getCurrentWeekSpanEn } from "@/lib/weekUtilsEn";
 import { WeekPickerEn } from "./WeekPickerEn";
@@ -225,6 +225,14 @@ export function QuickLoggerEn({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Sensitive Data Warning Caption */}
+      <div className="flex items-center gap-1.5 px-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+        <Lock className="w-3 h-3 text-zinc-400 dark:text-zinc-500 shrink-0" />
+        <span>
+          Never enter sensitive information: please do not include credit card numbers, social security numbers, passwords, or private API keys.
+        </span>
       </div>
     </div>
   );
