@@ -8,7 +8,6 @@ import {
   Check,
   Briefcase,
   Share2,
-  Printer,
   Sparkles,
 } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner, SynthesizedStarItem } from "@/types/career";
@@ -407,16 +406,6 @@ export function StarResumeTab({
                 <span>Copy STAR Portfolio</span>
               </>
             )}
-          </button>
-          
-          <button
-            onClick={() => window.print()}
-            disabled={displayedItems.length === 0}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Print or Save as Clean ATS PDF"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print / PDF</span>
           </button>
         </div>
       </div>

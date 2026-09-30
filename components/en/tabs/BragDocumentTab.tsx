@@ -3,12 +3,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Award,
-  Download,
   Copy,
   Check,
   FileSpreadsheet,
-  Share2,
-  Printer,
   Sparkles,
 } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem } from "@/types/career";
@@ -70,7 +67,6 @@ export function BragDocumentTab({
   // Action states
   const [isCopied, setIsCopied] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [linkedInCopiedId, setLinkedInCopiedId] = useState<string | null>(null);
 
   // 1. Filter raw records by dropdown periods
   const filteredRecords = useMemo(() => {
@@ -244,50 +240,6 @@ export function BragDocumentTab({
     }
   };
 
-  const copyLinkedInSnippet = async (item: SynthesizedBragItem) => {
-    const text = `🏆 Proud of what our team shipped during ${item.quarter_span}:
-
-"${item.metric_summary}"
-
-📌 Strategic Impact:
-${item.business_impact}
-
-Key milestones:
-${item.key_highlights.map((h) => `• ${h}`).join("\n")}
-
-#CareerWins #TechLeadership #BuildingInPublic #Impact
-
----
-⚡ Synthesized with WinStash 3-Way Career OS`;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setLinkedInCopiedId(item.id);
-      setTimeout(() => setLinkedInCopiedId(null), 2500);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const downloadCSV = () => {
-    const headers = ["Quarter Span", "Metric Summary", "Business Impact", "Key Highlights"];
-    const rows = displayedItems.map((item) => [
-      `"${item.quarter_span}"`,
-      `"${item.metric_summary.replace(/"/g, '""')}"`,
-      `"${item.business_impact.replace(/"/g, '""')}"`,
-      `"${item.key_highlights.join(" | ").replace(/"/g, '""')}"`,
-    ]);
-
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `brag_document_${activeJobRole}_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="space-y-5">
       {/* 1. Top Banner (Title Only) */}
@@ -404,24 +356,6 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
               </>
             )}
           </button>
-          <button
-            onClick={downloadCSV}
-            disabled={displayedItems.length === 0}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Download CSV table"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>CSV</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            disabled={displayedItems.length === 0}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Print or PDF"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print</span>
-          </button>
         </div>
       </div>
 
@@ -469,24 +403,6 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
 
               {/* Action Buttons */}
               <div className="flex items-center gap-1.5 no-print">
-                <button
-                  onClick={() => copyLinkedInSnippet(item)}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900 transition-colors cursor-pointer"
-                  title="Copy achievement for LinkedIn post"
-                >
-                  {linkedInCopiedId === item.id ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-sky-600" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-3.5 h-3.5 text-sky-600" />
-                      <span>LinkedIn</span>
-                    </>
-                  )}
-                </button>
-
                 <button
                   onClick={() =>
                     copySingleItem(item.id, `• ${item.metric_summary}\n  - ${item.business_impact}`)
