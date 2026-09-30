@@ -79,7 +79,7 @@ export function StarResumeTab({
   const [density, setDensity] = useState<ViewDensity>("detailed");
 
   // Masking & Action states
-  const [isNdaMasked, setIsNdaMasked] = useState(true);
+  const [isNdaMasked, setIsNdaMasked] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string>("ALL");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isAllCopied, setIsAllCopied] = useState(false);
@@ -249,7 +249,7 @@ export function StarResumeTab({
         : baseItems.filter((i) => i.nda_tags.includes(selectedTag));
 
     if (isNdaMasked) {
-      return list.map((item) => maskSynthesizedStarItem(item));
+      return list.map((item) => maskSynthesizedStarItem(item, "en"));
     }
     return list;
   }, [baseItems, selectedTag, isNdaMasked]);
