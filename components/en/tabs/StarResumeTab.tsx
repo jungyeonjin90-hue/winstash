@@ -23,6 +23,8 @@ import {
   getSummaryCache,
   saveSummaryCache,
   isSummaryStale,
+  isCacheValid,
+  deleteSummaryCache,
   SummaryCacheEntry,
 } from "@/lib/summaryCacheService";
 import {
@@ -94,20 +96,41 @@ export function StarResumeTab({
 
   // 3. Load from cache whenever key changes
   const loadCache = useCallback(async () => {
+    if (filteredRecords.length === 0) {
+      setCachedEntry(null);
+      return;
+    }
     const cached = await getSummaryCache(userId, isDemo, cacheKey);
+    // If cached entry is stale or references deleted records, evict it immediately!
+    if (cached && !isCacheValid(cached, currentRecordIds)) {
+      setCachedEntry(null);
+      deleteSummaryCache(userId, isDemo, cacheKey).catch(() => {});
+      return;
+    }
     setCachedEntry(cached);
-  }, [userId, isDemo, cacheKey]);
+  }, [userId, isDemo, cacheKey, filteredRecords.length, currentRecordIds]);
 
   useEffect(() => {
     loadCache();
   }, [loadCache]);
 
-  // 4. Stale check
+  // Keep cache strictly in sync if currentRecordIds changes (e.g. user deletes or edits records)
+  useEffect(() => {
+    if (cachedEntry && !isCacheValid(cachedEntry, currentRecordIds)) {
+      setCachedEntry(null);
+    }
+  }, [cachedEntry, currentRecordIds]);
+
+  // 4. Stale check: has any record been added or deleted since this summary was cached?
   const isStale = useMemo(() => {
     return isSummaryStale(cachedEntry, currentRecordIds);
   }, [cachedEntry, currentRecordIds]);
 
-  const needsGeneration = !cachedEntry || isStale;
+  const isValid = useMemo(() => {
+    return isCacheValid(cachedEntry, currentRecordIds);
+  }, [cachedEntry, currentRecordIds]);
+
+  const needsGeneration = !cachedEntry || !isValid || isStale;
 
   // 5. Trigger AI Synthesis on-demand
   const handleSynthesizeWithAi = async () => {
@@ -180,13 +203,19 @@ export function StarResumeTab({
     }
   };
 
-  // 6. Base Synthesized STAR items: Only show actual cached AI items (no fake local fallback)
+  // 6. Base Synthesized STAR items: Only show actual cached AI items if strictly valid and filteredRecords not empty
   const baseItems = useMemo<SynthesizedStarItem[]>(() => {
-    if (cachedEntry && Array.isArray(cachedEntry.items) && cachedEntry.items.length > 0) {
+    if (filteredRecords.length === 0) return [];
+    if (
+      isValid &&
+      cachedEntry &&
+      Array.isArray(cachedEntry.items) &&
+      cachedEntry.items.length > 0
+    ) {
       return cachedEntry.items as SynthesizedStarItem[];
     }
     return [];
-  }, [cachedEntry]);
+  }, [filteredRecords.length, isValid, cachedEntry]);
 
   // Unique domain tags
   const allTags = useMemo(() => {

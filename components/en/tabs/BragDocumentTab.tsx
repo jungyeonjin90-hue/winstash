@@ -22,6 +22,8 @@ import {
   getSummaryCache,
   saveSummaryCache,
   isSummaryStale,
+  isCacheValid,
+  deleteSummaryCache,
   SummaryCacheEntry,
 } from "@/lib/summaryCacheService";
 import {
@@ -93,20 +95,41 @@ export function BragDocumentTab({
 
   // 3. Load from cache whenever key changes
   const loadCache = useCallback(async () => {
+    if (filteredRecords.length === 0) {
+      setCachedEntry(null);
+      return;
+    }
     const cached = await getSummaryCache(userId, isDemo, cacheKey);
+    // If cached entry is stale or references deleted records, evict it immediately!
+    if (cached && !isCacheValid(cached, currentRecordIds)) {
+      setCachedEntry(null);
+      deleteSummaryCache(userId, isDemo, cacheKey).catch(() => {});
+      return;
+    }
     setCachedEntry(cached);
-  }, [userId, isDemo, cacheKey]);
+  }, [userId, isDemo, cacheKey, filteredRecords.length, currentRecordIds]);
 
   useEffect(() => {
     loadCache();
   }, [loadCache]);
 
-  // 4. Stale check: has any new weekly record been added since this summary was cached?
+  // Keep cache strictly in sync if currentRecordIds changes (e.g. user deletes or edits records)
+  useEffect(() => {
+    if (cachedEntry && !isCacheValid(cachedEntry, currentRecordIds)) {
+      setCachedEntry(null);
+    }
+  }, [cachedEntry, currentRecordIds]);
+
+  // 4. Stale check: has any weekly record been added or deleted since this summary was cached?
   const isStale = useMemo(() => {
     return isSummaryStale(cachedEntry, currentRecordIds);
   }, [cachedEntry, currentRecordIds]);
 
-  const needsGeneration = !cachedEntry || isStale;
+  const isValid = useMemo(() => {
+    return isCacheValid(cachedEntry, currentRecordIds);
+  }, [cachedEntry, currentRecordIds]);
+
+  const needsGeneration = !cachedEntry || !isValid || isStale;
 
   // 5. Trigger AI Synthesis on-demand (costs 1 API call, then cached permanently)
   const handleSynthesizeWithAi = async () => {
@@ -181,13 +204,19 @@ export function BragDocumentTab({
     }
   };
 
-  // 6. Active items to display: Only show actual cached AI items (no fake local fallback)
+  // 6. Active items to display: Only show actual cached AI items if strictly valid and filteredRecords not empty
   const displayedItems = useMemo<SynthesizedBragItem[]>(() => {
-    if (cachedEntry && Array.isArray(cachedEntry.items) && cachedEntry.items.length > 0) {
+    if (filteredRecords.length === 0) return [];
+    if (
+      isValid &&
+      cachedEntry &&
+      Array.isArray(cachedEntry.items) &&
+      cachedEntry.items.length > 0
+    ) {
       return cachedEntry.items as SynthesizedBragItem[];
     }
     return [];
-  }, [cachedEntry]);
+  }, [filteredRecords.length, isValid, cachedEntry]);
 
   const activeJobRole = cachedEntry ? cachedEntry.jobRole : jobRole;
 

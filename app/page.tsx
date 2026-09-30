@@ -15,6 +15,7 @@ import {
   deleteUserRecordFromFirestore,
   saveUserPersonaToFirestore,
 } from "@/lib/firestoreService";
+import { clearUserSummaryCache } from "@/lib/summaryCacheService";
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
@@ -204,6 +205,10 @@ export default function Home() {
       const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));
       setCreditStatus(updatedCredit);
 
+      if (finalExistingRecordId) {
+        await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
+      }
+
       showToast(
         finalExistingRecordId
           ? "🎉 Record successfully updated!"
@@ -227,6 +232,8 @@ export default function Home() {
     if (!user) return;
     try {
       await deleteUserRecordFromFirestore(user.uid, Boolean(user.isDemo), id);
+      // Immediately clear summary cache so deleted record never lingers in Brag or Vault
+      await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
       showToast("Record successfully deleted.");
     } catch (err) {
       console.error(err);
@@ -234,12 +241,18 @@ export default function Home() {
     }
   };
 
-  const handleDataReset = () => {
+  const handleDataReset = async () => {
     setRecords(INITIAL_CAREER_RECORDS_EN);
-    showToast("Restored to initial 3-week English sample records.");
+    if (user) {
+      await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
+    }
+    showToast("Restored to initial state.");
   };
 
-  const handleDataImported = () => {
+  const handleDataImported = async () => {
+    if (user) {
+      await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
+    }
     showToast("Backup data successfully imported.");
   };
 

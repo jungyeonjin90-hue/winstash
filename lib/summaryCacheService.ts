@@ -1,4 +1,12 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  writeBatch,
+} from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 import { SynthesizedBragItem, SynthesizedStarItem, JobRole, ToneManner } from "@/types/career";
 
@@ -117,3 +125,102 @@ export function isSummaryStale(
   const cachedSet = new Set(cachedEntry.sourceRecordIds);
   return currentRecordIds.some((id) => !cachedSet.has(id));
 }
+
+/**
+ * Strict cache validity check:
+ * Returns true ONLY if:
+ * 1. Cache exists
+ * 2. Current records is not empty
+ * 3. Count matches exactly
+ * 4. The sourceRecordIds in the cache match currentRecordIds 1:1 with NO deleted or missing records
+ */
+export function isCacheValid(
+  cachedEntry: SummaryCacheEntry | null,
+  currentRecordIds: string[]
+): boolean {
+  if (!cachedEntry) return false;
+  if (!currentRecordIds || currentRecordIds.length === 0) return false;
+  if (!Array.isArray(cachedEntry.sourceRecordIds)) return false;
+  if (cachedEntry.sourceRecordCount !== currentRecordIds.length) return false;
+  if (cachedEntry.sourceRecordIds.length !== currentRecordIds.length) return false;
+
+  const currentSet = new Set(currentRecordIds);
+  const cachedSet = new Set(cachedEntry.sourceRecordIds);
+
+  // If any current record is missing from cache, it's invalid
+  if (currentRecordIds.some((id) => !cachedSet.has(id))) return false;
+  // If any cached record is no longer in current records (e.g. deleted), it's invalid!
+  if (cachedEntry.sourceRecordIds.some((id) => !currentSet.has(id))) return false;
+
+  return true;
+}
+
+/**
+ * Deletes a single summary cache entry from Firestore and LocalStorage
+ */
+export async function deleteSummaryCache(
+  userId: string,
+  isDemo: boolean,
+  cacheKey: string
+): Promise<void> {
+  // 1. LocalStorage
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.removeItem(`${LOCAL_STORAGE_CACHE_PREFIX}${userId}_${cacheKey}`);
+    } catch (e) {
+      console.warn("Failed to remove local summary cache item:", e);
+    }
+  }
+
+  // 2. Firestore
+  if (isFirebaseConfigured && db && !isDemo && userId) {
+    try {
+      const docRef = doc(db, "users", userId, "summary_cache", cacheKey);
+      await deleteDoc(docRef);
+    } catch (e) {
+      console.warn("Failed to delete Firestore summary cache doc:", e);
+    }
+  }
+}
+
+/**
+ * Completely purges all summary caches for a user.
+ * Must be called when any weekly record is deleted or significantly modified to prevent ghost summaries.
+ */
+export async function clearUserSummaryCache(
+  userId: string,
+  isDemo: boolean
+): Promise<void> {
+  // 1. Purge LocalStorage entries matching user prefix
+  if (typeof window !== "undefined") {
+    try {
+      const userPrefix = `${LOCAL_STORAGE_CACHE_PREFIX}${userId}_`;
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith(userPrefix) || key.startsWith(LOCAL_STORAGE_CACHE_PREFIX))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {
+      console.warn("Failed to clear local summary cache:", e);
+    }
+  }
+
+  // 2. Purge Firestore summary_cache collection
+  if (isFirebaseConfigured && db && !isDemo && userId) {
+    try {
+      const colRef = collection(db, "users", userId, "summary_cache");
+      const snapshot = await getDocs(colRef);
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn("Failed to clear Firestore summary cache collection:", e);
+    }
+  }
+}
+
