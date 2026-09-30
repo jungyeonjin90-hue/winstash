@@ -38,9 +38,10 @@ if (typeof window !== "undefined" && isFirebaseConfigured) {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
 
-    // IndexedDB 기반 오프라인 캐시 및 다중 탭 동기화 설정
+    // IndexedDB 기반 오프라인 캐시 및 다중 탭 동기화 설정, undefined 필드 자동 무시
     try {
       db = initializeFirestore(app, {
+        ignoreUndefinedProperties: true,
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager(),
         }),

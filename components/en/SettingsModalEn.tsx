@@ -8,6 +8,7 @@ import {
   importRecordsFromJSON,
   resetToInitialRecords,
 } from "@/lib/storage";
+import { useAuth } from "@/context/AuthContext";
 
 interface SettingsModalEnProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function SettingsModalEn({
   jobRole,
   onJobRoleChange,
 }: SettingsModalEnProps) {
+  const { user } = useAuth();
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
@@ -142,12 +144,30 @@ export function SettingsModalEn({
             <Database className="w-4 h-4 text-emerald-500" />
             <span>Storage & Cloud Sync</span>
           </div>
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            <div className="flex items-center gap-2 font-semibold text-zinc-800 dark:text-zinc-200 mb-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Real-Time Cloud Synchronization Active</span>
+          <div className="bg-zinc-50 dark:bg-zinc-950 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 text-xs text-zinc-600 dark:text-zinc-400 space-y-2.5 leading-relaxed">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-semibold text-zinc-800 dark:text-zinc-200">
+                <span className={`w-2 h-2 rounded-full ${user && !user.isDemo ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+                <span>{user && !user.isDemo ? "Firestore Cloud Database (Live)" : "Local Storage Sandbox"}</span>
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${user && !user.isDemo ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300" : "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"}`}>
+                {user && !user.isDemo ? "Synced" : "Demo Mode"}
+              </span>
             </div>
-            All Friday notes and synthesized drawers are encrypted and securely synchronized with your authenticated account. Access your records anytime across devices.
+
+            {user && (
+              <div className="pt-1.5 space-y-1">
+                <div className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                  Firebase Firestore Database Document Path:
+                </div>
+                <div className="font-mono text-[11px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-indigo-600 dark:text-indigo-400 select-all break-all">
+                  users/{user.uid}/records
+                </div>
+                <div className="text-[10px] text-zinc-400">
+                  User Account: {user.email || user.displayName} (UID: {user.uid})
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

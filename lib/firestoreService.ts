@@ -7,6 +7,8 @@ import {
   onSnapshot,
   query,
   orderBy,
+  getDocs,
+  writeBatch,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 import { CareerRecord, JobRole, ToneManner, PersonaProfile, SeniorityLevel, RegionCode } from "@/types/career";
@@ -101,13 +103,22 @@ export async function saveUserRecordToFirestore(
     ...record,
     source: record.source || "web_text",
   };
+  // undefined 필드를 제거하여 Firestore Invalid argument 예외 원천 방지
+  const cleanRecord = JSON.parse(JSON.stringify(normalizedRecord));
+
   if (isFirebaseConfigured && db && !isDemo) {
-    const docRef = doc(db, "users", userId, "records", normalizedRecord.id);
-    await setDoc(docRef, normalizedRecord);
+    try {
+      const docRef = doc(db, "users", userId, "records", normalizedRecord.id);
+      await setDoc(docRef, cleanRecord);
+      console.log(`[Firestore] Successfully saved record: users/${userId}/records/${normalizedRecord.id}`);
+    } catch (err) {
+      console.error(`[Firestore ERROR] Failed to save record ${normalizedRecord.id}:`, err);
+      throw err;
+    }
   } else {
     // 로컬 스토리지에 저장
     const current = getLocalUserRecords(userId);
-    const updated = [normalizedRecord, ...current.filter((r) => r.id !== normalizedRecord.id)];
+    const updated = [cleanRecord, ...current.filter((r) => r.id !== cleanRecord.id)];
     saveLocalUserRecords(userId, updated);
   }
 }
@@ -121,12 +132,45 @@ export async function deleteUserRecordFromFirestore(
   recordId: string
 ): Promise<void> {
   if (isFirebaseConfigured && db && !isDemo) {
-    const docRef = doc(db, "users", userId, "records", recordId);
-    await deleteDoc(docRef);
+    try {
+      const docRef = doc(db, "users", userId, "records", recordId);
+      await deleteDoc(docRef);
+      console.log(`[Firestore] Successfully deleted record: users/${userId}/records/${recordId}`);
+    } catch (err) {
+      console.error(`[Firestore ERROR] Failed to delete record ${recordId}:`, err);
+      throw err;
+    }
   } else {
     const current = getLocalUserRecords(userId);
     const updated = current.filter((r) => r.id !== recordId);
     saveLocalUserRecords(userId, updated);
+  }
+}
+
+/**
+ * 사용자의 모든 주간 기록 일괄 삭제 (Firestore writeBatch)
+ */
+export async function deleteAllUserRecordsFromFirestore(
+  userId: string,
+  isDemo: boolean
+): Promise<void> {
+  if (isFirebaseConfigured && db && !isDemo) {
+    try {
+      const userRecordsRef = collection(db, "users", userId, "records");
+      const snapshot = await getDocs(userRecordsRef);
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docSnap) => batch.delete(docSnap.ref));
+        await batch.commit();
+        console.log(`[Firestore] Purged all ${snapshot.docs.length} records for user ${userId}`);
+      }
+    } catch (err) {
+      console.error(`[Firestore ERROR] Failed to purge records for user ${userId}:`, err);
+      throw err;
+    }
+  }
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${userId}`);
   }
 }
 

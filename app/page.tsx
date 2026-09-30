@@ -13,6 +13,7 @@ import {
   subscribeUserRecords,
   saveUserRecordToFirestore,
   deleteUserRecordFromFirestore,
+  deleteAllUserRecordsFromFirestore,
   saveUserPersonaToFirestore,
 } from "@/lib/firestoreService";
 import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCacheService";
@@ -195,6 +196,9 @@ export default function Home() {
         weekly_report: output.weekly_report,
         brag_sheet_item: output.brag_sheet_item,
         star_portfolio: output.star_portfolio,
+        jobRole: role,
+        toneManner: tone,
+        source: "web_text",
       };
 
       // Optimistic local state update for instantaneous reactivity
@@ -246,19 +250,20 @@ export default function Home() {
       await deleteUserRecordFromFirestore(user.uid, Boolean(user.isDemo), id);
       // 2. Immediately clear summary cache so deleted record never lingers in Brag or Vault
       await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
-      showToast("Record successfully deleted.");
+      showToast("Record successfully deleted from database.");
     } catch (err) {
-      console.error(err);
-      alert("Failed to delete record.");
+      console.error("Delete record failed:", err);
+      alert("Failed to delete record from database.");
     }
   };
 
   const handleDataReset = async () => {
     setRecords([]);
     if (user) {
+      await deleteAllUserRecordsFromFirestore(user.uid, Boolean(user.isDemo));
       await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
     }
-    showToast("Restored to initial state.");
+    showToast("All records successfully reset in cloud database.");
   };
 
   const handleDataImported = async () => {
