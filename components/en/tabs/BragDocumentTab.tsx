@@ -13,7 +13,7 @@ import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
 import { formatBragSheet } from "@/lib/exportFormatters";
-import { filterRecordsByPeriod } from "@/lib/periodUtils";
+import { filterRecordsByPeriod, getDetailedRecordDateInfo } from "@/lib/periodUtils";
 import {
   buildSummaryCacheKey,
   getSummaryCache,
@@ -50,11 +50,28 @@ export function BragDocumentTab({
   const userId = user?.uid || "guest";
   const isDemo = Boolean(user?.isDemo);
 
+  // Derive latest record year or fallback to current calendar year
+  const latestRecordYear = useMemo(() => {
+    if (records.length > 0) {
+      return getDetailedRecordDateInfo(records[0]).year;
+    }
+    return String(new Date().getFullYear());
+  }, [records]);
+
   // Period Filters (Year / Half / Quarter)
-  const currentYear = String(new Date().getFullYear());
-  const [selectedYear, setSelectedYear] = useState<string>(currentYear);
+  const [selectedYear, setSelectedYear] = useState<string>(latestRecordYear);
   const [selectedHalf, setSelectedHalf] = useState<string>("ALL");
   const [selectedQuarter, setSelectedQuarter] = useState<string>("ALL");
+
+  // Keep selectedYear synchronized when records load asynchronously
+  useEffect(() => {
+    if (records.length > 0) {
+      const availableYears = new Set(records.map((r) => getDetailedRecordDateInfo(r).year));
+      if (!availableYears.has(selectedYear)) {
+        setSelectedYear(latestRecordYear);
+      }
+    }
+  }, [records, latestRecordYear, selectedYear]);
 
   // Professional Scope (3 | 5 | 10) & Density ("detailed" | "compact")
   const [scale, setScale] = useState<3 | 5 | 10>(5);

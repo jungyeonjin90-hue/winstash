@@ -178,10 +178,10 @@ export function DashboardTabs({
 
       {/* Tab Content Display */}
       <div>
-        {activeTab === "weekly" && currentRecord && (
-          <WeeklyReportTab record={currentRecord} />
-        )}
-        {activeTab === "brag" && (
+        <div className={activeTab === "weekly" ? "block" : "hidden"}>
+          {currentRecord && <WeeklyReportTab record={currentRecord} />}
+        </div>
+        <div className={activeTab === "brag" ? "block" : "hidden"}>
           <BragSheetTab
             records={records}
             jobRole={jobRole}
@@ -189,8 +189,8 @@ export function DashboardTabs({
             onJobRoleChange={onJobRoleChange}
             onToneMannerChange={onToneMannerChange}
           />
-        )}
-        {activeTab === "vault" && (
+        </div>
+        <div className={activeTab === "vault" ? "block" : "hidden"}>
           <CareerVaultTab
             records={records}
             jobRole={jobRole}
@@ -198,15 +198,15 @@ export function DashboardTabs({
             onJobRoleChange={onJobRoleChange}
             onToneMannerChange={onToneMannerChange}
           />
-        )}
-        {activeTab === "timeline" && (
+        </div>
+        <div className={activeTab === "timeline" ? "block" : "hidden"}>
           <TimelineArchiveTab
             records={records}
             onDeleteRecord={onDeleteRecord}
             onEditRecord={onEditRecord}
             onSelectRecordForWeekly={handleSelectRecordForWeekly}
           />
-        )}
+        </div>
       </div>
     </div>
   );

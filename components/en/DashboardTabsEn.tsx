@@ -107,43 +107,46 @@ export function DashboardTabsEn({
       </div>
 
       {/* Tab Panels */}
+      {/* Tab Panels with Keep-Alive to preserve selected options and generated summaries */}
       <div>
-        {activeTab === "weekly" && records.length > 0 && (
-          <WeeklySnippetsTab records={records} />
-        )}
-
-        {activeTab === "brag" && (
-          <BragDocumentTab
-            records={records}
-            jobRole={jobRole}
-            toneManner={toneManner}
-            onJobRoleChange={onJobRoleChange}
-            onToneMannerChange={onToneMannerChange}
-          />
-        )}
-
-        {activeTab === "vault" && (
-          <StarResumeTab
-            records={records}
-            jobRole={jobRole}
-            toneManner={toneManner}
-            onJobRoleChange={onJobRoleChange}
-            onToneMannerChange={onToneMannerChange}
-          />
-        )}
-
-        {activeTab === "archive" && (
-          <TimelineArchiveTabEn
-            records={records}
-            onDeleteRecord={onDeleteRecord}
-            onEditRecord={onEditRecord}
-          />
-        )}
-
-        {records.length === 0 && (
+        {records.length === 0 ? (
           <div className="p-12 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-400 text-sm">
             No weekly logs found. Enter your first Friday note above!
           </div>
+        ) : (
+          <>
+            <div className={activeTab === "weekly" ? "block" : "hidden"}>
+              <WeeklySnippetsTab records={records} />
+            </div>
+
+            <div className={activeTab === "brag" ? "block" : "hidden"}>
+              <BragDocumentTab
+                records={records}
+                jobRole={jobRole}
+                toneManner={toneManner}
+                onJobRoleChange={onJobRoleChange}
+                onToneMannerChange={onToneMannerChange}
+              />
+            </div>
+
+            <div className={activeTab === "vault" ? "block" : "hidden"}>
+              <StarResumeTab
+                records={records}
+                jobRole={jobRole}
+                toneManner={toneManner}
+                onJobRoleChange={onJobRoleChange}
+                onToneMannerChange={onToneMannerChange}
+              />
+            </div>
+
+            <div className={activeTab === "archive" ? "block" : "hidden"}>
+              <TimelineArchiveTabEn
+                records={records}
+                onDeleteRecord={onDeleteRecord}
+                onEditRecord={onEditRecord}
+              />
+            </div>
+          </>
         )}
       </div>
 
