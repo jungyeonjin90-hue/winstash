@@ -337,39 +337,38 @@ export function StarResumeTab({
 
       {/* 3. Synthesis Action & Export Toolbar */}
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 no-print">
-        {/* Synthesize Button */}
+        {/* Synthesize Button with 3-State Logic (Generate / Update / Up to Date) */}
         <div className="w-full xl:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <button
-            onClick={handleSynthesizeWithAi}
-            disabled={isSynthesizing || filteredRecords.length === 0}
-            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${
-              needsGeneration && filteredRecords.length > 0
-                ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-amber-500/25 ring-2 ring-amber-500/30 animate-pulse"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {isSynthesizing ? (
-              <Sparkles className="w-4 h-4 animate-spin text-white" />
-            ) : (
-              <Sparkles className={`w-4 h-4 ${needsGeneration && filteredRecords.length > 0 ? "text-white" : "text-amber-500"}`} />
-            )}
-            <span>
-              {isSynthesizing
-                ? "Synthesizing AI Resumes..."
-                : filteredRecords.length === 0
-                ? "No Weekly Logs in this Period"
-                : !cachedEntry
-                ? `Generate STAR Resume (${filteredRecords.length} Logs)`
-                : isStale
-                ? `Update Resume (${filteredRecords.length} Logs)`
-                : "Re-Generate Resume"}
-            </span>
-          </button>
-          
-          {!needsGeneration && cachedEntry && (
-            <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-800">
-              ✓ Up to date (Cached)
-            </span>
+          {needsGeneration ? (
+            <button
+              onClick={handleSynthesizeWithAi}
+              disabled={isSynthesizing || filteredRecords.length === 0}
+              className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${
+                filteredRecords.length > 0
+                  ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-amber-500/25 ring-2 ring-amber-500/30 animate-pulse cursor-pointer"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 border border-zinc-200 dark:border-zinc-800 cursor-not-allowed"
+              } disabled:opacity-50`}
+            >
+              {isSynthesizing ? (
+                <Sparkles className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-white" />
+              )}
+              <span>
+                {isSynthesizing
+                  ? "Synthesizing AI Resumes..."
+                  : filteredRecords.length === 0
+                  ? "No Weekly Logs in this Period"
+                  : isStale
+                  ? `Update Resume (${filteredRecords.length} Logs)`
+                  : `Generate STAR Resume (${filteredRecords.length} Logs)`}
+              </span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/80 shadow-xs select-none">
+              <Check className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span>Resume Up to Date (Saved in DB)</span>
+            </div>
           )}
         </div>
 
