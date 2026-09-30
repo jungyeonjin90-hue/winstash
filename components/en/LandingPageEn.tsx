@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Sparkles,
   MessageSquare,
@@ -865,10 +866,25 @@ export function LandingPageEn() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-2">
+      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-10 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-3">
         <p>© 2026 WinStash. AI Career Memory for Everything You Do.</p>
-        <p className="text-[11px] text-zinc-400">
-          Enterprise-grade security, AES-256 encryption, and zero model training guaranteed.
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <Link
+            href="/privacy"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline-offset-4 hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          <span>·</span>
+          <a
+            href="mailto:thestudioplus26@gmail.com"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline-offset-4 hover:underline"
+          >
+            Contact & Support
+          </a>
+        </div>
+        <p className="text-[11px] text-zinc-400 max-w-md mx-auto leading-relaxed">
+          AES-256 encryption, zero LLM model training, and confidential tenant isolation guaranteed.
         </p>
       </footer>
     </div>
