@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // CareerPulse 개인별 철통 격리 보안 규칙 (Security Rules)
+    // WinStash 개인별 철통 격리 보안 규칙 (Security Rules)
     // 오직 Google 인증을 마친 본인(request.auth.uid == userId)만 자신의 데이터(하위 컬렉션 포함)에 접근 가능
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
