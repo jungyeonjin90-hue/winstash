@@ -137,15 +137,15 @@ export function StarResumeTab({
   const handleSynthesizeWithAi = async () => {
     if (filteredRecords.length === 0) return;
 
-    // 1. Anti-spam cooldown check (10s)
-    const cooldown = checkSynthesisCooldown(userId);
+    // 1. Anti-spam cooldown check (bypassed for admin)
+    const cooldown = checkSynthesisCooldown(userId, user?.email);
     if (cooldown.inCooldown) {
       alert(`⏳ Please wait ${cooldown.remainingSeconds}s before requesting AI synthesis again.`);
       return;
     }
 
-    // 2. Daily synthesis quota check (max 5 per day)
-    const dailyLimit = checkDailySynthesisLimit(userId);
+    // 2. Daily synthesis quota check (bypassed for admin)
+    const dailyLimit = checkDailySynthesisLimit(userId, user?.email);
     if (!dailyLimit.allowed) {
       alert(
         `⚠️ Daily AI synthesis limit reached (${dailyLimit.usedCount}/${dailyLimit.maxLimit}).\n\nPlease try again tomorrow or continue using your cached summaries.`
@@ -154,7 +154,7 @@ export function StarResumeTab({
     }
 
     setIsSynthesizing(true);
-    recordSynthesisCooldown(userId);
+    recordSynthesisCooldown(userId, user?.email);
     try {
       const periodLabel = `${selectedYear} ${selectedHalf !== "ALL" ? selectedHalf : "Full Year"}`.trim();
 
@@ -176,7 +176,7 @@ export function StarResumeTab({
       const items: SynthesizedStarItem[] = data.items || [];
 
       // Record daily usage on success
-      recordDailySynthesisUsage(userId);
+      recordDailySynthesisUsage(userId, user?.email);
 
       // Save into cache
       const newEntry: SummaryCacheEntry = {

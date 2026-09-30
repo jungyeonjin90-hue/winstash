@@ -1,4 +1,5 @@
 import { MAX_DAILY_SYNTHESIS_LIMIT, SYNTHESIS_COOLDOWN_MS } from "./creditConfig";
+import { isAdminEmail } from "./adminConfig";
 
 const DAILY_KEY_PREFIX = "winstash_synthesis_daily_";
 const COOLDOWN_KEY_PREFIX = "winstash_synthesis_last_";
@@ -23,7 +24,21 @@ export interface CooldownStatus {
 /**
  * 사용자당 일일 AI 종합(Brag/STAR) 생성 한도 확인
  */
-export function checkDailySynthesisLimit(userId: string): DailySynthesisStatus {
+export function checkDailySynthesisLimit(
+  userId: string,
+  userEmail?: string | null
+): DailySynthesisStatus {
+  // 관리자는 무제한
+  if (isAdminEmail(userEmail)) {
+    return {
+      allowed: true,
+      usedCount: 0,
+      remaining: 999999,
+      maxLimit: 999999,
+      resetDate: getTodayKey(),
+    };
+  }
+
   if (typeof window === "undefined") {
     return {
       allowed: true,
@@ -52,14 +67,21 @@ export function checkDailySynthesisLimit(userId: string): DailySynthesisStatus {
 /**
  * 일일 AI 종합 사용 횟수 1 증가
  */
-export function recordDailySynthesisUsage(userId: string): DailySynthesisStatus {
+export function recordDailySynthesisUsage(
+  userId: string,
+  userEmail?: string | null
+): DailySynthesisStatus {
+  if (isAdminEmail(userEmail)) {
+    return checkDailySynthesisLimit(userId, userEmail);
+  }
+
   if (typeof window === "undefined") {
-    return checkDailySynthesisLimit(userId);
+    return checkDailySynthesisLimit(userId, userEmail);
   }
 
   const today = getTodayKey();
   const storageKey = `${DAILY_KEY_PREFIX}${userId}_${today}`;
-  const current = checkDailySynthesisLimit(userId);
+  const current = checkDailySynthesisLimit(userId, userEmail);
   const nextCount = current.usedCount + 1;
 
   try {
@@ -78,9 +100,16 @@ export function recordDailySynthesisUsage(userId: string): DailySynthesisStatus 
 }
 
 /**
- * 연타 방지 쿨다운 확인 (기본 10초)
+ * 연타 방지 쿨다운 확인 (기본 10초, 관리자는 0초)
  */
-export function checkSynthesisCooldown(userId: string): CooldownStatus {
+export function checkSynthesisCooldown(
+  userId: string,
+  userEmail?: string | null
+): CooldownStatus {
+  if (isAdminEmail(userEmail)) {
+    return { inCooldown: false, remainingSeconds: 0 };
+  }
+
   if (typeof window === "undefined") {
     return { inCooldown: false, remainingSeconds: 0 };
   }
@@ -103,8 +132,13 @@ export function checkSynthesisCooldown(userId: string): CooldownStatus {
 /**
  * 쿨다운 타이머 시작 기록
  */
-export function recordSynthesisCooldown(userId: string): void {
+export function recordSynthesisCooldown(
+  userId: string,
+  userEmail?: string | null
+): void {
+  if (isAdminEmail(userEmail)) return;
   if (typeof window === "undefined") return;
+
   const storageKey = `${COOLDOWN_KEY_PREFIX}${userId}`;
   try {
     localStorage.setItem(storageKey, String(Date.now()));

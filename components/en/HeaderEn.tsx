@@ -4,6 +4,7 @@
 import { Sparkles, Settings, Briefcase, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { CreditStatus } from "@/lib/creditService";
+import { isAdminEmail } from "@/lib/adminConfig";
 
 interface HeaderEnProps {
   onOpenSettings: () => void;
@@ -13,6 +14,7 @@ interface HeaderEnProps {
 
 export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEnProps) {
   const { user, signOut, isFirebaseConfigured } = useAuth();
+  const isAdmin = isAdminEmail(user?.email);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md transition-all">
@@ -42,16 +44,24 @@ export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEn
           {/* Credit Status Badge */}
           {creditStatus && (
             <div
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                creditStatus.remainingCredits > 0
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                isAdmin
+                  ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                  : creditStatus.remainingCredits > 0
                   ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
                   : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
               }`}
-              title={`${creditStatus.remainingCredits} of ${creditStatus.maxUserCredits} free transformations remaining`}
+              title={
+                isAdmin
+                  ? "Administrator Account: Unlimited Transformations & Zero Cooldowns"
+                  : `${creditStatus.remainingCredits} of ${creditStatus.maxUserCredits} free transformations remaining`
+              }
             >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+              <Sparkles className={`w-3.5 h-3.5 ${isAdmin ? "text-amber-500" : "text-indigo-500 dark:text-indigo-400"}`} />
               <span>
-                {creditStatus.remainingCredits > 0
+                {isAdmin
+                  ? "👑 Admin (Unlimited)"
+                  : creditStatus.remainingCredits > 0
                   ? `${creditStatus.remainingCredits} Free Left`
                   : "Free Quota Reached"}
               </span>

@@ -18,6 +18,7 @@ import {
 import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCacheService";
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
+import { isAdminEmail } from "@/lib/adminConfig";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
 import { INITIAL_CAREER_RECORDS_EN } from "@/lib/initialDataEn";
 import { trackEvent } from "@/lib/analytics";
@@ -77,7 +78,8 @@ export default function Home() {
       Boolean(user.isDemo),
       (status) => {
         setCreditStatus(status);
-      }
+      },
+      user.email
     );
 
     return () => {
@@ -121,12 +123,14 @@ export default function Home() {
       return;
     }
 
-    if (creditStatus?.isGlobalExhausted) {
+    const isAdmin = isAdminEmail(user.email);
+
+    if (!isAdmin && creditStatus?.isGlobalExhausted) {
       alert("⚠️ The global promotional free quota (10,000 requests) has been reached.");
       return;
     }
 
-    if (creditStatus?.isUserExhausted) {
+    if (!isAdmin && creditStatus?.isUserExhausted) {
       alert("⚠️ You have used all 5 free transformations.\n\nPro subscription plans will open soon!");
       return;
     }
@@ -143,8 +147,8 @@ export default function Home() {
           job_role: role,
           tone_manner: tone,
           provider: settings.provider,
-          isCreditExhausted: Boolean(creditStatus?.isUserExhausted),
-          isGlobalExhausted: Boolean(creditStatus?.isGlobalExhausted),
+          isCreditExhausted: isAdmin ? false : Boolean(creditStatus?.isUserExhausted),
+          isGlobalExhausted: isAdmin ? false : Boolean(creditStatus?.isGlobalExhausted),
         }),
       });
 
@@ -206,8 +210,8 @@ export default function Home() {
         impactMagnitude: output.star_portfolio?.impactMagnitude,
       });
 
-      // Deduct credit for updates as well
-      const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));
+      // Deduct credit for updates as well (bypassed automatically for admins)
+      const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
       setCreditStatus(updatedCredit);
 
       if (finalExistingRecordId) {

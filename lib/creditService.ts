@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 import { MAX_USER_FREE_CREDITS, MAX_GLOBAL_SERVICE_CREDITS } from "./creditConfig";
+import { isAdminEmail } from "./adminConfig";
 
 const LOCAL_USER_USAGE_KEY = "career_pulse_free_usage_user_";
 const LOCAL_GLOBAL_USAGE_KEY = "career_pulse_global_free_usage";
@@ -19,6 +20,7 @@ export interface CreditStatus {
   globalUsedCount: number;
   maxGlobalCredits: number;
   isGlobalExhausted: boolean;
+  isAdmin?: boolean;
 }
 
 /**
@@ -52,8 +54,23 @@ function getLocalGlobalUsage(): number {
  */
 export async function getCreditStatus(
   userId: string,
-  isDemo: boolean
+  isDemo: boolean,
+  userEmail?: string | null
 ): Promise<CreditStatus> {
+  // 0. 관리자 계정은 무조건 무제한
+  if (isAdminEmail(userEmail)) {
+    return {
+      userUsedCount: 0,
+      maxUserCredits: 999999,
+      remainingCredits: 999999,
+      isUserExhausted: false,
+      globalUsedCount: 0,
+      maxGlobalCredits: 999999,
+      isGlobalExhausted: false,
+      isAdmin: true,
+    };
+  }
+
   // 1. Firebase Firestore 연동 모드
   if (isFirebaseConfigured && db && !isDemo) {
     try {
@@ -81,6 +98,7 @@ export async function getCreditStatus(
         globalUsedCount,
         maxGlobalCredits: MAX_GLOBAL_SERVICE_CREDITS,
         isGlobalExhausted: globalUsedCount >= MAX_GLOBAL_SERVICE_CREDITS,
+        isAdmin: false,
       };
     } catch (e) {
       console.warn("Firestore usage fetch failed, using local fallback:", e);
@@ -100,6 +118,7 @@ export async function getCreditStatus(
     globalUsedCount,
     maxGlobalCredits: MAX_GLOBAL_SERVICE_CREDITS,
     isGlobalExhausted: globalUsedCount >= MAX_GLOBAL_SERVICE_CREDITS,
+    isAdmin: false,
   };
 }
 
@@ -108,8 +127,14 @@ export async function getCreditStatus(
  */
 export async function consumeFreeCredit(
   userId: string,
-  isDemo: boolean
+  isDemo: boolean,
+  userEmail?: string | null
 ): Promise<CreditStatus> {
+  // 관리자 계정은 크레딧을 소모하지 않음
+  if (isAdminEmail(userEmail)) {
+    return getCreditStatus(userId, isDemo, userEmail);
+  }
+
   // 1. Firebase Firestore 실시간 업데이트
   if (isFirebaseConfigured && db && !isDemo) {
     try {
@@ -135,7 +160,7 @@ export async function consumeFreeCredit(
         { merge: true }
       );
 
-      return getCreditStatus(userId, isDemo);
+      return getCreditStatus(userId, isDemo, userEmail);
     } catch (e) {
       console.warn("Firestore consume failed, falling back to local:", e);
     }
@@ -149,7 +174,7 @@ export async function consumeFreeCredit(
     localStorage.setItem(LOCAL_GLOBAL_USAGE_KEY, String(nextGlobal));
   }
 
-  return getCreditStatus(userId, isDemo);
+  return getCreditStatus(userId, isDemo, userEmail);
 }
 
 /**
@@ -158,18 +183,25 @@ export async function consumeFreeCredit(
 export function subscribeCreditStatus(
   userId: string,
   isDemo: boolean,
-  onUpdate: (status: CreditStatus) => void
+  onUpdate: (status: CreditStatus) => void,
+  userEmail?: string | null
 ): () => void {
+  // 관리자 계정은 즉시 무제한 반환
+  if (isAdminEmail(userEmail)) {
+    getCreditStatus(userId, isDemo, userEmail).then(onUpdate);
+    return () => {};
+  }
+
   if (isFirebaseConfigured && db && !isDemo) {
     const userUsageRef = doc(db, "users", userId, "usage", "summary");
     const unsubscribe = onSnapshot(
       userUsageRef,
       async () => {
-        const status = await getCreditStatus(userId, isDemo);
+        const status = await getCreditStatus(userId, isDemo, userEmail);
         onUpdate(status);
       },
       async () => {
-        const status = await getCreditStatus(userId, isDemo);
+        const status = await getCreditStatus(userId, isDemo, userEmail);
         onUpdate(status);
       }
     );
@@ -177,6 +209,6 @@ export function subscribeCreditStatus(
   }
 
   // 로컬 폴백
-  getCreditStatus(userId, isDemo).then(onUpdate);
+  getCreditStatus(userId, isDemo, userEmail).then(onUpdate);
   return () => {};
 }
