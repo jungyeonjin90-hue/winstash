@@ -302,7 +302,7 @@ export function LandingPageEn() {
           <div className="pt-1 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             <div className="flex items-center gap-1.5">
               <Check className="w-4 h-4 text-emerald-500" />
-              <span>Free to start</span>
+              <span>Free forever to log — unlock your full history anytime</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Check className="w-4 h-4 text-emerald-500" />
@@ -506,7 +506,7 @@ export function LandingPageEn() {
                         <span className="text-xs text-zinc-400">{activeData.bragDoc.quarter} Metric Punch</span>
                       </div>
                       <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-                        Google XYZ Formula Verified
+                        XYZ Impact Formula Verified
                       </span>
                     </div>
 
@@ -552,7 +552,7 @@ export function LandingPageEn() {
                         <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
                           Long-Term · Career Vault & Stories
                         </span>
-                        <span className="text-xs text-zinc-400">Amazon STAR Method + NDA Shield</span>
+                        <span className="text-xs text-zinc-400">Executive STAR Method + NDA Shield</span>
                       </div>
 
                       {/* NDA Toggle Simulation */}
@@ -606,7 +606,7 @@ export function LandingPageEn() {
 
                         <div className="p-3 rounded-xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-900/50 space-y-1">
                           <span className="font-bold text-rose-600 dark:text-rose-400 uppercase text-[11px] block">
-                            R · Result (Google XYZ)
+                            R · Result (Quantifiable XYZ)
                           </span>
                           <p className="text-zinc-900 dark:text-zinc-50 font-semibold leading-relaxed text-xs">
                             {activeData.starResume.result}
@@ -673,11 +673,11 @@ export function LandingPageEn() {
                   [Mid-Term] Quarterly / Annual
                 </div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  Brag Document (Google XYZ)
+                  XYZ-Format Brag Document
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Condenses 12 weeks of micro-tasks into 3, 5, or 10 high-leverage bullet points. Built on Google&apos;s formula for promo packets.
+                Condenses 12 weeks of micro-tasks into 3, 5, or 10 high-leverage bullet points. Built on the proven XYZ impact formula for promo packets.
               </p>
               <div className="pt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <span>On-Demand Synthesis & Caching</span>
@@ -769,15 +769,15 @@ export function LandingPageEn() {
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 opacity-80">
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
               <Award className="w-5 h-5 text-indigo-500" />
-              <span>Google XYZ Formula</span>
+              <span>XYZ Impact Formula</span>
             </div>
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
               <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              <span>Amazon STAR Method</span>
+              <span>Executive STAR Framework</span>
             </div>
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
               <Terminal className="w-5 h-5 text-amber-500" />
-              <span>Silicon Valley PPP Cadence</span>
+              <span>PPP Weekly Cadence</span>
             </div>
           </div>
         </section>
@@ -797,7 +797,7 @@ export function LandingPageEn() {
             {[
               {
                 q: "Are the first 5 runs really 100% free? Do I need a credit card?",
-                a: "Yes, completely free. You get 5 full transformations right upon signing in with your Google account. We do not ask for a credit card. You can test and experience all three outputs risk-free.",
+                a: "Yes, completely free. It is free forever to log your achievements, and you get 5 full AI transformations right upon signing in with your Google account. No credit card required. You can log your wins freely and unlock your full history anytime.",
               },
               {
                 q: "Can I use WinStash if I am a Product Manager or Marketer?",
@@ -866,7 +866,7 @@ export function LandingPageEn() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-10 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-3">
+      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-10 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-3 px-4">
         <p>© 2026 WinStash. AI Career Memory for Everything You Do.</p>
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <Link
@@ -885,6 +885,9 @@ export function LandingPageEn() {
         </div>
         <p className="text-[11px] text-zinc-400 max-w-md mx-auto leading-relaxed">
           AES-256 encryption, zero LLM model training, and confidential tenant isolation guaranteed.
+        </p>
+        <p className="text-[10px] text-zinc-400 max-w-xl mx-auto leading-relaxed">
+          Disclaimer: WinStash is an independent product and is not affiliated with, endorsed by, or sponsored by Google LLC, Amazon.com, Inc., or any other referenced organizations. All trademarks belong to their respective owners. AI-synthesized outputs should be reviewed and verified by the user before professional use.
         </p>
       </footer>
     </div>

@@ -37,7 +37,7 @@ const TONES: { id: ToneManner; label: string; desc: string }[] = [
   {
     id: "impact",
     label: "🎯 Quantifiable Impact",
-    desc: "Google XYZ format ('Accomplished X, measured by Y, by doing Z')",
+    desc: "XYZ impact formula ('Accomplished X, measured by Y, by doing Z')",
   },
   {
     id: "problem_solving",

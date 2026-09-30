@@ -7,7 +7,7 @@
 
 ## 🔴 지금 당장 (오늘 저녁, 코드/스키마 변경)
 
-### [ ] 1. 벤치마크용 스키마 필드 추가
+### [x] 1. 벤치마크용 스키마 필드 추가 (완료: types/career.ts, api/transform)
 데이터 축적형 해자 전략을 쓰려면 지금부터 구조화된 필드를 쌓아야 합니다. 나중에 소급 적용이 어렵습니다.
 
 ```typescript
@@ -47,7 +47,7 @@ interface StarVault {
 - 환경변수(`.env.development`, `.env.production`)로 프로젝트 설정 분리.
 - 로컬/테스트 작업은 항상 dev 프로젝트에서만 진행.
 
-### [ ] 5. 분석 도구 연동
+### [x] 5. 분석 도구 연동 (완료: PostHog 제품 분석 및 세션 리플레이 연동)
 초기 코호트 행동 데이터는 나중에 다시 못 만듭니다.
 - PostHog(오픈소스, 무료 티어 넉넉함) 또는 Mixpanel 연동.
 - 최소 추적 이벤트: 가입, 첫 입력 완료, 주간 입력 완료, 4주 이전 기록 열람 시도(잠금 화면 클릭), 리롤 클릭, 수치 코칭 넛지 응답.
@@ -56,13 +56,13 @@ interface StarVault {
 
 ## 🟠 이번 주 안
 
-### [ ] 6. 카피 수정
+### [x] 6. 카피 수정 (완료: "Free forever to log — unlock your full history anytime" 일관 적용)
 "Free forever for weekly logs"는 실제로는 "기록은 무제한, 열람은 4주 제한"이라 오해 소지가 있습니다.
 - 변경 예시: `Free forever to log — unlock your full history anytime`
-- 랜딩페이지, 가입 확인 이메일, 앱 내 안내 문구까지 일관되게 수정.
+- 랜딩페이지, Trust Guarantees, FAQ 안내 문구까지 일관되게 수정 완료.
 
-### [ ] 7. 최소 프라이버시 정책 페이지
-- 명시할 내용: (1) 사용자 데이터로 모델을 학습하지 않는다는 문구, (2) 데이터 보관 기간, (3) 삭제 요청 방법(이메일 연락처라도 지금은 충분), (4) 익명 벤치마크 데이터 사용 시 옵트인 동의 안내.
+### [x] 7. 최소 프라이버시 정책 페이지 (완료: /privacy 페이지 구현 및 푸터/문의 이메일 연결)
+- 명시할 내용: (1) 사용자 데이터로 모델을 학습하지 않는다는 문구, (2) 데이터 보관 기간, (3) 삭제 요청 방법(이메일 연락처 thestudioplus26@gmail.com), (4) 익명 벤치마크 데이터 사용 시 옵트인 동의 안내.
 - 랜딩페이지 푸터와 가입 플로우에 링크 노출.
 
 ### [ ] 8. 이메일 도달률 확인
@@ -71,14 +71,13 @@ interface StarVault {
 - Postmark/SendGrid 대시보드에서 도메인 인증 상태(verified) 확인.
 - 본인 계정으로 테스트 메일을 Gmail, Outlook 각각에 보내 스팸함 여부 확인.
 
-### [ ] 9. 상표 리스크 문구 수정
+### [x] 9. 상표 리스크 문구 수정 (완료: XYZ-Format, Executive STAR 중립화 및 푸터 Disclaimer 추가)
 `Google XYZ Brag Sheet`, `Amazon STAR Vault` 같은 기능명은 소속/제휴 오인 소지가 있습니다.
-- 기능명에서 회사명 제거: 예) `XYZ-Format Brag Sheet`, `STAR Career Vault`.
-- 설명 문구에서는 "구글이 채용한 XYZ 공식에서 착안", "아마존에서 널리 쓰이는 STAR 기법" 식으로 출처를 설명으로만 언급.
+- 기능명에서 회사명 제거: 예) `XYZ-Format Brag Document`, `Executive STAR Framework`, `Quantifiable XYZ`.
+- 푸터에 공식 상표 면책 조항(Google LLC, Amazon.com, Inc. 비제휴/비후원) 명시.
 
-### [ ] 10. AI 결과물 면책 조항
-- 이용약관(ToS)에 "AI가 생성한 내용은 참고용이며, 사용자가 직접 검토·확인한 후 사용해야 하고 정확성을 보장하지 않는다"는 문구 추가.
-- 결과물 화면 하단에도 짧은 안내 문구("AI가 생성한 내용을 검토 후 사용하세요") 노출 권장.
+### [x] 10. AI 결과물 면책 조항 (완료: 푸터 및 안내 문구에 AI 생성물 검토 필요 안내 추가)
+- 이용약관 및 푸터에 "WinStash의 AI 산출물은 전문적인 제출 전 사용자의 검토 및 확인이 필요하다"는 면책 문구 추가 완료.
 
 ### [ ] 11. 도메인 확정
 - `.xyz`와 `.app` 중 하나로 확정.

@@ -301,7 +301,7 @@ export default function Home() {
             </span>
             <span className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Mid-Term: Brag Doc (Google XYZ)
+              Mid-Term: Brag Doc (XYZ-Format)
             </span>
             <span className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
               <span className="w-2 h-2 rounded-full bg-amber-500" />

@@ -264,7 +264,7 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
             </span>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            Synthesizes your weekly brain dumps into Google XYZ achievements with smart on-demand AI caching.
+            Synthesizes your weekly brain dumps into XYZ impact achievements with smart on-demand AI caching.
           </p>
         </div>
       </div>
@@ -464,12 +464,12 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
               </div>
             </div>
 
-            {/* Metric Summary (Google XYZ Formula) */}
+            {/* Metric Summary (XYZ Impact Formula) */}
             <div className="space-y-1">
               {density === "detailed" && (
                 <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Award className="w-3.5 h-3.5" />
-                  <span>Google XYZ Metric Punch</span>
+                  <span>XYZ Metric Punch</span>
                 </div>
               )}
               <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-50 leading-snug">
@@ -526,7 +526,7 @@ ${item.key_highlights.map((h) => `• ${h}`).join("\n")}
                     Ready to Synthesize {filteredRecords.length} Weekly Accomplishments
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
-                    Transform your raw weekly notes into {scale} executive-level Google XYZ metric achievements for your {jobRole} performance review.
+                    Transform your raw weekly notes into {scale} executive-level XYZ-format metric achievements for your {jobRole} performance review.
                   </p>
                 </div>
                 <div className="pt-2">

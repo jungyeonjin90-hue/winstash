@@ -488,7 +488,7 @@ export function StarResumeTab({
 
                 <div className="p-3.5 rounded-xl bg-rose-50/30 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-900/50 space-y-1">
                   <span className="font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider text-[11px] block">
-                    R · Result (Google XYZ)
+                    R · Result (Quantifiable XYZ)
                   </span>
                   <p className="text-zinc-900 dark:text-zinc-50 font-semibold leading-relaxed">
                     {item.result}
