@@ -7,6 +7,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
+import { getAnalytics, isSupported, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,6 +16,7 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 export const isFirebaseConfigured = Boolean(
@@ -26,6 +28,7 @@ export const isFirebaseConfigured = Boolean(
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let analytics: Analytics | null = null;
 const googleProvider = new GoogleAuthProvider();
 
 // Google 로그인 시 항상 계정 선택 창이 뜨도록 설정
@@ -49,9 +52,20 @@ if (typeof window !== "undefined" && isFirebaseConfigured) {
     } catch {
       db = getFirestore(app);
     }
+
+    // Google Analytics (Firebase Analytics) 브라우저 환경 지원 시 자동 초기화
+    isSupported()
+      .then((supported) => {
+        if (supported && app) {
+          analytics = getAnalytics(app);
+        }
+      })
+      .catch((e) => {
+        console.warn("Firebase Analytics isSupported check failed:", e);
+      });
   } catch (err) {
     console.error("Firebase initialization failed:", err);
   }
 }
 
-export { app, auth, db, googleProvider };
+export { app, auth, db, googleProvider, analytics };
