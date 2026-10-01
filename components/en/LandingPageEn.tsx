@@ -489,11 +489,16 @@ export function LandingPageEn() {
                         <span className="text-xs text-zinc-400">Optimized for Slack & 1-on-1s</span>
                       </div>
                       <button
-                        onClick={() => handleCopySnippet(activeData.weeklySnippet.done.join("\n"), "Weekly Snippet")}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                        onClick={() =>
+                          handleCopySnippet(
+                            `📢 [Weekly Snippets] Monday Sync\n\n✅ Progress (Completed)\n${activeData.weeklySnippet.done.map((item) => `• ${item}`).join("\n")}\n\n⏳ In-Flight & Bottlenecks\n• ${activeData.weeklySnippet.inProgress[0]}\n\n---\n⚡ Synthesized with WinStash 3-Way Career OS`,
+                            "Weekly Snippet"
+                          )
+                        }
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
                       >
                         <Copy className="w-3.5 h-3.5" />
-                        <span>{copiedNotification === "Weekly Snippet" ? "Copied!" : "Copy for Slack"}</span>
+                        <span>{copiedNotification === "Weekly Snippet" ? "Copied Snippet!" : "Copy Weekly Snippet"}</span>
                       </button>
                     </div>
 
@@ -687,7 +692,7 @@ export function LandingPageEn() {
                 Structured into Progress, Plans, and Problems. Optimized for async Slack check-ins and executive skip-level syncs in 1 click.
               </p>
               <div className="pt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-                <span>1-Click Markdown & Slack Copy</span>
+                <span>1-Click Weekly Snippet Copy</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -709,7 +714,7 @@ export function LandingPageEn() {
                 Condenses 12 weeks of micro-tasks into 3, 5, or 10 high-leverage bullet points. Built on the proven XYZ impact formula for promo packets.
               </p>
               <div className="pt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <span>On-Demand Synthesis & Caching</span>
+                <span>1-Click Brag Sheet Copy</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -731,7 +736,7 @@ export function LandingPageEn() {
                 Elevates accomplishments into complete Situation-Task-Action-Result case studies with automatic client anonymity masking.
               </p>
               <div className="pt-2 text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                <span>ATS Resume & Clean PDF Print</span>
+                <span>1-Click STAR Portfolio Copy</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -834,11 +839,11 @@ export function LandingPageEn() {
               },
               {
                 q: "How does the NDA Confidentiality Shield protect my company's secrets?",
-                a: "The NDA Shield detects internal proprietary code names, client names, and confidential metrics, replacing them with standardized placeholders (e.g. '[Tier-1 Fintech Gateway]') so you can safely post to LinkedIn or send resumes to recruiters.",
+                a: "The NDA Shield detects internal proprietary code names, client names, and confidential metrics, replacing them with standardized placeholders (e.g. '[Tier-1 Fintech Gateway]') so you can safely share external portfolio case studies or send resumes to recruiters.",
               },
               {
-                q: "Can I export my synthesized achievements to Notion or PDF?",
-                a: "Yes. In 1 click, you can copy structured Markdown formatted with callouts and checklists for Notion, download clean CSV spreadsheets, or print an ATS-optimized clean PDF.",
+                q: "How do I export my synthesized career achievements?",
+                a: "In 1 click, you can copy structured, golden-standard Markdown formatted with callouts and checklists for Notion, Slack, Google Docs, or ATS applications—complete with verified WinStash career attribution.",
               },
               {
                 q: "How much time does WinStash take every Friday?",
