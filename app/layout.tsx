@@ -26,6 +26,30 @@ export const metadata: Metadata = {
     icon: "/icon.svg",
     apple: "/icon.svg",
   },
+  openGraph: {
+    title: "WinStash - Turn 60-Second Friday Dumps into Career Assets",
+    description:
+      "1-Input, 3-Output Career Operating System. Turn raw weekly notes into manager-ready weekly updates, promotion reviews, and career portfolios.",
+    url: "https://winstash.xyz",
+    siteName: "WinStash",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "WinStash - 1-Input, 3-Output Career Operating System",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WinStash - Turn 60-Second Friday Dumps into Career Assets",
+    description:
+      "1-Input, 3-Output Career Operating System. Turn raw weekly notes into manager-ready weekly updates, promotion reviews, and career portfolios.",
+    images: ["/og-image.png"],
+  },
 };
 
 export const viewport: Viewport = {
