@@ -14,9 +14,9 @@ export interface SummaryCacheEntry {
   cacheKey: string;
   type: "brag" | "star";
   year: string;
-  half: string;
-  quarter: string;
-  scope: 3 | 5 | 10;
+  half?: string;
+  quarter?: string;
+  scope?: 3 | 5 | 10;
   jobRole: JobRole;
   toneManner: ToneManner;
   items: SynthesizedBragItem[] | SynthesizedStarItem[];
@@ -24,6 +24,40 @@ export interface SummaryCacheEntry {
   sourceRecordCount: number;
   createdAt: string;
   updatedAt: string;
+  startYear?: string;
+  endYear?: string;
+}
+
+/**
+ * Formats record IDs deterministically while preventing Firestore 1500-byte document ID limit overflow
+ */
+function formatRecordIdsSegment(recordIds: string[]): string {
+  if (!recordIds || recordIds.length === 0) return "none";
+  const sortedStr = recordIds.slice().sort().join("_");
+  if (sortedStr.length <= 250) {
+    return sortedStr;
+  }
+  let hash = 5381;
+  for (let i = 0; i < sortedStr.length; i++) {
+    hash = (hash * 33) ^ sortedStr.charCodeAt(i);
+  }
+  const positiveHash = (hash >>> 0).toString(36);
+  return `cnt${recordIds.length}_h${positiveHash}_${recordIds.slice(0, 3).sort().join("_")}`;
+}
+
+/**
+ * Builds a deterministic Content-Addressable cache key for STAR Multi-Year Portfolios
+ */
+export function buildStarSummaryCacheKey(
+  startYear: string,
+  endYear: string,
+  scope: 3 | 5 | 10,
+  jobRole: JobRole = "engineering",
+  toneManner: ToneManner = "impact",
+  recordIds: string[] = []
+): string {
+  const idsSegment = formatRecordIdsSegment(recordIds);
+  return `star_${startYear}_to_${endYear}_${scope}_${jobRole}_${toneManner}_records:[${idsSegment}]`;
 }
 
 /**
@@ -41,8 +75,8 @@ export function buildSummaryCacheKey(
   toneManner: ToneManner = "impact",
   recordIds: string[] = []
 ): string {
-  const sortedIds = recordIds.slice().sort().join("_");
-  return `${type}_${year}_${half}_${quarter}_${scope}_${jobRole}_${toneManner}_records:[${sortedIds || "none"}]`;
+  const idsSegment = formatRecordIdsSegment(recordIds);
+  return `${type}_${year}_${half}_${quarter}_${scope}_${jobRole}_${toneManner}_records:[${idsSegment}]`;
 }
 
 const LOCAL_STORAGE_CACHE_PREFIX = "career_pulse_summary_cache_v2_";

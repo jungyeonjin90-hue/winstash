@@ -174,3 +174,31 @@ export function filterRecordsByPeriod(
     return true;
   });
 }
+
+/**
+ * Filters CareerRecords based on a Start Year and End Year range (inclusive)
+ * Perfect for multi-year Portfolio and STAR case study synthesis (e.g. 2024 ~ 2026).
+ */
+export function filterRecordsByYearRange(
+  records: CareerRecord[],
+  startYear: string,
+  endYear: string
+): CareerRecord[] {
+  const startNum = parseInt(startYear, 10);
+  const endNum = parseInt(endYear, 10);
+
+  return records.filter((r) => {
+    const info = getRecordPeriodInfo(r);
+    const recYear = parseInt(info.year, 10);
+
+    if (!isNaN(startNum) && recYear < startNum) {
+      return false;
+    }
+    if (!isNaN(endNum) && recYear > endNum) {
+      return false;
+    }
+
+    return true;
+  });
+}
+

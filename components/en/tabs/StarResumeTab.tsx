@@ -13,12 +13,12 @@ import {
 import { CareerRecord, JobRole, ToneManner, SynthesizedStarItem } from "@/types/career";
 import { maskSynthesizedStarItem } from "@/lib/masking";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
-import { PeriodFilterEn } from "../PeriodFilterEn";
+import { YearRangeFilterEn } from "../YearRangeFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
 import { formatStarPortfolio, formatSingleStarItem } from "@/lib/exportFormatters";
-import { filterRecordsByPeriod, getDetailedRecordDateInfo } from "@/lib/periodUtils";
+import { filterRecordsByYearRange, getRecordPeriodInfo } from "@/lib/periodUtils";
 import {
-  buildSummaryCacheKey,
+  buildStarSummaryCacheKey,
   getSummaryCache,
   getLatestSummaryCache,
   saveSummaryCache,
@@ -57,30 +57,39 @@ export function StarResumeTab({
   const userId = user?.uid || "guest";
   const isDemo = Boolean(user?.isDemo);
 
-  // Derive latest record year or fallback to current calendar year
-  const latestRecordYear = useMemo(() => {
-    if (records.length > 0) {
-      return getDetailedRecordDateInfo(records[0]).year;
+  // Derive default multi-year range from records (default to past 2-3 years up to latest record year)
+  const { defaultStartYear, defaultEndYear } = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    if (records.length === 0) {
+      return { defaultStartYear: String(currentYear - 2), defaultEndYear: String(currentYear) };
     }
-    return String(new Date().getFullYear());
+    const years = records
+      .map((r) => parseInt(getRecordPeriodInfo(r).year, 10))
+      .filter((y) => !isNaN(y));
+    if (years.length === 0) {
+      return { defaultStartYear: String(currentYear - 2), defaultEndYear: String(currentYear) };
+    }
+    const min = Math.min(...years);
+    const max = Math.max(...years);
+    const start = Math.max(min, max - 2); // Default to up to 3 years
+    return { defaultStartYear: String(start), defaultEndYear: String(max) };
   }, [records]);
 
-  // Period Filters (Year & Half only; Quarters excluded for Portfolios)
-  const [selectedYear, setSelectedYear] = useState<string>(latestRecordYear);
-  const [selectedHalf, setSelectedHalf] = useState<string>("ALL");
-
-  // Keep selectedYear synchronized when records load asynchronously
-  useEffect(() => {
-    if (records.length > 0) {
-      const availableYears = new Set(records.map((r) => getDetailedRecordDateInfo(r).year));
-      if (!availableYears.has(selectedYear)) {
-        setSelectedYear(latestRecordYear);
-      }
-    }
-  }, [records, latestRecordYear, selectedYear]);
+  // Multi-Year Range Filters (e.g. 2024 ~ 2026 for comprehensive portfolio case studies)
+  const [startYear, setStartYear] = useState<string>(defaultStartYear);
+  const [endYear, setEndYear] = useState<string>(defaultEndYear);
 
   // Automatically restore settings from the most recently generated AI summary
   const hasRestoredRef = useRef(false);
+
+  // Synchronize when records load asynchronously and no prior cache restored
+  useEffect(() => {
+    if (records.length > 0 && !hasRestoredRef.current) {
+      setStartYear(defaultStartYear);
+      setEndYear(defaultEndYear);
+    }
+  }, [records.length, defaultStartYear, defaultEndYear]);
+
   useEffect(() => {
     if (records.length === 0 || !userId || hasRestoredRef.current) return;
 
@@ -89,8 +98,12 @@ export function StarResumeTab({
         const latest = await getLatestSummaryCache(userId, isDemo, "star");
         if (latest && Array.isArray(latest.items) && latest.items.length > 0) {
           hasRestoredRef.current = true;
-          if (latest.year) setSelectedYear(latest.year);
-          if (latest.half) setSelectedHalf(latest.half);
+          if (latest.startYear) setStartYear(latest.startYear);
+          else if (latest.year) setStartYear(latest.year);
+
+          if (latest.endYear) setEndYear(latest.endYear);
+          else if (latest.year) setEndYear(latest.year);
+
           if (latest.scope) setScale(latest.scope);
           if (latest.toneManner && onToneMannerChange) {
             onToneMannerChange(latest.toneManner);
@@ -119,26 +132,24 @@ export function StarResumeTab({
   const [cachedEntry, setCachedEntry] = useState<SummaryCacheEntry | null>(null);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
 
-  // 1. Filter raw records by dropdown periods (Year & Half)
+  // 1. Filter raw records by multi-year range (startYear ~ endYear)
   const filteredRecords = useMemo(() => {
-    return filterRecordsByPeriod(records, selectedYear, selectedHalf, "ALL");
-  }, [records, selectedYear, selectedHalf]);
+    return filterRecordsByYearRange(records, startYear, endYear);
+  }, [records, startYear, endYear]);
 
   const currentRecordIds = useMemo(() => filteredRecords.map((r) => r.id), [filteredRecords]);
 
-  // 2. Deterministic Content-Addressable cache key strictly bound to current record IDs
+  // 2. Deterministic Content-Addressable cache key for STAR multi-year portfolios
   const cacheKey = useMemo(() => {
-    return buildSummaryCacheKey(
-      "star",
-      selectedYear,
-      selectedHalf,
-      "ALL",
+    return buildStarSummaryCacheKey(
+      startYear,
+      endYear,
       scale,
       jobRole,
       toneManner,
       currentRecordIds
     );
-  }, [selectedYear, selectedHalf, scale, jobRole, toneManner, currentRecordIds]);
+  }, [startYear, endYear, scale, jobRole, toneManner, currentRecordIds]);
 
   // 3. Load from cache whenever key changes
   const loadCache = useCallback(async () => {
@@ -203,7 +214,7 @@ export function StarResumeTab({
     setIsSynthesizing(true);
     recordSynthesisCooldown(userId, user?.email);
     try {
-      const periodLabel = `${selectedYear} ${selectedHalf !== "ALL" ? selectedHalf : "Full Year"}`.trim();
+      const periodLabel = startYear === endYear ? `${startYear}` : `${startYear} – ${endYear}`;
 
       const res = await fetch("/api/synthesize/en", {
         method: "POST",
@@ -230,8 +241,10 @@ export function StarResumeTab({
       const newEntry: SummaryCacheEntry = {
         cacheKey,
         type: "star",
-        year: selectedYear,
-        half: selectedHalf,
+        year: endYear,
+        startYear,
+        endYear,
+        half: "ALL",
         quarter: "ALL",
         scope: scale,
         jobRole,
@@ -340,14 +353,13 @@ export function StarResumeTab({
           </span>
         </div>
         
-        {/* Period Filter */}
-        <PeriodFilterEn
+        {/* Multi-Year Portfolio Range Filter */}
+        <YearRangeFilterEn
           records={records}
-          selectedYear={selectedYear}
-          selectedHalf={selectedHalf}
-          onYearChange={setSelectedYear}
-          onHalfChange={setSelectedHalf}
-          showQuarter={false}
+          startYear={startYear}
+          endYear={endYear}
+          onStartYearChange={setStartYear}
+          onEndYearChange={setEndYear}
           filteredCount={filteredRecords.length}
         />
 
@@ -600,12 +612,9 @@ export function StarResumeTab({
                 </div>
                 <div className="space-y-1.5 max-w-md mx-auto">
                   <div className="flex items-center justify-center flex-wrap gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                    <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">{selectedYear}</span>
-                    {selectedHalf !== "ALL" ? (
-                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">{selectedHalf}</span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">Full Year</span>
-                    )}
+                    <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">
+                      {startYear === endYear ? startYear : `${startYear} ~ ${endYear}`}
+                    </span>
                     <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-bold">{scale} Stories</span>
                     <span className="px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300">{toneManner}</span>
                   </div>

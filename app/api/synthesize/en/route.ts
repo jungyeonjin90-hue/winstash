@@ -162,7 +162,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ items: [] });
     }
 
-    const safeRecords = (records as CareerRecord[]).slice(0, 20);
+    // Support up to 100 weekly logs for multi-year Portfolio STAR synthesis
+    const safeRecords = (records as CareerRecord[]).slice(0, 100);
 
     const apiKey = process.env.GEMINI_API_KEY;
     const prompt = buildSynthesisPrompt(
