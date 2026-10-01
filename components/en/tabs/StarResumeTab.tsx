@@ -335,11 +335,10 @@ export function StarResumeTab({
           filteredCount={filteredRecords.length}
         />
 
-        {/* Persona & Tone */}
+        {/* Narrative Tone Selector */}
         <PersonaSelectorEn
           currentRole={jobRole}
           currentTone={toneManner}
-          onRoleChange={(r) => onJobRoleChange?.(r)}
           onToneChange={(t) => onToneMannerChange?.(t)}
         />
 

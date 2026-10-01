@@ -4,44 +4,20 @@ import { UserCircle, Sliders } from "lucide-react";
 import { JobRole, ToneManner } from "@/types/career";
 
 interface PersonaSelectorEnProps {
-  currentRole: JobRole;
+  currentRole?: JobRole;
   currentTone: ToneManner;
-  onRoleChange: (role: JobRole) => void;
+  onRoleChange?: (role: JobRole) => void;
   onToneChange: (tone: ToneManner) => void;
 }
 
-const ROLES: { id: JobRole; label: string; desc: string }[] = [
-  {
-    id: "engineering",
-    label: "💻 Engineering",
-    desc: "Architecture, p99 latency, distributed systems, tech debt",
-  },
-  {
-    id: "product",
-    label: "🚀 Product Management",
-    desc: "User problem framing, CVR funnel, feature shipping velocity, business ROI",
-  },
-  {
-    id: "design",
-    label: "🎨 Product Design",
-    desc: "Design systems, usability metrics, user research, UX conversion lift",
-  },
-  {
-    id: "marketing",
-    label: "📈 Growth & Marketing",
-    desc: "ROAS, CAC reduction, user retention, acquisition funnel lift",
-  },
-  {
-    id: "sales",
-    label: "💼 Sales & BD",
-    desc: "Quota attainment, enterprise deal velocity, pipeline acceleration",
-  },
-  {
-    id: "operations",
-    label: "⚙️ BizOps & Finance",
-    desc: "Process automation, SLA compression, zero human error, cost savings",
-  },
-];
+const ROLE_LABELS: Record<JobRole, string> = {
+  engineering: "💻 Engineering",
+  product: "🚀 Product Management",
+  design: "🎨 Product Design",
+  marketing: "📈 Growth & Marketing",
+  sales: "💼 Sales & BD",
+  operations: "⚙️ BizOps & Finance",
+};
 
 const TONES: { id: ToneManner; label: string; desc: string }[] = [
   {
@@ -67,71 +43,50 @@ const TONES: { id: ToneManner; label: string; desc: string }[] = [
 ];
 
 export function PersonaSelectorEn({
-  currentRole,
+  currentRole = "engineering",
   currentTone,
-  onRoleChange,
   onToneChange,
 }: PersonaSelectorEnProps) {
+  const roleLabel = ROLE_LABELS[currentRole] || "💻 Engineering";
+
   return (
-    <div className="bg-zinc-50 dark:bg-zinc-950 p-4 sm:p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-4">
-      {/* Role Row */}
-      <div className="space-y-2">
+    <div className="bg-zinc-50 dark:bg-zinc-950 p-4 sm:p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-3">
+      {/* Header: Tone Label on left, Active Role Badge on right */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
-          <UserCircle className="w-3.5 h-3.5 text-indigo-500" />
-          <span>Primary Career Persona (6 Disciplines)</span>
+          <Sliders className="w-3.5 h-3.5 text-violet-500" />
+          <span>Narrative Tone & Synthesis Voice</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          {ROLES.map((r) => {
-            const active = currentRole === r.id;
-            return (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => onRoleChange(r.id)}
-                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                  active
-                    ? "border-indigo-600 bg-white dark:bg-zinc-900 shadow-xs ring-2 ring-indigo-500/20 text-indigo-900 dark:text-indigo-200"
-                    : "border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 hover:bg-white text-zinc-600 dark:text-zinc-400"
-                }`}
-              >
-                <div className="font-bold text-xs truncate">{r.label}</div>
-                <div className="text-[10px] text-zinc-400 dark:text-zinc-500 line-clamp-1 mt-0.5">
-                  {r.desc}
-                </div>
-              </button>
-            );
-          })}
+
+        {/* Read-only Active Role Badge (Configured via Settings Modal) */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 w-fit">
+          <UserCircle className="w-3.5 h-3.5 text-indigo-500" />
+          <span>Persona: {roleLabel}</span>
         </div>
       </div>
 
-      {/* Tone Row */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
-          <Sliders className="w-3.5 h-3.5 text-violet-500" />
-          <span>Narrative Tone & Voice</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {TONES.map((t) => {
-            const active = currentTone === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => onToneChange(t.id)}
-                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                  active
-                    ? "border-violet-600 bg-white dark:bg-zinc-900 shadow-xs ring-2 ring-violet-500/20 text-violet-900 dark:text-violet-200"
-                    : "border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 hover:bg-white text-zinc-600 dark:text-zinc-400"
-                }`}
-              >
-                <div className="font-bold text-xs truncate">{t.label}</div>
-                <div className="text-[10px] text-zinc-400 dark:text-zinc-500 line-clamp-1 mt-0.5">
-                  {t.desc}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      {/* Tone Selection Grid (4 Tones) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {TONES.map((t) => {
+          const active = currentTone === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onToneChange(t.id)}
+              className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                active
+                  ? "border-violet-600 bg-white dark:bg-zinc-900 shadow-xs ring-2 ring-violet-500/20 text-violet-900 dark:text-violet-200"
+                  : "border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 hover:bg-white text-zinc-600 dark:text-zinc-400"
+              }`}
+            >
+              <div className="font-bold text-xs truncate">{t.label}</div>
+              <div className="text-[10px] text-zinc-400 dark:text-zinc-500 line-clamp-1 mt-0.5">
+                {t.desc}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

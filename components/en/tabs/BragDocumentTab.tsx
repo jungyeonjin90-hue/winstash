@@ -312,12 +312,11 @@ export function BragDocumentTab({
         />
       </div>
 
-      {/* 2. Persona & Narrative Tone Selector (Synthesis Shaping) */}
+      {/* 2. Narrative Tone Selector (Synthesis Shaping) */}
       <div className="no-print">
         <PersonaSelectorEn
           currentRole={jobRole}
           currentTone={toneManner}
-          onRoleChange={(r) => onJobRoleChange?.(r)}
           onToneChange={(t) => onToneMannerChange?.(t)}
         />
       </div>
