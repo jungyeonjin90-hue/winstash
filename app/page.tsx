@@ -463,12 +463,13 @@ export default function Home() {
         onSuccess={(msg) => showToast(msg)}
       />
 
-      {/* Upgrade to Pro Modal */}
+      {/* Upgrade / Subscription Management Modal */}
       <UpgradeModal
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         user={user}
         triggerReason={upgradeTriggerReason}
+        isPro={Boolean(creditStatus?.isPro)}
       />
 
       {/* Settings Modal */}
@@ -476,6 +477,11 @@ export default function Home() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onOpenFeedback={() => setIsFeedbackOpen(true)}
+        onOpenUpgrade={() => {
+          setUpgradeTriggerReason("header");
+          setIsUpgradeModalOpen(true);
+        }}
+        isPro={Boolean(creditStatus?.isPro)}
         jobRole={jobRole}
         onJobRoleChange={handleJobRoleChange}
         seniorityLevel={seniorityLevel}

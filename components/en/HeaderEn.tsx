@@ -53,13 +53,15 @@ export function HeaderEn({ onOpenSettings, onOpenFeedback, onOpenUpgrade, record
                 <span>👑 Admin</span>
               </div>
             ) : creditStatus.isPro ? (
-              <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 shadow-xs"
-                title="WinStash Pro Active: Unlimited Transformations & Syntheses"
+              <button
+                type="button"
+                onClick={onOpenUpgrade}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 shadow-xs cursor-pointer hover:border-indigo-400 transition-all active:scale-95"
+                title="WinStash Pro Active: Click to view or manage subscription"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-spin-slow" />
                 <span>PRO</span>
-              </div>
+              </button>
             ) : creditStatus.isUserExhausted ? (
               <button
                 onClick={onOpenUpgrade}

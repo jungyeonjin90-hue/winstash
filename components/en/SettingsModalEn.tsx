@@ -1,6 +1,6 @@
 "use client";
 
-import { X, UserCircle, Briefcase, Award, Building, Globe, LogOut, CheckCircle2, MessageSquarePlus } from "lucide-react";
+import { X, UserCircle, Briefcase, Award, Building, Globe, LogOut, CheckCircle2, MessageSquarePlus, Sparkles, Zap } from "lucide-react";
 import { JobRole, SeniorityLevel, RegionCode } from "@/types/career";
 import { useAuth } from "@/context/AuthContext";
 
@@ -8,6 +8,8 @@ interface SettingsModalEnProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenFeedback?: () => void;
+  onOpenUpgrade?: () => void;
+  isPro?: boolean;
   jobRole?: JobRole;
   onJobRoleChange?: (role: JobRole) => void;
   seniorityLevel?: SeniorityLevel;
@@ -22,6 +24,8 @@ export function SettingsModalEn({
   isOpen,
   onClose,
   onOpenFeedback,
+  onOpenUpgrade,
+  isPro = false,
   jobRole,
   onJobRoleChange,
   seniorityLevel,
@@ -91,6 +95,63 @@ export function SettingsModalEn({
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Section 1.5: Membership & Subscription Management */}
+        <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Membership & Subscription
+            </span>
+            {isPro ? (
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-indigo-500" />
+                PRO ACTIVE
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                FREE PLAN
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-0.5">
+            <div className="space-y-0.5">
+              <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                {isPro ? "WinStash Pro Monthly ($5.99 / mo)" : "Free Trial Plan (5 logs, 3 syntheses)"}
+              </div>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                {isPro
+                  ? "Unlimited weekly logging, past edits, and executive syntheses active."
+                  : "Upgrade to unlock unlimited weekly transformations and syntheses."}
+              </p>
+            </div>
+
+            {isPro ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenUpgrade?.();
+                }}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors cursor-pointer"
+              >
+                <span>구독 관리 및 해지</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenUpgrade?.();
+                }}
+                className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs hover:opacity-95 transition-all cursor-pointer"
+              >
+                <Zap className="w-3.5 h-3.5 fill-white" />
+                <span>Upgrade to Pro ($5.99)</span>
               </button>
             )}
           </div>
