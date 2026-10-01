@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         signOutRef.current?.();
         alert(
-          "보안을 위해 30분 동안 활동이 없어 자동으로 로그아웃되었습니다.\n(Automatically signed out due to 30 minutes of inactivity.)"
+          "You have been automatically signed out due to 30 minutes of inactivity for your security."
         );
       }
     };
