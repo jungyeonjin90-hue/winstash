@@ -5,6 +5,7 @@ import { HeaderEn } from "@/components/en/HeaderEn";
 import { QuickLoggerEn } from "@/components/en/QuickLoggerEn";
 import { DashboardTabsEn } from "@/components/en/DashboardTabsEn";
 import { SettingsModalEn } from "@/components/en/SettingsModalEn";
+import { FeedbackModalEn } from "@/components/en/FeedbackModalEn";
 import { OnboardingModalEn } from "@/components/en/OnboardingModalEn";
 import { LandingPageEn } from "@/components/en/LandingPageEn";
 import { useAuth } from "@/context/AuthContext";
@@ -28,6 +29,7 @@ export default function Home() {
   const [records, setRecords] = useState<CareerRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
@@ -344,6 +346,7 @@ export default function Home() {
       {/* Header */}
       <HeaderEn
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenFeedback={() => setIsFeedbackOpen(true)}
         recordCount={records.length}
         creditStatus={creditStatus}
       />
@@ -426,14 +429,28 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400">
+      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 px-4">
         <p>© 2026 WinStash. 1-Input, 3-Output Career Operating System for Global Builders.</p>
+        <button
+          onClick={() => setIsFeedbackOpen(true)}
+          className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4 cursor-pointer font-medium"
+        >
+          Send Feedback & Bug Report
+        </button>
       </footer>
+
+      {/* Feedback & Bug Report Modal */}
+      <FeedbackModalEn
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        onSuccess={(msg) => showToast(msg)}
+      />
 
       {/* Settings Modal */}
       <SettingsModalEn
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        onOpenFeedback={() => setIsFeedbackOpen(true)}
         jobRole={jobRole}
         onJobRoleChange={handleJobRoleChange}
         seniorityLevel={seniorityLevel}

@@ -100,3 +100,24 @@ export interface SynthesizedStarItem {
   impactCategory?: ImpactCategory;
   impactMagnitude?: ImpactMagnitude;
 }
+
+export type FeedbackType = 'bug' | 'feature' | 'general';
+export type FeedbackStatus = 'new' | 'investigating' | 'resolved';
+
+export interface FeedbackReport {
+  id: string;
+  type: FeedbackType;
+  title: string;
+  message: string;
+  userEmail: string;
+  userId: string;
+  status: FeedbackStatus;
+  metadata?: {
+    userAgent?: string;
+    screenResolution?: string;
+    pathname?: string;
+    platform?: string;
+    language?: string;
+  };
+  createdAt: string; // ISO string
+}

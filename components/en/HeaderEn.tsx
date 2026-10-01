@@ -1,18 +1,19 @@
 "use client";
 
 
-import { Sparkles, Settings, Briefcase, LogOut } from "lucide-react";
+import { Sparkles, Settings, Briefcase, LogOut, MessageSquarePlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { CreditStatus } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
 
 interface HeaderEnProps {
   onOpenSettings: () => void;
+  onOpenFeedback?: () => void;
   recordCount: number;
   creditStatus: CreditStatus | null;
 }
 
-export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEnProps) {
+export function HeaderEn({ onOpenSettings, onOpenFeedback, recordCount, creditStatus }: HeaderEnProps) {
   const { user, signOut, isFirebaseConfigured } = useAuth();
   const isAdmin = isAdminEmail(user?.email);
 
@@ -119,11 +120,24 @@ export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEn
             </div>
           )}
 
+          {/* Feedback Trigger */}
+          {onOpenFeedback && (
+            <button
+              onClick={onOpenFeedback}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800 cursor-pointer"
+              title="Report an issue or share feedback"
+              aria-label="Feedback"
+            >
+              <MessageSquarePlus className="w-4 h-4 text-indigo-500" />
+              <span className="hidden sm:inline">Feedback</span>
+            </button>
+          )}
+
           {/* Settings Trigger */}
           <button
             onClick={onOpenSettings}
             className="p-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 cursor-pointer"
-            title="Settings & Backup"
+            title="Settings"
             aria-label="Settings"
           >
             <Settings className="w-5 h-5" />

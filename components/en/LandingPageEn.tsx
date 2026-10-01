@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { trackEvent } from "@/lib/analytics";
+import { FeedbackModalEn } from "./FeedbackModalEn";
 
 function GoogleIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -213,6 +214,7 @@ export function LandingPageEn() {
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const activeData = SHOWCASE_DATA[selectedPersona];
 
@@ -950,6 +952,13 @@ export function LandingPageEn() {
           >
             Contact & Support
           </a>
+          <span>·</span>
+          <button
+            onClick={() => setIsFeedbackOpen(true)}
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline-offset-4 hover:underline cursor-pointer"
+          >
+            Feedback & Issue Report
+          </button>
         </div>
         <p className="text-[11px] text-zinc-400 max-w-md mx-auto leading-relaxed">
           AES-256 encryption, zero LLM model training, and confidential tenant isolation guaranteed.
@@ -958,6 +967,12 @@ export function LandingPageEn() {
           Disclaimer: WinStash is an independent product and is not affiliated with, endorsed by, or sponsored by Google LLC, Amazon.com, Inc., or any other referenced organizations. All trademarks belong to their respective owners. AI-synthesized outputs should be reviewed and verified by the user before professional use.
         </p>
       </footer>
+
+      {/* Feedback Modal for Visitors */}
+      <FeedbackModalEn
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+      />
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
-import { CareerRecord, JobRole, ToneManner, PersonaProfile, SeniorityLevel, RegionCode } from "@/types/career";
+import { CareerRecord, JobRole, ToneManner, PersonaProfile, SeniorityLevel, RegionCode, FeedbackReport } from "@/types/career";
 import { INITIAL_CAREER_RECORDS } from "./initialData";
 
 const LOCAL_STORAGE_KEY_PREFIX = "career_pulse_records_user_";
@@ -264,4 +264,47 @@ function saveLocalUserRecords(userId: string, records: CareerRecord[]): void {
   } catch (e) {
     console.error(e);
   }
+}
+
+/**
+ * 기능 이상 및 건의사항(피드백)을 Firestore 'feedbacks' 컬렉션에 저장
+ */
+export async function submitFeedbackToFirestore(
+  feedbackData: Omit<FeedbackReport, "id" | "createdAt" | "status">
+): Promise<FeedbackReport> {
+  const timestamp = new Date().toISOString();
+  const feedbackId = `fb-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+  const feedbackReport: FeedbackReport = {
+    ...feedbackData,
+    id: feedbackId,
+    status: "new",
+    createdAt: timestamp,
+  };
+
+  // 1. Firebase Firestore 연동 시 저장
+  if (isFirebaseConfigured && db) {
+    try {
+      const feedbackDocRef = doc(db, "feedbacks", feedbackId);
+      await setDoc(feedbackDocRef, feedbackReport);
+      return feedbackReport;
+    } catch (error) {
+      console.warn("Firestore feedback submission failed, saving to local fallback:", error);
+    }
+  }
+
+  // 2. 로컬 브라우저 폴백 저장 (오프라인 또는 Firebase 미설정 시)
+  if (typeof window !== "undefined") {
+    try {
+      const existingKey = "career_pulse_feedbacks_queue";
+      const existing = localStorage.getItem(existingKey);
+      const list: FeedbackReport[] = existing ? JSON.parse(existing) : [];
+      list.unshift(feedbackReport);
+      localStorage.setItem(existingKey, JSON.stringify(list.slice(0, 50)));
+    } catch (e) {
+      console.error("Local feedback storage error:", e);
+    }
+  }
+
+  return feedbackReport;
 }

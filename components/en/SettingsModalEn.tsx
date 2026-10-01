@@ -1,12 +1,13 @@
 "use client";
 
-import { X, UserCircle, Briefcase, Award, Building, Globe, LogOut, CheckCircle2 } from "lucide-react";
+import { X, UserCircle, Briefcase, Award, Building, Globe, LogOut, CheckCircle2, MessageSquarePlus } from "lucide-react";
 import { JobRole, SeniorityLevel, RegionCode } from "@/types/career";
 import { useAuth } from "@/context/AuthContext";
 
 interface SettingsModalEnProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenFeedback?: () => void;
   jobRole?: JobRole;
   onJobRoleChange?: (role: JobRole) => void;
   seniorityLevel?: SeniorityLevel;
@@ -20,6 +21,7 @@ interface SettingsModalEnProps {
 export function SettingsModalEn({
   isOpen,
   onClose,
+  onOpenFeedback,
   jobRole,
   onJobRoleChange,
   seniorityLevel,
@@ -195,7 +197,22 @@ export function SettingsModalEn({
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+          {onOpenFeedback ? (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenFeedback();
+              }}
+              className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+            >
+              <MessageSquarePlus className="w-4 h-4 text-indigo-500" />
+              <span>Report Bug / Send Feedback</span>
+            </button>
+          ) : (
+            <div />
+          )}
           <button
             onClick={onClose}
             className="px-5 py-2 rounded-xl text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 transition-colors cursor-pointer"
