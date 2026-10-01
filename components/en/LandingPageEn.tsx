@@ -392,6 +392,10 @@ export function LandingPageEn() {
               >
                 <span>🎯 Growth & Marketing</span>
               </button>
+
+              <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border border-dashed border-zinc-300 dark:border-zinc-700">
+                + Design, Sales & BizOps in App
+              </span>
             </div>
           </div>
 
@@ -834,8 +838,8 @@ export function LandingPageEn() {
                 a: "Yes, completely free. It is free forever to log your achievements, and you get 5 full AI transformations right upon signing in with your Google account. No credit card required. You can log your wins freely and unlock your full history anytime.",
               },
               {
-                q: "Can I use WinStash if I am a Product Manager or Marketer?",
-                a: "Absolutely. WinStash supports 6 dedicated career personas (Engineering, Product, Marketing, Sales, Operations, Design) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). AI tunes metrics and jargon specifically for your domain.",
+                q: "Can I use WinStash if I am not a Software Engineer?",
+                a: "Absolutely. WinStash supports 6 dedicated career personas (Engineering, Product Management, Product Design, Growth & Marketing, Sales & BD, BizOps & Finance) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). AI tunes metrics and domain-specific terminology for your exact discipline.",
               },
               {
                 q: "How does the NDA Confidentiality Shield protect my company's secrets?",

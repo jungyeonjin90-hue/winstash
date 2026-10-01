@@ -5,8 +5,10 @@ import { JobRole, ToneManner } from "@/types/career";
 
 export const JOB_ROLES: { id: JobRole; label: string; icon: string; desc: string }[] = [
   { id: "engineering", label: "개발·엔지니어링", icon: "💻", desc: "아키텍처, 레이턴시, 가용성, 리팩토링 및 기술 부채 해소 중심" },
-  { id: "product", label: "기획·PO·PM", icon: "📋", desc: "유저 문제 정의, CVR, 기능 런칭, 로드맵 리딩 및 가치 창출 중심" },
+  { id: "product", label: "기획·PO·PM", icon: "🚀", desc: "유저 문제 정의, CVR 퍼널, 기능 런칭, 로드맵 및 비즈니스 ROI 중심" },
+  { id: "design", label: "디자인·UX/UI", icon: "🎨", desc: "디자인 시스템, 사용성 개선, UX 리서치 및 인터페이스 전환율 중심" },
   { id: "marketing", label: "마케팅·그로스", icon: "📈", desc: "ROAS, CAC, 리텐션, 캠페인 ROI 및 고객 획득 퍼널 최적화 중심" },
+  { id: "sales", label: "세일즈·사업개발", icon: "💼", desc: "분기 쿼터 달성, 엔터프라이즈 수주, 파이프라인 발굴 및 파트너십 중심" },
   { id: "operations", label: "운영·재무·경영", icon: "⚙️", desc: "프로세스 표준화, 마감 단축, 휴먼에러 제로화 및 비용 효율 중심" },
 ];
 

@@ -13,22 +13,32 @@ interface PersonaSelectorEnProps {
 const ROLES: { id: JobRole; label: string; desc: string }[] = [
   {
     id: "engineering",
-    label: "💻 Software Engineer",
-    desc: "Architecture, latency reduction, p99 metrics, technical debt",
+    label: "💻 Engineering",
+    desc: "Architecture, p99 latency, distributed systems, tech debt",
   },
   {
     id: "product",
-    label: "🚀 Product Manager",
+    label: "🚀 Product Management",
     desc: "User problem framing, CVR funnel, feature shipping velocity, business ROI",
   },
   {
+    id: "design",
+    label: "🎨 Product Design",
+    desc: "Design systems, usability metrics, user research, UX conversion lift",
+  },
+  {
     id: "marketing",
-    label: "📈 Growth Marketer",
+    label: "📈 Growth & Marketing",
     desc: "ROAS, CAC reduction, user retention, acquisition funnel lift",
   },
   {
+    id: "sales",
+    label: "💼 Sales & BD",
+    desc: "Quota attainment, enterprise deal velocity, pipeline acceleration",
+  },
+  {
     id: "operations",
-    label: "⚙️ BizOps / Finance",
+    label: "⚙️ BizOps & Finance",
     desc: "Process automation, SLA compression, zero human error, cost savings",
   },
 ];
@@ -64,6 +74,36 @@ export function PersonaSelectorEn({
 }: PersonaSelectorEnProps) {
   return (
     <div className="bg-zinc-50 dark:bg-zinc-950 p-4 sm:p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 space-y-4">
+      {/* Role Row */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+          <UserCircle className="w-3.5 h-3.5 text-indigo-500" />
+          <span>Primary Career Persona (6 Disciplines)</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {ROLES.map((r) => {
+            const active = currentRole === r.id;
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => onRoleChange(r.id)}
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  active
+                    ? "border-indigo-600 bg-white dark:bg-zinc-900 shadow-xs ring-2 ring-indigo-500/20 text-indigo-900 dark:text-indigo-200"
+                    : "border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 hover:bg-white text-zinc-600 dark:text-zinc-400"
+                }`}
+              >
+                <div className="font-bold text-xs truncate">{r.label}</div>
+                <div className="text-[10px] text-zinc-400 dark:text-zinc-500 line-clamp-1 mt-0.5">
+                  {r.desc}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Tone Row */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
