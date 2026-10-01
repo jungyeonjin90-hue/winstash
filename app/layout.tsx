@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://winstash.xyz"),
-  title: "WinStash - AI Career Memory for Everything You Do",
+  title: "WinStash - Never Forget Your Wins | 1-Min Friday Notes to Career Assets",
   description:
-    "Never lose track of what you achieved. Dump 1 minute on Friday. WinStash automatically turns raw work notes into manager-ready weekly updates, promotion reviews, and career portfolios.",
+    "Turn 1-minute Friday notes into manager-ready weekly syncs, promotion brag sheets, and career portfolios. Never forget what you shipped.",
   verification: {
     google: "qKa_dC23HOY2U3XVvOP3rdC4nyvltfy_dgjghEXxKPQ",
   },
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
     apple: "/icon.svg",
   },
   openGraph: {
-    title: "WinStash - Turn 60-Second Friday Dumps into Career Assets",
+    title: "WinStash - Never Forget Your Wins",
     description:
-      "1-Input, 3-Output Career Operating System. Turn raw weekly notes into manager-ready weekly updates, promotion reviews, and career portfolios.",
+      "1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio. Write rough notes on Friday, auto-fill your career assets.",
     url: "https://winstash.xyz",
     siteName: "WinStash",
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "WinStash - 1-Input, 3-Output Career Operating System",
+        alt: "WinStash - Never Forget Your Wins | 1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio",
       },
     ],
     locale: "en_US",
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "WinStash - Turn 60-Second Friday Dumps into Career Assets",
+    title: "WinStash - Never Forget Your Wins",
     description:
-      "1-Input, 3-Output Career Operating System. Turn raw weekly notes into manager-ready weekly updates, promotion reviews, and career portfolios.",
+      "1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio. Write rough notes on Friday, auto-fill your career assets.",
     images: ["/og-image.png"],
   },
 };

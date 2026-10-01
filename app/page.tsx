@@ -356,8 +356,8 @@ export default function Home() {
         {/* Hero Section */}
         <section className="text-center space-y-3 max-w-2xl mx-auto pt-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/60 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>1-Input, 3-Output Career Operating System</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Never Forget Your Wins · Career Memory Vault</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight text-balance">
@@ -430,7 +430,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 px-4">
-        <p>© 2026 WinStash. 1-Input, 3-Output Career Operating System for Global Builders.</p>
+        <p>© 2026 WinStash. Never forget your wins. 1-Min Friday notes into career assets.</p>
         <button
           onClick={() => setIsFeedbackOpen(true)}
           className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4 cursor-pointer font-medium"

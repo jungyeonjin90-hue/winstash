@@ -1,7 +1,7 @@
 "use client";
 
 
-import { Sparkles, Settings, Briefcase, LogOut, MessageSquarePlus } from "lucide-react";
+import { Layers, Settings, Briefcase, LogOut, MessageSquarePlus, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { CreditStatus } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
@@ -23,7 +23,7 @@ export function HeaderEn({ onOpenSettings, onOpenFeedback, recordCount, creditSt
         {/* Logo and Brand */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-            <Sparkles className="w-5 h-5 animate-pulse" />
+            <Layers className="w-5 h-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -31,11 +31,11 @@ export function HeaderEn({ onOpenSettings, onOpenFeedback, recordCount, creditSt
                 WinStash
               </span>
               <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
-                3-Way Career OS
+                Career Memory Vault
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">
-              1-Min Friday Log → Weekly Snippets · Performance Review · Career Portfolio
+              1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio
             </p>
           </div>
         </div>
