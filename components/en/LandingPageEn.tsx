@@ -473,7 +473,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <TrendingUp className="w-4 h-4" />
-                  <span>Drawer 2: Brag Document</span>
+                  <span>Drawer 2: Performance Review</span>
                   <span
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "brag"
@@ -481,7 +481,7 @@ export function LandingPageEn() {
                         : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
-                    Reviews
+                    Brag Sheet
                   </span>
                 </button>
 
@@ -494,7 +494,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Drawer 3: STAR Resume</span>
+                  <span>Drawer 3: Career Portfolio</span>
                   <span
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "star"
@@ -502,7 +502,7 @@ export function LandingPageEn() {
                         : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
-                    Interviews
+                    STAR Format
                   </span>
                 </button>
               </div>
@@ -738,14 +738,14 @@ export function LandingPageEn() {
                   [Mid-Term] Quarterly / Annual
                 </div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  XYZ-Format Brag Document
+                  XYZ Performance Review (Brag Sheet)
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 Condenses 12 weeks of micro-tasks into 3, 5, or 10 high-leverage bullet points. Built on the proven XYZ impact formula for promo packets.
               </p>
               <div className="pt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <span>1-Click Brag Sheet Copy</span>
+                <span>1-Click Performance Review Copy</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -760,14 +760,14 @@ export function LandingPageEn() {
                   [Long-Term] Senior Interviews
                 </div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  STAR Resume & NDA Shield
+                  STAR Career Portfolio & NDA Shield
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 Elevates accomplishments into complete Situation-Task-Action-Result case studies with automatic client anonymity masking.
               </p>
               <div className="pt-2 text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                <span>1-Click STAR Portfolio Copy</span>
+                <span>1-Click Career Portfolio Copy</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>

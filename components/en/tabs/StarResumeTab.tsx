@@ -284,7 +284,7 @@ export function StarResumeTab({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-amber-950 dark:text-amber-200">
-              Drawer 3: STAR Resume Bullets & Case Studies
+              Drawer 3: Career Portfolio (STAR Method & Case Studies)
             </span>
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-200/60 dark:bg-amber-900 text-amber-800 dark:text-amber-300">
               Long-Term
@@ -363,14 +363,14 @@ export function StarResumeTab({
                   : filteredRecords.length === 0
                   ? "No Weekly Logs in this Period"
                   : isStale
-                  ? `Update Resume (${filteredRecords.length} Logs)`
-                  : `Generate STAR Resume (${filteredRecords.length} Logs)`}
+                  ? `Update Portfolio (${filteredRecords.length} Logs)`
+                  : `Generate Career Portfolio (${filteredRecords.length} Logs)`}
               </span>
             </button>
           ) : (
             <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/80 shadow-xs select-none">
               <Check className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Resume Up to Date (Saved in DB)</span>
+              <span>Portfolio Up to Date (Saved in DB)</span>
             </div>
           )}
         </div>
@@ -397,17 +397,17 @@ export function StarResumeTab({
             onClick={copyStarPortfolio}
             disabled={displayedItems.length === 0}
             className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white shadow-xs hover:shadow-amber-500/20 transition-all cursor-pointer disabled:cursor-not-allowed"
-            title="Copy ATS-optimized STAR Portfolio case studies"
+            title="Copy ATS-optimized STAR Career Portfolio case studies"
           >
             {isAllCopied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-white" />
-                <span>Copied STAR Portfolio!</span>
+                <span>Copied Career Portfolio!</span>
               </>
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5" />
-                <span>Copy STAR Portfolio</span>
+                <span>Copy Career Portfolio</span>
               </>
             )}
           </button>

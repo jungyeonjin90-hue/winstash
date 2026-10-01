@@ -60,7 +60,7 @@ export function DashboardTabsEn({
           </span>
         </button>
 
-        {/* Tab 2: Brag Document */}
+        {/* Tab 2: Performance Review */}
         <button
           onClick={() => handleTabChange("brag")}
           className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
@@ -70,13 +70,13 @@ export function DashboardTabsEn({
           }`}
         >
           <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
-          <span>Brag Document</span>
+          <span>Performance Review</span>
           <span className="hidden md:inline-block text-[10px] font-normal px-1.5 py-0.2 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-            Reviews
+            Brag Sheet
           </span>
         </button>
 
-        {/* Tab 3: STAR Resume */}
+        {/* Tab 3: Career Portfolio */}
         <button
           onClick={() => handleTabChange("vault")}
           className={`flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
@@ -86,9 +86,9 @@ export function DashboardTabsEn({
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
-          <span>STAR Resume</span>
+          <span>Career Portfolio</span>
           <span className="hidden md:inline-block text-[10px] font-normal px-1.5 py-0.2 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
-            Interviews
+            STAR Format
           </span>
         </button>
 

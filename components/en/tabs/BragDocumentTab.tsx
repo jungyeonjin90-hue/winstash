@@ -264,7 +264,7 @@ export function BragDocumentTab({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
-              Drawer 2: Brag Document (Performance Reviews & Comp Negotiations)
+              Drawer 2: Performance Review (Brag Sheet · Comp Negotiations)
             </span>
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-200/60 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300">
               Mid-Term
@@ -359,17 +359,17 @@ export function BragDocumentTab({
             onClick={copyBragSheet}
             disabled={displayedItems.length === 0}
             className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white shadow-xs hover:shadow-emerald-500/20 transition-all cursor-pointer disabled:cursor-not-allowed"
-            title="Copy Golden Standard Brag Sheet (Notion / Confluence / Docs compatible)"
+            title="Copy Golden Standard Performance Review (Notion / Confluence / Docs compatible)"
           >
             {isCopied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-white" />
-                <span>Copied Brag Sheet!</span>
+                <span>Copied Review!</span>
               </>
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5" />
-                <span>Copy Brag Sheet</span>
+                <span>Copy Performance Review</span>
               </>
             )}
           </button>

@@ -34,7 +34,7 @@ export function HeaderEn({ onOpenSettings, recordCount, creditStatus }: HeaderEn
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">
-              1-Min Friday Log → Weekly Snippets · Brag Document · STAR Resume
+              1-Min Friday Log → Weekly Snippets · Performance Review · Career Portfolio
             </p>
           </div>
         </div>
