@@ -452,7 +452,16 @@ export function LandingPageEn() {
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Drawer 1: Weekly Check-ins</span>
+                  <span>Drawer 1: Weekly Snippets</span>
+                  <span
+                    className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
+                      activeOutputTab === "weekly"
+                        ? "bg-white/20 text-white"
+                        : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
+                    }`}
+                  >
+                    Slack Sync
+                  </span>
                 </button>
 
                 <button
@@ -464,7 +473,16 @@ export function LandingPageEn() {
                   }`}
                 >
                   <TrendingUp className="w-4 h-4" />
-                  <span>Drawer 2: Performance Reviews</span>
+                  <span>Drawer 2: Brag Document</span>
+                  <span
+                    className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
+                      activeOutputTab === "brag"
+                        ? "bg-white/20 text-white"
+                        : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
+                    }`}
+                  >
+                    Reviews
+                  </span>
                 </button>
 
                 <button
@@ -476,7 +494,16 @@ export function LandingPageEn() {
                   }`}
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Drawer 3: Career Vault & Stories</span>
+                  <span>Drawer 3: STAR Resume</span>
+                  <span
+                    className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
+                      activeOutputTab === "star"
+                        ? "bg-white/20 text-white"
+                        : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
+                    }`}
+                  >
+                    Interviews
+                  </span>
                 </button>
               </div>
 

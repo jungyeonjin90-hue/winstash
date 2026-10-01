@@ -88,7 +88,7 @@ export function DashboardTabsEn({
           <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
           <span>STAR Resume</span>
           <span className="hidden md:inline-block text-[10px] font-normal px-1.5 py-0.2 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
-            LinkedIn
+            Interviews
           </span>
         </button>
 
