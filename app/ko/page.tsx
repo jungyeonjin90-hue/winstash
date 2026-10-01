@@ -97,13 +97,15 @@ export default function HomeKo() {
       return;
     }
 
-    if (creditStatus?.isGlobalExhausted) {
+    const isPro = Boolean(creditStatus?.isPro);
+
+    if (!isPro && creditStatus?.isGlobalExhausted) {
       alert("⚠️ 서비스 전체 프로모션 무료 변환 한도(10,000회)가 소진되었습니다.");
       return;
     }
 
-    if (creditStatus?.isUserExhausted) {
-      alert("⚠️ 기본 제공 무료 변환 5회를 모두 사용하셨습니다.\n\n정기 구독 및 유료 플랜이 곧 오픈될 예정입니다.");
+    if (!isPro && creditStatus?.isUserExhausted) {
+      alert("⚠️ 기본 제공 무료 변환 5회를 모두 사용하셨습니다.\n\n무제한 이용을 위해 Pro 플랜($5.99/월)으로 업그레이드해주세요.");
       return;
     }
 
@@ -119,8 +121,8 @@ export default function HomeKo() {
           job_role: role,
           tone_manner: tone,
           provider: settings.provider,
-          isCreditExhausted: Boolean(creditStatus?.isUserExhausted),
-          isGlobalExhausted: Boolean(creditStatus?.isGlobalExhausted),
+          isCreditExhausted: isPro ? false : Boolean(creditStatus?.isUserExhausted),
+          isGlobalExhausted: isPro ? false : Boolean(creditStatus?.isGlobalExhausted),
         }),
       });
 

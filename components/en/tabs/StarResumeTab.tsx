@@ -33,6 +33,7 @@ import {
   checkSynthesisCooldown,
   recordSynthesisCooldown,
 } from "@/lib/rateLimitService";
+import { checkSynthesisQuota, consumeSynthesisQuota } from "@/lib/creditService";
 import { useAuth } from "@/context/AuthContext";
 
 interface StarResumeTabProps {
@@ -41,6 +42,7 @@ interface StarResumeTabProps {
   toneManner?: ToneManner;
   onJobRoleChange?: (role: JobRole) => void;
   onToneMannerChange?: (tone: ToneManner) => void;
+  onUpgradeClick?: () => void;
 }
 
 export function StarResumeTab({
@@ -49,6 +51,7 @@ export function StarResumeTab({
   toneManner = "impact",
   onJobRoleChange,
   onToneMannerChange,
+  onUpgradeClick,
 }: StarResumeTabProps) {
   const { user } = useAuth();
   const userId = user?.uid || "guest";
@@ -186,12 +189,14 @@ export function StarResumeTab({
       return;
     }
 
-    // 2. Daily synthesis quota check (bypassed for admin)
-    const dailyLimit = checkDailySynthesisLimit(userId, user?.email);
-    if (!dailyLimit.allowed) {
-      alert(
-        `⚠️ Daily AI synthesis limit reached (${dailyLimit.usedCount}/${dailyLimit.maxLimit}).\n\nPlease try again tomorrow or continue using your cached summaries.`
-      );
+    // 2. Synthesis quota check (3 free for STAR, unlimited for Pro)
+    const quota = await checkSynthesisQuota(userId, "star", isDemo, user?.email);
+    if (!quota.allowed) {
+      if (onUpgradeClick) {
+        onUpgradeClick();
+      } else {
+        alert("⚠️ You have used all 3 free STAR portfolio syntheses.\n\nPlease upgrade to Pro ($5.99/mo) for unlimited case studies!");
+      }
       return;
     }
 
@@ -217,7 +222,8 @@ export function StarResumeTab({
       const data = await res.json();
       const items: SynthesizedStarItem[] = data.items || [];
 
-      // Record daily usage on success
+      // Record quota and daily usage on success
+      await consumeSynthesisQuota(userId, "star", isDemo, user?.email);
       recordDailySynthesisUsage(userId, user?.email);
 
       // Save into cache

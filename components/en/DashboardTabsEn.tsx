@@ -13,6 +13,7 @@ interface DashboardTabsEnProps {
   records: CareerRecord[];
   onDeleteRecord?: (id: string) => void;
   onEditRecord?: (rawMemo: string, existingRecordId: string) => Promise<void>;
+  onUpgradeClick?: () => void;
   jobRole?: JobRole;
   toneManner?: ToneManner;
   onJobRoleChange?: (role: JobRole) => void;
@@ -25,6 +26,7 @@ export function DashboardTabsEn({
   records,
   onDeleteRecord,
   onEditRecord,
+  onUpgradeClick,
   jobRole = "engineering",
   toneManner = "impact",
   onJobRoleChange,
@@ -126,6 +128,7 @@ export function DashboardTabsEn({
                 toneManner={toneManner}
                 onJobRoleChange={onJobRoleChange}
                 onToneMannerChange={onToneMannerChange}
+                onUpgradeClick={onUpgradeClick}
               />
             </div>
 
@@ -136,6 +139,7 @@ export function DashboardTabsEn({
                 toneManner={toneManner}
                 onJobRoleChange={onJobRoleChange}
                 onToneMannerChange={onToneMannerChange}
+                onUpgradeClick={onUpgradeClick}
               />
             </div>
 

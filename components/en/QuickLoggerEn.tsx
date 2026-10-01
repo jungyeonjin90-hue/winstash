@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, CornerDownLeft, RotateCcw, Lightbulb, Lock } from "lucide-react";
+import { Sparkles, CornerDownLeft, RotateCcw, Lightbulb, Lock, Zap } from "lucide-react";
 import { WeekSpan, CareerRecord } from "@/types/career";
 import { getCurrentWeekSpanEn } from "@/lib/weekUtilsEn";
 import { WeekPickerEn } from "./WeekPickerEn";
@@ -18,6 +18,7 @@ interface QuickLoggerEnProps {
   isLoading: boolean;
   existingRecords?: CareerRecord[];
   creditStatus?: CreditStatus | null;
+  onUpgradeClick?: () => void;
 }
 
 const PRESET_MEMOS_EN = [
@@ -78,6 +79,7 @@ export function QuickLoggerEn({
   isLoading,
   existingRecords = [],
   creditStatus = null,
+  onUpgradeClick,
 }: QuickLoggerEnProps) {
   const [memo, setMemo] = useState("");
   const [selectedWeek, setSelectedWeek] = useState<WeekSpan>(getCurrentWeekSpanEn());
@@ -106,6 +108,11 @@ export function QuickLoggerEn({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!memo.trim() || isLoading) return;
+
+    if (creditStatus?.isUserExhausted && !creditStatus?.isPro) {
+      onUpgradeClick?.();
+      return;
+    }
     
     // Pass existingRecord.id if we are editing an already logged week.
     await onTransform(memo.trim(), selectedWeek, undefined, undefined, existingRecord?.id);
@@ -195,24 +202,29 @@ export function QuickLoggerEn({
 
           {/* Transform & Submit Button or Out of Credits Warning */}
           <div className="flex items-center gap-2">
-            {creditStatus && (
+            {creditStatus?.isPro ? (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 text-xs font-bold shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
+                <span>Pro Unlimited</span>
+              </span>
+            ) : creditStatus && (
               <span className="hidden md:inline-flex text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
                 {creditStatus.isUserExhausted ? (
-                  <span className="text-rose-500 font-semibold">Free Quota Reached</span>
+                  <span className="text-rose-500 font-semibold">Free Quota Reached (0/{creditStatus.maxUserCredits})</span>
                 ) : (
                   <span>{creditStatus.remainingCredits}/{creditStatus.maxUserCredits} free left</span>
                 )}
               </span>
             )}
 
-            {creditStatus && creditStatus.isUserExhausted ? (
+            {creditStatus && !creditStatus.isPro && creditStatus.isUserExhausted ? (
               <button
                 type="button"
-                disabled
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-not-allowed"
-                title="You have used all 5 free transformations."
+                onClick={onUpgradeClick}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 via-indigo-600 to-violet-600 hover:from-amber-600 hover:to-indigo-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
               >
-                <span>Free Quota Exhausted</span>
+                <Zap className="w-4 h-4 fill-white" />
+                <span>Upgrade to Pro ($5.99)</span>
               </button>
             ) : (
               <button

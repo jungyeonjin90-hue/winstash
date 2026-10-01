@@ -22,6 +22,7 @@ import { isAdminEmail } from "@/lib/adminConfig";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, SeniorityLevel, RegionCode } from "@/types/career";
 import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -30,6 +31,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeTriggerReason, setUpgradeTriggerReason] = useState<"input" | "edit" | "brag" | "star" | "header">("header");
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
@@ -184,14 +187,16 @@ export default function Home() {
     }
 
     const isAdmin = isAdminEmail(user.email);
+    const isPro = isAdmin || Boolean(creditStatus?.isPro);
 
-    if (!isAdmin && creditStatus?.isGlobalExhausted) {
+    if (!isPro && creditStatus?.isGlobalExhausted) {
       alert("⚠️ The global promotional free quota (10,000 requests) has been reached.");
       return;
     }
 
-    if (!isAdmin && creditStatus?.isUserExhausted) {
-      alert("⚠️ You have used all 5 free transformations.\n\nPro subscription plans will open soon!");
+    if (!isPro && creditStatus?.isUserExhausted) {
+      setUpgradeTriggerReason(existingRecordId ? "edit" : "input");
+      setIsUpgradeModalOpen(true);
       return;
     }
 
@@ -210,8 +215,8 @@ export default function Home() {
           industry,
           region,
           provider: settings.provider,
-          isCreditExhausted: isAdmin ? false : Boolean(creditStatus?.isUserExhausted),
-          isGlobalExhausted: isAdmin ? false : Boolean(creditStatus?.isGlobalExhausted),
+          isCreditExhausted: isPro ? false : Boolean(creditStatus?.isUserExhausted),
+          isGlobalExhausted: isPro ? false : Boolean(creditStatus?.isGlobalExhausted),
         }),
       });
 
@@ -347,6 +352,10 @@ export default function Home() {
       <HeaderEn
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenFeedback={() => setIsFeedbackOpen(true)}
+        onOpenUpgrade={() => {
+          setUpgradeTriggerReason("header");
+          setIsUpgradeModalOpen(true);
+        }}
         recordCount={records.length}
         creditStatus={creditStatus}
       />
@@ -395,6 +404,10 @@ export default function Home() {
             isLoading={isLoading}
             existingRecords={records}
             creditStatus={creditStatus}
+            onUpgradeClick={() => {
+              setUpgradeTriggerReason("input");
+              setIsUpgradeModalOpen(true);
+            }}
           />
         </section>
 
@@ -418,6 +431,10 @@ export default function Home() {
               onDeleteRecord={handleDeleteRecord}
               onEditRecord={async (memo, id) => {
                 await handleTransform(memo, undefined, jobRole, toneManner, id);
+              }}
+              onUpgradeClick={() => {
+                setUpgradeTriggerReason("brag");
+                setIsUpgradeModalOpen(true);
               }}
               jobRole={jobRole}
               toneManner={toneManner}
@@ -444,6 +461,14 @@ export default function Home() {
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}
         onSuccess={(msg) => showToast(msg)}
+      />
+
+      {/* Upgrade to Pro Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        user={user}
+        triggerReason={upgradeTriggerReason}
       />
 
       {/* Settings Modal */}

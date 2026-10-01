@@ -10,11 +10,12 @@ import { WinStashBrandBadge } from "@/components/WinStashLogo";
 interface HeaderEnProps {
   onOpenSettings: () => void;
   onOpenFeedback?: () => void;
+  onOpenUpgrade?: () => void;
   recordCount: number;
   creditStatus: CreditStatus | null;
 }
 
-export function HeaderEn({ onOpenSettings, onOpenFeedback, recordCount, creditStatus }: HeaderEnProps) {
+export function HeaderEn({ onOpenSettings, onOpenFeedback, onOpenUpgrade, recordCount, creditStatus }: HeaderEnProps) {
   const { user, signOut, isFirebaseConfigured } = useAuth();
   const isAdmin = isAdminEmail(user?.email);
 
@@ -41,31 +42,43 @@ export function HeaderEn({ onOpenSettings, onOpenFeedback, recordCount, creditSt
 
         {/* Right Action Bar */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Credit Status Badge */}
+          {/* Credit Status / Pro Badge */}
           {creditStatus && (
-            <div
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                isAdmin
-                  ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                  : creditStatus.remainingCredits > 0
-                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-                  : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
-              }`}
-              title={
-                isAdmin
-                  ? "Administrator Account: Unlimited Transformations & Zero Cooldowns"
-                  : `${creditStatus.remainingCredits} of ${creditStatus.maxUserCredits} free transformations remaining`
-              }
-            >
-              <Sparkles className={`w-3.5 h-3.5 ${isAdmin ? "text-amber-500" : "text-indigo-500 dark:text-indigo-400"}`} />
-              <span>
-                {isAdmin
-                  ? "👑 Admin (Unlimited)"
-                  : creditStatus.remainingCredits > 0
-                  ? `${creditStatus.remainingCredits} Free Left`
-                  : "Free Quota Reached"}
-              </span>
-            </div>
+            isAdmin ? (
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                title="Administrator Account: Unlimited Transformations & Zero Cooldowns"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>👑 Admin</span>
+              </div>
+            ) : creditStatus.isPro ? (
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 shadow-xs"
+                title="WinStash Pro Active: Unlimited Transformations & Syntheses"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-spin-slow" />
+                <span>PRO</span>
+              </div>
+            ) : creditStatus.isUserExhausted ? (
+              <button
+                onClick={onOpenUpgrade}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white shadow-xs cursor-pointer transition-all active:scale-95"
+                title="Free Quota Reached. Click to Upgrade to Pro ($5.99/mo)"
+              >
+                <Sparkles className="w-3.5 h-3.5 fill-white" />
+                <span>Upgrade to Pro</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenUpgrade}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:border-indigo-400 transition-colors cursor-pointer"
+                title={`${creditStatus.remainingCredits} of ${creditStatus.maxUserCredits} free transformations remaining. Click to upgrade.`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+                <span>{creditStatus.remainingCredits} Free Left</span>
+              </button>
+            )
           )}
 
 

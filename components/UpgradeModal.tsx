@@ -1,0 +1,186 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { X, Check, Sparkles, Zap, ArrowRight, ShieldCheck, CreditCard } from "lucide-react";
+import { AppUser } from "@/context/AuthContext";
+import { buildLemonSqueezyCheckoutUrl, PRO_PRICE_USD } from "@/lib/lemonSqueezyConfig";
+import { setUserPlan } from "@/lib/creditService";
+
+interface UpgradeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: AppUser | null;
+  triggerReason?: "input" | "edit" | "brag" | "star" | "header";
+}
+
+export function UpgradeModal({
+  isOpen,
+  onClose,
+  user,
+  triggerReason = "header",
+}: UpgradeModalProps) {
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const checkoutUrl = user
+    ? buildLemonSqueezyCheckoutUrl(user.uid, user.email, user.displayName)
+    : "#";
+
+  const getHeadlineSubtitle = () => {
+    switch (triggerReason) {
+      case "input":
+        return "You have used all 5 free transformations. Upgrade to Pro for unlimited weekly logging.";
+      case "edit":
+        return "Free transformation credits are required to re-synthesize edits. Upgrade for unlimited revisions.";
+      case "brag":
+        return "You have reached your 3 free Brag Sheet syntheses. Upgrade to synthesize unlimited reviews.";
+      case "star":
+        return "You have reached your 3 free STAR portfolio syntheses. Upgrade to generate unlimited case studies.";
+      default:
+        return "Unlock unlimited weekly transformations, revisions, and executive syntheses.";
+    }
+  };
+
+  const handleSimulatePro = async () => {
+    if (!user) return;
+    setIsSimulating(true);
+    await setUserPlan(user.uid, "pro", Boolean(user.isDemo));
+    setIsSimulating(false);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div
+        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 p-2 rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          aria-label="Close modal"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Modal Header */}
+        <div className="space-y-2 text-center pt-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>WinStash Pro Membership</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
+            Invest in Your Promotion & Career
+          </h2>
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md mx-auto">
+            {getHeadlineSubtitle()}
+          </p>
+        </div>
+
+        {/* Pricing Card */}
+        <div className="relative p-5 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-white to-violet-50/70 dark:from-indigo-950/30 dark:via-zinc-900 dark:to-violet-950/30 border-2 border-indigo-500/30 dark:border-indigo-500/40 space-y-4">
+          <div className="flex items-baseline justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-3">
+            <div>
+              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase">
+                Pro Monthly
+              </span>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Coffee 1-cup price per month</p>
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100">
+                ${PRO_PRICE_USD}
+              </span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400"> / month</span>
+            </div>
+          </div>
+
+          {/* Feature List */}
+          <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+            <li className="flex items-center gap-2.5">
+              <div className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center shrink-0">
+                <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[3]" />
+              </div>
+              <span>
+                <strong>Unlimited</strong> Weekly Brain Dumps & 1-Input 3-Output Transformations
+              </span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <div className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center shrink-0">
+                <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[3]" />
+              </div>
+              <span>
+                <strong>Unlimited</strong> Edits & AI Re-syntheses for All Past Weeks
+              </span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <div className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center shrink-0">
+                <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[3]" />
+              </div>
+              <span>
+                <strong>Unlimited</strong> Brag Document Syntheses for Performance Reviews
+              </span>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <div className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center shrink-0">
+                <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[3]" />
+              </div>
+              <span>
+                <strong>Unlimited</strong> STAR Portfolio Syntheses for Executive Interviews
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        {/* CTA Button */}
+        <div className="space-y-3">
+          <a
+            href={checkoutUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-500 hover:to-violet-600 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+          >
+            <Zap className="w-4 h-4 fill-white" />
+            <span>Upgrade to Pro Now (${PRO_PRICE_USD}/mo)</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+
+          <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              Lemon Squeezy MoR Verified
+            </span>
+            <span>·</span>
+            <span className="flex items-center gap-1">
+              <CreditCard className="w-3.5 h-3.5" />
+              1-Click Cancel Anytime
+            </span>
+          </div>
+        </div>
+
+        {/* Developer / Demo Simulator Button (Hidden or subtle testing tool) */}
+        <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
+          <span>Test mode preview:</span>
+          <button
+            onClick={handleSimulatePro}
+            disabled={isSimulating}
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+          >
+            {isSimulating ? "Activating..." : "Simulate Pro Mode Instantly"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
