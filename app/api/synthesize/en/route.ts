@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem, SynthesizedStarItem } from "@/types/career";
+import { checkServerRateLimit, getClientIp } from "@/lib/serverRateLimit";
 
 /**
  * Builds the AI Synthesis prompt with strict factual grounding & dynamic scope rules
@@ -130,6 +131,23 @@ ${recordsContext}`;
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. IP Rate Limiting Guardrail (Max 8 synthesis calls per minute per IP)
+    const clientIp = getClientIp(req);
+    const rateLimit = checkServerRateLimit(clientIp, 8, 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: `Synthesis rate limit reached. Please wait ${rateLimit.resetSeconds} seconds before requesting a new synthesis.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.resetSeconds),
+          },
+        }
+      );
+    }
+
     const body = await req.json();
     const {
       type = "brag",

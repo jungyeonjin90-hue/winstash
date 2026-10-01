@@ -138,8 +138,8 @@ export function QuickLoggerEn({
               Clear
             </button>
           )}
-          <span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
-            {memo.length} chars
+          <span className={`text-xs font-mono ${memo.length > 4500 ? "text-amber-500 font-semibold" : "text-zinc-400 dark:text-zinc-500"}`}>
+            {memo.length.toLocaleString()} / 5,000 chars
           </span>
         </div>
       </div>
@@ -174,6 +174,7 @@ export function QuickLoggerEn({
         <textarea
           value={memo}
           onChange={(e) => setMemo(e.target.value)}
+          maxLength={5000}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
               handleSubmit();

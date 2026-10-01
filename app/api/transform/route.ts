@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode } from "@/types/career";
+import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
@@ -331,6 +332,23 @@ function generateFallbackOutputEn(
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. IP Rate Limiting Guardrail (Max 12 requests per minute per IP)
+    const clientIp = getClientIp(req);
+    const rateLimit = checkServerRateLimit(clientIp, 12, 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: `Rate limit exceeded. Please wait ${rateLimit.resetSeconds} seconds before submitting again.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.resetSeconds),
+          },
+        }
+      );
+    }
+
     const body = await req.json();
     const {
       raw_memo,
@@ -347,6 +365,16 @@ export async function POST(req: NextRequest) {
     if (!raw_memo || typeof raw_memo !== "string" || raw_memo.trim().length === 0) {
       return NextResponse.json(
         { error: "Please enter your weekly raw brain dump notes." },
+        { status: 400 }
+      );
+    }
+
+    // 2. Character Length Guardrail (Cap at 5,000 chars to prevent token abuse)
+    if (raw_memo.length > MAX_MEMO_CHAR_LIMIT) {
+      return NextResponse.json(
+        {
+          error: `Your memo is too long (${raw_memo.length.toLocaleString()} characters). Please shorten it under ${MAX_MEMO_CHAR_LIMIT.toLocaleString()} characters.`,
+        },
         { status: 400 }
       );
     }

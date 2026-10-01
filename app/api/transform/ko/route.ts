@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransformationOutput, JobRole, ToneManner } from "@/types/career";
+import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 
 function buildSystemPromptKo(jobRole: JobRole = "engineering", toneManner: ToneManner = "impact"): string {
   const roleDescriptions: Record<JobRole, string> = {
@@ -176,6 +177,23 @@ function generateFallbackOutputKo(
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. IP Rate Limiting Guardrail (Max 12 requests per minute per IP)
+    const clientIp = getClientIp(req);
+    const rateLimit = checkServerRateLimit(clientIp, 12, 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          error: `요청 횟수 제한을 초과했습니다. ${rateLimit.resetSeconds}초 후에 다시 시도해주세요.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.resetSeconds),
+          },
+        }
+      );
+    }
+
     const body = await req.json();
     const {
       raw_memo,
@@ -189,6 +207,16 @@ export async function POST(req: NextRequest) {
     if (!raw_memo || typeof raw_memo !== "string" || raw_memo.trim().length === 0) {
       return NextResponse.json(
         { error: "주간 메모 내용을 입력해주세요." },
+        { status: 400 }
+      );
+    }
+
+    // 2. Character Length Guardrail (Cap at 5,000 chars)
+    if (raw_memo.length > MAX_MEMO_CHAR_LIMIT) {
+      return NextResponse.json(
+        {
+          error: `입력 메모가 너무 깁니다 (${raw_memo.length.toLocaleString()}자). ${MAX_MEMO_CHAR_LIMIT.toLocaleString()}자 이내로 줄여주세요.`,
+        },
         { status: 400 }
       );
     }
