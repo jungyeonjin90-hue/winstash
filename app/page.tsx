@@ -319,7 +319,7 @@ export default function Home() {
           </h1>
 
           <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed text-balance">
-            Write rough notes without worrying about structure. AI synthesizes it into <strong>Weekly Snippets</strong>, an annual <strong>Brag Document</strong>, and <strong>STAR Resume bullets</strong>.
+            Write rough notes without worrying about structure. AI synthesizes it into <strong>Weekly Snippets</strong>, an executive <strong>Performance Review</strong>, and a polished <strong>Career Portfolio</strong>.
           </p>
 
           {/* 3 Drawers Badges */}
@@ -330,11 +330,11 @@ export default function Home() {
             </span>
             <span className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              Mid-Term: Brag Doc (XYZ-Format)
+              Mid-Term: Performance Review (Brag Sheet)
             </span>
             <span className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
               <span className="w-2 h-2 rounded-full bg-amber-500" />
-              Long-Term: STAR Resume & Case Studies
+              Long-Term: Career Portfolio (STAR Format)
             </span>
           </div>
         </section>
