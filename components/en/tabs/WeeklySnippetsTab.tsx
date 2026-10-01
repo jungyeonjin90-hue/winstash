@@ -74,7 +74,23 @@ export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTa
       .sort((a, b) => Number(b.monthNum) - Number(a.monthNum)); // reverse chronological
   }, [recordsWithDateInfo, selectedYear]);
 
+  // Automatically select the most recent record when records load asynchronously or change
+  useEffect(() => {
+    if (records.length > 0) {
+      const latest = records[0];
+      const isCurrentValid = records.some((r) => r.id === selectedRecordId);
+      // If no valid selection or uninitialized, snap to the latest created record
+      if (!selectedRecordId || !isCurrentValid) {
+        setSelectedRecordId(latest.id);
+        const latestInfo = getDetailedRecordDateInfo(latest);
+        setSelectedYear(latestInfo.year);
+        setSelectedMonth(latestInfo.month);
+      }
+    }
+  }, [records, selectedRecordId]);
+
   // 3. Weeks available matching selected Year and Month
+  // Sorted reverse-chronologically (latest week first: Week 4, Week 3, ...)
   const matchingRecords = useMemo(() => {
     const filtered = recordsWithDateInfo.filter((item) => {
       if (selectedYear !== "ALL" && item.dateInfo.year !== selectedYear) return false;
@@ -82,11 +98,11 @@ export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTa
       return true;
     });
     
-    // Sort ascending by week number (Week 1, Week 2, ...)
-    return filtered.sort((a, b) => a.dateInfo.weekNum - b.dateInfo.weekNum);
+    // Sort descending by week number so newest week appears first
+    return filtered.sort((a, b) => b.dateInfo.weekNum - a.dateInfo.weekNum);
   }, [recordsWithDateInfo, selectedYear, selectedMonth]);
 
-  // If currently selected record is not in matching weeks, select the first matching one
+  // If currently selected record is not in matching weeks, select the newest matching one
   useEffect(() => {
     if (matchingRecords.length > 0) {
       const isCurrentInMatching = matchingRecords.some(

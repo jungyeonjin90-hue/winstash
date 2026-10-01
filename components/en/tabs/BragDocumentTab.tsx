@@ -7,13 +7,15 @@ import {
   Check,
   FileSpreadsheet,
   Sparkles,
+  Clock,
+  Calendar,
 } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem } from "@/types/career";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
 import { formatBragSheet } from "@/lib/exportFormatters";
-import { filterRecordsByPeriod, getDetailedRecordDateInfo } from "@/lib/periodUtils";
+import { filterRecordsByPeriod, getDetailedRecordDateInfo, getRecordPeriodInfo } from "@/lib/periodUtils";
 import {
   buildSummaryCacheKey,
   getSummaryCache,
@@ -237,7 +239,26 @@ export function BragDocumentTab({
     const periodSpan = `${selectedYear} ${selectedHalf !== "ALL" ? selectedHalf : ""} ${
       selectedQuarter !== "ALL" ? selectedQuarter : ""
     }`.trim();
-    const text = formatBragSheet(displayedItems, activeJobRole, periodSpan);
+    let text = "";
+    if (displayedItems.length > 0) {
+      text = formatBragSheet(displayedItems, activeJobRole, periodSpan);
+    } else if (filteredRecords.length > 0) {
+      const fallbackItems: SynthesizedBragItem[] = filteredRecords.map((r, idx) => {
+        const periodInfo = getRecordPeriodInfo(r);
+        return {
+          id: r.id,
+          rank: idx + 1,
+          title: r.star_portfolio?.title || "Weekly Accomplishment",
+          metric_summary: r.brag_sheet_item?.metric_summary || "Impact accomplishment logged",
+          business_impact: r.brag_sheet_item?.business_impact || "Contributed to team milestones",
+          quarter_span: r.brag_sheet_item?.quarter || periodInfo.quarterLabel,
+          key_highlights: r.weekly_report?.done || [],
+          nda_tags: r.star_portfolio?.nda_tags || [],
+        };
+      });
+      text = formatBragSheet(fallbackItems, activeJobRole, periodSpan);
+    }
+    if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
       setIsCopied(true);
@@ -357,7 +378,7 @@ export function BragDocumentTab({
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 border-zinc-100 dark:border-zinc-800">
           <button
             onClick={copyBragSheet}
-            disabled={displayedItems.length === 0}
+            disabled={displayedItems.length === 0 && filteredRecords.length === 0}
             className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white shadow-xs hover:shadow-emerald-500/20 transition-all cursor-pointer disabled:cursor-not-allowed"
             title="Copy Golden Standard Performance Review (Notion / Confluence / Docs compatible)"
           >
@@ -477,9 +498,9 @@ export function BragDocumentTab({
         ))}
 
         {displayedItems.length === 0 && (
-          <div className="p-10 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 space-y-3">
+          <>
             {filteredRecords.length === 0 ? (
-              <>
+              <div className="p-10 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 space-y-3">
                 <FileSpreadsheet className="w-9 h-9 mx-auto text-zinc-300 dark:text-zinc-600" />
                 <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                   No weekly logs found for the selected period
@@ -487,33 +508,139 @@ export function BragDocumentTab({
                 <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                   Log your weekly accomplishments in the Weekly Snippets drawer first, or adjust your year/quarter filters.
                 </p>
-              </>
+              </div>
             ) : (
-              <>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                    Ready to Synthesize {filteredRecords.length} Weekly Accomplishments
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
-                    Transform your raw weekly notes into {scale} executive-level XYZ-format metric achievements for your {jobRole} performance review.
-                  </p>
-                </div>
-                <div className="pt-2">
+              <div className="space-y-4">
+                {/* Synthesis Prompt Banner */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-emerald-500 text-white shrink-0 mt-0.5">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                        Showing {filteredRecords.length} Individual Weekly Accomplishments
+                      </h4>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        Below are your recent achievements in XYZ impact format. You can also aggregate them into a {scale}-item executive summary anytime.
+                      </p>
+                    </div>
+                  </div>
                   <button
                     onClick={handleSynthesizeWithAi}
                     disabled={isSynthesizing}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all shrink-0 cursor-pointer disabled:opacity-50"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Generate AI Brag Summary Now</span>
+                    <span>Generate {scale}-Item Summary</span>
                   </button>
                 </div>
-              </>
+
+                {/* Individual Weekly Brag Cards */}
+                <div className="space-y-3.5">
+                  {filteredRecords.map((record, idx) => {
+                    const isLatest = idx === 0;
+                    const dateInfo = getDetailedRecordDateInfo(record);
+                    const periodInfo = getRecordPeriodInfo(record);
+                    const quarter = record.brag_sheet_item?.quarter || periodInfo.quarterLabel;
+                    const metricPunch = record.brag_sheet_item?.metric_summary || "Impact accomplishment logged";
+                    const businessImpact = record.brag_sheet_item?.business_impact || "Contributed to core deliverables";
+                    const highlights = record.weekly_report?.done || [];
+
+                    return (
+                      <div
+                        key={record.id}
+                        className={`bg-white dark:bg-zinc-900 border rounded-2xl shadow-xs transition-all hover:border-emerald-500/40 ${
+                          isLatest
+                            ? "border-emerald-500/50 ring-1 ring-emerald-500/20"
+                            : "border-zinc-200 dark:border-zinc-800"
+                        } ${density === "compact" ? "p-4 space-y-2.5" : "p-5 sm:p-6 space-y-3.5"}`}
+                      >
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center flex-wrap gap-2">
+                            <span className="flex items-center justify-center px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-xs font-bold font-mono">
+                              #{idx + 1}
+                            </span>
+                            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-zinc-400" />
+                              <span>{dateInfo.displayLabel}</span>
+                            </span>
+                            <span className="text-[11px] font-medium text-zinc-400">
+                              {quarter}
+                            </span>
+                            {isLatest && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white flex items-center gap-1 shadow-xs">
+                                <span>🔥</span>
+                                <span>Latest Entry</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 no-print">
+                            <button
+                              onClick={() =>
+                                copySingleItem(
+                                  record.id,
+                                  `• ${metricPunch}\n  - ${businessImpact}`
+                                )
+                              }
+                              className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                              title="Copy achievement bullet"
+                            >
+                              {copiedId === record.id ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Metric Summary (XYZ Impact Formula) */}
+                        <div className="space-y-1">
+                          {density === "detailed" && (
+                            <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                              <Award className="w-3.5 h-3.5" />
+                              <span>XYZ Metric Punch</span>
+                            </div>
+                          )}
+                          <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-50 leading-snug">
+                            {metricPunch}
+                          </h3>
+                        </div>
+
+                        {/* Strategic Value & Impact */}
+                        <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-100 dark:border-zinc-800/80 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100 mr-1.5">
+                            Strategic Impact:
+                          </span>
+                          {businessImpact}
+                        </div>
+
+                        {/* Key Accomplishments (Detailed mode only) */}
+                        {density === "detailed" && highlights.length > 0 && (
+                          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
+                            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1.5">
+                              Key Milestones:
+                            </span>
+                            <ul className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                              {highlights.map((h, hIdx) => (
+                                <li key={hIdx} className="flex items-start gap-1.5">
+                                  <span className="text-emerald-500 font-bold">•</span>
+                                  <span>{h}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

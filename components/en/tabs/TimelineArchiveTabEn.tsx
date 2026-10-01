@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Trash2, ChevronDown, ChevronUp, Archive, Calendar, Pencil, Loader2 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
 import { getDetailedRecordDateInfo } from "@/lib/periodUtils";
@@ -12,7 +12,14 @@ interface TimelineArchiveTabEnProps {
 }
 
 export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: TimelineArchiveTabEnProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(records[0]?.id || null);
+
+  // Automatically expand the latest record when records arrive or change
+  useEffect(() => {
+    if (records.length > 0 && !expandedId) {
+      setExpandedId(records[0].id);
+    }
+  }, [records, expandedId]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMemo, setEditMemo] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -145,9 +152,17 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                  <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400">
-                    {weekLabel}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400">
+                      {weekLabel}
+                    </span>
+                    {record.id === records[0]?.id && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500 text-white flex items-center gap-1 shadow-xs">
+                        <span>🔥</span>
+                        <span>Latest Entry</span>
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[11px] text-zinc-400 font-mono hidden sm:inline-block">
                     (Created: {new Date(record.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
