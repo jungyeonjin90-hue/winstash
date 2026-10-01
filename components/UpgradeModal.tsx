@@ -31,7 +31,6 @@ export function UpgradeModal({
   triggerReason = "header",
   isPro = false,
 }: UpgradeModalProps) {
-  const [isSimulating, setIsSimulating] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
@@ -63,14 +62,6 @@ export function UpgradeModal({
       default:
         return "Unlock unlimited weekly transformations, revisions, and executive syntheses.";
     }
-  };
-
-  const handleSimulatePro = async () => {
-    if (!user) return;
-    setIsSimulating(true);
-    await setUserPlan(user.uid, "pro", Boolean(user.isDemo));
-    setIsSimulating(false);
-    onClose();
   };
 
   const handleCancelSubscription = async () => {
@@ -284,18 +275,6 @@ export function UpgradeModal({
                   1-Click Cancel Anytime
                 </span>
               </div>
-            </div>
-
-            {/* Developer / Demo Simulator Button */}
-            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
-              <span>Test mode preview:</span>
-              <button
-                onClick={handleSimulatePro}
-                disabled={isSimulating}
-                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-              >
-                {isSimulating ? "Activating..." : "Simulate Pro Mode Instantly"}
-              </button>
             </div>
           </>
         )}
