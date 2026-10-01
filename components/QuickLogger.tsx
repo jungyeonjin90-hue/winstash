@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mic, MicOff, Sparkles, CornerDownLeft, RotateCcw, Lightbulb } from "lucide-react";
+import { Mic, MicOff, Sparkles, CornerDownLeft, RotateCcw, Lightbulb, Zap } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { WeekSpan, CareerRecord } from "@/types/career";
 import { getCurrentWeekSpan } from "@/lib/weekUtils";
@@ -19,6 +19,7 @@ interface QuickLoggerProps {
   isLoading: boolean;
   existingRecords?: CareerRecord[];
   creditStatus?: CreditStatus | null;
+  onUpgradeClick?: () => void;
 }
 
 const PRESET_MEMOS = [
@@ -71,6 +72,7 @@ export function QuickLogger({
   isLoading,
   existingRecords = [],
   creditStatus = null,
+  onUpgradeClick,
 }: QuickLoggerProps) {
   const [memo, setMemo] = useState("");
   const [selectedWeek, setSelectedWeek] = useState<WeekSpan>(getCurrentWeekSpan());
@@ -118,6 +120,12 @@ export function QuickLogger({
     if (e) e.preventDefault();
     if (!memo.trim() || isLoading) return;
     if (isListening) stopListening();
+
+    if (creditStatus?.isUserExhausted && !creditStatus?.isPro) {
+      onUpgradeClick?.();
+      return;
+    }
+
     await onTransform(memo.trim(), selectedWeek, undefined, undefined, existingRecord?.id);
   };
 
@@ -232,24 +240,29 @@ export function QuickLogger({
 
           {/* Transform & Submit Button or Out of Credits Warning */}
           <div className="flex items-center gap-2">
-            {creditStatus && (
+            {creditStatus?.isPro ? (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 text-xs font-bold shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
+                <span>Pro 무제한</span>
+              </span>
+            ) : creditStatus && (
               <span className="hidden md:inline-flex text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
                 {creditStatus.isUserExhausted ? (
-                  <span className="text-rose-500 font-semibold">무료 5회 소진</span>
+                  <span className="text-rose-500 font-semibold">무료 5회 소진 (0/{creditStatus.maxUserCredits})</span>
                 ) : (
                   <span>무료 잔여 {creditStatus.remainingCredits}/{creditStatus.maxUserCredits}회</span>
                 )}
               </span>
             )}
 
-            {creditStatus && creditStatus.isUserExhausted ? (
+            {creditStatus && !creditStatus.isPro && creditStatus.isUserExhausted ? (
               <button
                 type="button"
-                disabled
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-zinc-200 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-not-allowed"
-                title="기본 제공 무료 변환 5회를 모두 사용하셨습니다."
+                onClick={onUpgradeClick}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 via-indigo-600 to-violet-600 hover:from-amber-600 hover:to-indigo-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
               >
-                <span>무료 5회 모두 소진</span>
+                <Zap className="w-4 h-4 fill-white" />
+                <span>Pro 업그레이드 ($5.99)</span>
               </button>
             ) : (
               <button

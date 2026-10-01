@@ -19,6 +19,7 @@ import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
 import { Sparkles, CheckCircle2, Layers, Loader2, Globe } from "lucide-react";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 export default function HomeKo() {
   const { user, loading: authLoading } = useAuth();
@@ -26,6 +27,7 @@ export default function HomeKo() {
   const [records, setRecords] = useState<CareerRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
@@ -105,7 +107,7 @@ export default function HomeKo() {
     }
 
     if (!isPro && creditStatus?.isUserExhausted) {
-      alert("⚠️ 기본 제공 무료 변환 5회를 모두 사용하셨습니다.\n\n무제한 이용을 위해 Pro 플랜($5.99/월)으로 업그레이드해주세요.");
+      setIsUpgradeModalOpen(true);
       return;
     }
 
@@ -287,6 +289,7 @@ export default function HomeKo() {
             isLoading={isLoading}
             existingRecords={records}
             creditStatus={creditStatus}
+            onUpgradeClick={() => setIsUpgradeModalOpen(true)}
           />
         </section>
 
@@ -334,6 +337,13 @@ export default function HomeKo() {
         onClose={() => setIsSettingsOpen(false)}
         onDataReset={handleDataReset}
         onDataImported={handleDataImported}
+      />
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        user={user}
+        triggerReason="input"
       />
 
       {toastMessage && (
