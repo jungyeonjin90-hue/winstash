@@ -9,7 +9,8 @@ export const PRO_PRICE_USD = 5.99;
  * Configurable via NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL environment variable.
  */
 export const DEFAULT_LEMON_SQUEEZY_CHECKOUT_URL =
-  process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL || "";
+  process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL ||
+  "https://winstash.lemonsqueezy.com/checkout/buy/4b670dbe-398d-4378-a97a-28b7b450ff88";
 
 /**
  * Builds a dynamic Lemon Squeezy checkout link pre-filled with the authenticated user's ID and email.
