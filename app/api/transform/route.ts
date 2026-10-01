@@ -37,11 +37,12 @@ function buildSystemPromptEn(
   };
 
   const regionDescriptions: Record<RegionCode, string> = {
-    US: "United States & Silicon Valley Tech standards (aggressive impact verbs, clear dollar/percentage ROI, Tier-1 tech norms)",
-    KR: "Korean Pangyo Tech & Global hybrid standards (high-velocity execution, systematic governance, measurable conversion)",
-    EU: "European & UK Tech standards (data privacy compliance, rigorous engineering ethics, scalable architecture)",
-    APAC: "Asia-Pacific & Singapore Tech standards (regional expansion, multilingual market localization, cross-border operations)",
-    GLOBAL: "Global Remote standards (async documentation clarity, autonomous ownership, clear time-zone coordination)",
+    US: "United States professional workplace standards (clear measurable impact, active-voice agency, bottom-line business ROI)",
+    EU: "European professional workplace standards (structured process, ethical & quality compliance, sustainable team impact)",
+    APAC: "Asia-Pacific professional workplace standards (rapid operational execution, systematic governance, cross-cultural collaboration)",
+    LATAM: "Latin American professional workplace standards (relationship-driven execution, agile adaptability, growth initiatives)",
+    GLOBAL: "International global workplace standards (clear documentation, autonomous ownership, universal business clarity)",
+    KR: "Asia-Pacific professional workplace standards (rapid operational execution, systematic governance)",
   };
 
   return `You are WinStash's executive-level Career Intelligence Engine and elite Silicon Valley career coach / Engineering Director.

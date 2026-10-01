@@ -33,7 +33,7 @@ export type ToneManner = 'impact' | 'problem_solving' | 'stability' | 'leadershi
 
 export type SeniorityLevel = 'junior' | 'mid' | 'senior' | 'staff_plus' | 'lead_executive';
 
-export type RegionCode = 'US' | 'KR' | 'EU' | 'APAC' | 'GLOBAL';
+export type RegionCode = 'US' | 'EU' | 'APAC' | 'LATAM' | 'GLOBAL' | 'KR';
 
 export type ImpactCategory = 'efficiency' | 'revenue' | 'quality' | 'leadership' | 'risk_mitigation' | 'other';
 

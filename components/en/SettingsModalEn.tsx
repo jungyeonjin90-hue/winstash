@@ -190,15 +190,16 @@ export function SettingsModalEn({
                 onChange={(e) => onIndustryChange?.(e.target.value || undefined)}
                 className="w-full bg-zinc-50 dark:bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
               >
-                <option value="">Not Specified (General Tech)</option>
-                <option value="fintech">Fintech & Payments</option>
-                <option value="saas">Enterprise B2B SaaS</option>
-                <option value="ecommerce">E-Commerce & Retail Tech</option>
-                <option value="ai_ml">AI, ML & Deep Tech</option>
-                <option value="healthcare">Healthcare & BioTech</option>
-                <option value="consumer">Consumer Mobile & Social Apps</option>
-                <option value="gaming">Gaming & Interactive Media</option>
-                <option value="crypto">Web3, Blockchain & Crypto</option>
+                <option value="">Not Specified (General Professional)</option>
+                <option value="tech_software">IT, Software & Internet</option>
+                <option value="finance_banking">Finance, Banking & Insurance</option>
+                <option value="retail_consumer">Retail, E-Commerce & Consumer Goods</option>
+                <option value="manufacturing_industrial">Manufacturing, Hardware & Automotive</option>
+                <option value="healthcare_pharma">Healthcare, Medicine & Biotech</option>
+                <option value="professional_services">Consulting, Agency & Professional Services</option>
+                <option value="media_entertainment">Media, Entertainment & Content</option>
+                <option value="education_public">Education, Research & Public Sector</option>
+                <option value="logistics_realestate">Logistics, Real Estate & Hospitality</option>
                 <option value="other">Other Industry</option>
               </select>
             </div>
@@ -215,11 +216,11 @@ export function SettingsModalEn({
                 className="w-full bg-zinc-50 dark:bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
               >
                 <option value="">Not Specified (Global Standard)</option>
-                <option value="US">United States (Silicon Valley & US Tech)</option>
-                <option value="KR">Korea (Pangyo & Korea Tech)</option>
-                <option value="EU">Europe (UK, Germany, EU Tech)</option>
-                <option value="APAC">Asia-Pacific (Singapore, Tokyo, APAC)</option>
-                <option value="GLOBAL">Global Remote / Multi-region</option>
+                <option value="US">United States</option>
+                <option value="EU">Europe</option>
+                <option value="APAC">Asia-Pacific</option>
+                <option value="LATAM">Latin America</option>
+                <option value="GLOBAL">Global / Worldwide</option>
               </select>
             </div>
           </div>
