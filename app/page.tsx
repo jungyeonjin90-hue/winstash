@@ -12,7 +12,6 @@ import {
   subscribeUserRecords,
   saveUserRecordToFirestore,
   deleteUserRecordFromFirestore,
-  deleteAllUserRecordsFromFirestore,
   saveUserPersonaToFirestore,
 } from "@/lib/firestoreService";
 import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCacheService";
@@ -20,7 +19,6 @@ import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, SeniorityLevel, RegionCode } from "@/types/career";
-import { INITIAL_CAREER_RECORDS_EN } from "@/lib/initialDataEn";
 import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
 
@@ -319,21 +317,6 @@ export default function Home() {
     }
   };
 
-  const handleDataReset = async () => {
-    setRecords([]);
-    if (user) {
-      await deleteAllUserRecordsFromFirestore(user.uid, Boolean(user.isDemo));
-      await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
-    }
-    showToast("All records successfully reset in cloud database.");
-  };
-
-  const handleDataImported = async () => {
-    if (user) {
-      await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
-    }
-    showToast("Backup data successfully imported.");
-  };
 
   // 1. Auth loading state
   if (authLoading) {
@@ -451,8 +434,6 @@ export default function Home() {
       <SettingsModalEn
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onDataReset={handleDataReset}
-        onDataImported={handleDataImported}
         jobRole={jobRole}
         onJobRoleChange={handleJobRoleChange}
         seniorityLevel={seniorityLevel}
