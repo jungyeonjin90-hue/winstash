@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import {
   signInWithPopup,
   signOut as firebaseSignOut,
@@ -37,6 +37,8 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 const DEMO_USER_STORAGE_KEY = "career_pulse_demo_user";
+const LAST_ACTIVITY_KEY = "winstash_last_activity_timestamp";
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 function getStoredDemoUser(): AppUser | null {
   if (typeof window === "undefined") return null;
@@ -52,15 +54,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(() => getStoredDemoUser());
   const [loading, setLoading] = useState<boolean>(() => isFirebaseConfigured);
 
+  const signOut = useCallback(async () => {
+    try {
+      trackEvent("user_signed_out");
+      resetUser();
+      if (isFirebaseConfigured && auth) {
+        await firebaseSignOut(auth);
+      }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(DEMO_USER_STORAGE_KEY);
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
+      }
+      setUser(null);
+    } catch (err: unknown) {
+      console.error("Sign out error:", err);
+    }
+  }, []);
+
+  const signOutRef = useRef(signOut);
   useEffect(() => {
-    // Firebase가 설정된 경우 Firebase Auth 상태 구독
+    signOutRef.current = signOut;
+  }, [signOut]);
+
+  // 1. Firebase Auth state listener
+  useEffect(() => {
     if (isFirebaseConfigured && auth) {
       const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
         if (fbUser) {
           setUser({
             uid: fbUser.uid,
             email: fbUser.email,
-            displayName: fbUser.displayName || fbUser.email?.split("@")[0] || "사용자",
+            displayName: fbUser.displayName || fbUser.email?.split("@")[0] || "User",
             photoURL: fbUser.photoURL,
             isDemo: false,
           });
@@ -70,7 +94,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           trackEvent("user_authenticated", { method: "google" });
         } else {
-          // Firebase 유저가 없으면 데모 유저 확인
           setUser(getStoredDemoUser());
         }
         setLoading(false);
@@ -80,10 +103,94 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // 2. 30-Minute Inactivity Auto Sign-Out System
+  useEffect(() => {
+    if (!user) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
+      }
+      return;
+    }
+
+    const updateLastActivity = () => {
+      try {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+      } catch {
+        // ignore quota errors
+      }
+    };
+
+    // Ensure timestamp exists immediately upon login
+    if (!localStorage.getItem(LAST_ACTIVITY_KEY)) {
+      updateLastActivity();
+    }
+
+    let lastWriteTime = Date.now();
+    const handleUserActivity = () => {
+      const now = Date.now();
+      // Throttle localStorage updates to once every 5 seconds to preserve high performance
+      if (now - lastWriteTime > 5000) {
+        lastWriteTime = now;
+        updateLastActivity();
+      }
+    };
+
+    const checkInactivity = () => {
+      const stored = localStorage.getItem(LAST_ACTIVITY_KEY);
+      const lastActivity = stored ? Number(stored) : Date.now();
+      const elapsed = Date.now() - lastActivity;
+
+      if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(LAST_ACTIVITY_KEY);
+        }
+        signOutRef.current?.();
+        alert(
+          "보안을 위해 30분 동안 활동이 없어 자동으로 로그아웃되었습니다.\n(Automatically signed out due to 30 minutes of inactivity.)"
+        );
+      }
+    };
+
+    // Activity tracking events
+    const events: (keyof WindowEventMap)[] = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+    ];
+
+    events.forEach((evt) => {
+      window.addEventListener(evt, handleUserActivity, { passive: true });
+    });
+
+    // Check inactivity on visibility change and window focus (e.g. user returns to inactive tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkInactivity();
+      }
+    };
+
+    window.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", checkInactivity);
+
+    // Periodic background evaluation every 15 seconds
+    const intervalId = setInterval(checkInactivity, 15000);
+
+    return () => {
+      events.forEach((evt) => {
+        window.removeEventListener(evt, handleUserActivity);
+      });
+      window.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", checkInactivity);
+      clearInterval(intervalId);
+    };
+  }, [user]);
+
   const signInWithGoogle = async () => {
     if (!isFirebaseConfigured || !auth) {
       throw new Error(
-        "Firebase 환경 변수가 설정되지 않았습니다. .env.local 파일을 확인하거나 데모 모드로 체험해 보세요."
+        "Firebase configuration is missing. Please check .env.local or try Demo mode."
       );
     }
 
@@ -102,30 +209,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const demoUser: AppUser = {
       uid: "demo-user-1234",
       email: "demo.pro@careerpulse.io",
-      displayName: "김커리어 (체험 계정)",
+      displayName: "Demo User",
       photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces",
       isDemo: true,
     };
     try {
       localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(demoUser));
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
     } catch (e) {
       console.error(e);
     }
     setUser(demoUser);
-  };
-
-  const signOut = async () => {
-    try {
-      trackEvent("user_signed_out");
-      resetUser();
-      if (isFirebaseConfigured && auth) {
-        await firebaseSignOut(auth);
-      }
-      localStorage.removeItem(DEMO_USER_STORAGE_KEY);
-      setUser(null);
-    } catch (err: unknown) {
-      console.error("Sign out error:", err);
-    }
   };
 
   return (
