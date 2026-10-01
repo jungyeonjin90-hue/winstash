@@ -233,7 +233,7 @@ export default function HomeKo() {
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950">
       {/* Top Banner to English Main */}
       <div className="bg-indigo-600 text-white text-xs py-1.5 px-4 text-center font-medium flex items-center justify-center gap-2">
-        <span>CareerPulse 주력 개발 버전은 <strong>글로벌 영문 버전</strong>입니다.</span>
+        <span>WinStash 주력 개발 버전은 <strong>글로벌 영문 버전</strong>입니다.</span>
         <Link href="/" className="underline hover:text-indigo-100 flex items-center gap-1 font-bold">
           <Globe className="w-3 h-3" /> Go to Global (EN)
         </Link>
@@ -324,7 +324,7 @@ export default function HomeKo() {
       </main>
 
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400">
-        <p>© 2026 CareerPulse. 1-Input 3-Output 커리어 운영체제.</p>
+        <p>© 2026 WinStash. 1-Input 3-Output 커리어 운영체제.</p>
       </footer>
 
       <SettingsModal

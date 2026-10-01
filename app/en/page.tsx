@@ -12,7 +12,7 @@ export default function EnRedirect() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-500 text-sm">
-      Redirecting to Global CareerPulse...
+      Redirecting to WinStash...
     </div>
   );
 }

@@ -249,7 +249,7 @@ export function LandingPageEn() {
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg tracking-tight">WinStash</span>
                 <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
-                  Global Edition
+                  3-Way Career OS
                 </span>
               </div>
             </div>
