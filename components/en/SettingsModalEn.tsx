@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, Database, Download, Upload, RotateCcw, Sparkles } from "lucide-react";
-import { JobRole } from "@/types/career";
+import { X, Database, Download, Upload, RotateCcw, Sparkles, UserCircle, Briefcase, Award, Building, Globe } from "lucide-react";
+import { JobRole, SeniorityLevel, RegionCode } from "@/types/career";
 import {
   exportRecordsAsJSON,
   importRecordsFromJSON,
@@ -17,6 +17,12 @@ interface SettingsModalEnProps {
   onDataImported: () => void;
   jobRole?: JobRole;
   onJobRoleChange?: (role: JobRole) => void;
+  seniorityLevel?: SeniorityLevel;
+  onSeniorityLevelChange?: (level: SeniorityLevel | undefined) => void;
+  industry?: string;
+  onIndustryChange?: (industry: string | undefined) => void;
+  region?: RegionCode;
+  onRegionChange?: (region: RegionCode | undefined) => void;
 }
 
 export function SettingsModalEn({
@@ -26,6 +32,12 @@ export function SettingsModalEn({
   onDataImported,
   jobRole,
   onJobRoleChange,
+  seniorityLevel,
+  onSeniorityLevelChange,
+  industry,
+  onIndustryChange,
+  region,
+  onRegionChange,
 }: SettingsModalEnProps) {
   const { user } = useAuth();
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -114,27 +126,102 @@ export function SettingsModalEn({
           </p>
         </div>
 
-        {/* Section 1.5: Persona Configuration */}
-        <div className="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-          <div className="flex items-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-            <span>Primary Job Role</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Your job role determines the focus and structure of your synthesized Brag Document and STAR Portfolio. Changing this will only affect newly generated summaries, keeping your past history intact.
+        {/* Section 1.5: Persona & Career Profile Configuration */}
+        <div className="space-y-4 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+              <UserCircle className="w-4 h-4 text-indigo-500" />
+              <span>Career Profile & Personalization (Optional)</span>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Optionally specify your seniority, industry domain, and target region. AI tailors metrics, vocabulary, and scope accordingly. You can leave them unspecified anytime.
             </p>
-            <select
-              value={jobRole || "engineering"}
-              onChange={(e) => onJobRoleChange?.(e.target.value as JobRole)}
-              className="bg-zinc-50 dark:bg-zinc-950 px-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer max-w-xs"
-            >
-              <option value="engineering">Engineering (Software, QA, Data)</option>
-              <option value="product">Product Management</option>
-              <option value="design">Design (UX/UI, Research)</option>
-              <option value="marketing">Marketing (Growth, Brand)</option>
-              <option value="sales">Sales & BD</option>
-              <option value="operations">Operations (HR, Finance)</option>
-            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* 1. Job Role */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                <Briefcase className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Primary Job Role</span>
+              </label>
+              <select
+                value={jobRole || "engineering"}
+                onChange={(e) => onJobRoleChange?.(e.target.value as JobRole)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="engineering">Engineering (Software, QA, Data)</option>
+                <option value="product">Product Management (PM, PO)</option>
+                <option value="design">Product Design (UX/UI, Research)</option>
+                <option value="marketing">Growth & Marketing</option>
+                <option value="sales">Sales & BD</option>
+                <option value="operations">BizOps & Finance</option>
+              </select>
+            </div>
+
+            {/* 2. Seniority Level */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                <Award className="w-3.5 h-3.5 text-amber-500" />
+                <span>Seniority Level <span className="text-[10px] text-zinc-400 font-normal">(Optional)</span></span>
+              </label>
+              <select
+                value={seniorityLevel || ""}
+                onChange={(e) => onSeniorityLevelChange?.((e.target.value as SeniorityLevel) || undefined)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="">Not Specified (General Professional)</option>
+                <option value="junior">Junior (1–3 years)</option>
+                <option value="mid">Mid-Level (4–7 years)</option>
+                <option value="senior">Senior (8–11 years)</option>
+                <option value="staff_plus">Staff / Principal (12+ years)</option>
+                <option value="lead_executive">Lead / Director / Executive</option>
+              </select>
+            </div>
+
+            {/* 3. Industry Domain */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                <Building className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Industry Domain <span className="text-[10px] text-zinc-400 font-normal">(Optional)</span></span>
+              </label>
+              <select
+                value={industry || ""}
+                onChange={(e) => onIndustryChange?.(e.target.value || undefined)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="">Not Specified (General Tech)</option>
+                <option value="fintech">Fintech & Payments</option>
+                <option value="saas">Enterprise B2B SaaS</option>
+                <option value="ecommerce">E-Commerce & Retail Tech</option>
+                <option value="ai_ml">AI, ML & Deep Tech</option>
+                <option value="healthcare">Healthcare & BioTech</option>
+                <option value="consumer">Consumer Mobile & Social Apps</option>
+                <option value="gaming">Gaming & Interactive Media</option>
+                <option value="crypto">Web3, Blockchain & Crypto</option>
+                <option value="other">Other Industry</option>
+              </select>
+            </div>
+
+            {/* 4. Target Region */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                <Globe className="w-3.5 h-3.5 text-blue-500" />
+                <span>Target Region <span className="text-[10px] text-zinc-400 font-normal">(Optional)</span></span>
+              </label>
+              <select
+                value={region || ""}
+                onChange={(e) => onRegionChange?.((e.target.value as RegionCode) || undefined)}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="">Not Specified (Global Standard)</option>
+                <option value="US">United States (Silicon Valley & US Tech)</option>
+                <option value="KR">Korea (Pangyo & Korea Tech)</option>
+                <option value="EU">Europe (UK, Germany, EU Tech)</option>
+                <option value="APAC">Asia-Pacific (Singapore, Tokyo, APAC)</option>
+                <option value="GLOBAL">Global Remote / Multi-region</option>
+              </select>
+            </div>
           </div>
         </div>
 

@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { TransformationOutput, JobRole, ToneManner } from "@/types/career";
+import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode } from "@/types/career";
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
  * Benchmarked against Google XYZ formula, Amazon STAR guidelines, and Indeed/LinkedIn standards.
  */
-function buildSystemPromptEn(jobRole: JobRole = "engineering", toneManner: ToneManner = "impact"): string {
+function buildSystemPromptEn(
+  jobRole: JobRole = "engineering",
+  toneManner: ToneManner = "impact",
+  seniorityLevel?: SeniorityLevel,
+  industry?: string,
+  region?: RegionCode
+): string {
   const roleDescriptions: Record<JobRole, string> = {
     engineering: "Staff Software Engineer / Tech Lead perspective (tech stack, latency, distributed architecture, p99 metrics, refactoring & technical debt paydown)",
     product: "Senior / Staff Product Manager (PM/PO) perspective (user problem framing, funnel conversion rate CVR, feature shipping velocity, roadmap governance, business ROI)",
@@ -22,11 +28,28 @@ function buildSystemPromptEn(jobRole: JobRole = "engineering", toneManner: ToneM
     leadership: "Cross-functional Leadership & Ownership tone (stakeholder alignment, organizational velocity, mentorship, proactive ownership)",
   };
 
+  const seniorityDescriptions: Record<SeniorityLevel, string> = {
+    junior: "Junior Professional level (1–3 years experience: high learning agility, execution fidelity, task velocity, growth momentum)",
+    mid: "Mid-Level Professional level (4–7 years experience: autonomous execution, feature ownership, cross-functional collaboration)",
+    senior: "Senior Professional level (8–11 years experience: strategic project ownership, technical architecture, mentoring, business ROI)",
+    staff_plus: "Staff / Principal / Fellow level (12+ years experience: organizational multiplier, multi-team architecture, company-wide technical strategy)",
+    lead_executive: "Director / VP / Executive level (organizational leadership, headcount & budget ROI, executive skip-level reporting, strategic vision)",
+  };
+
+  const regionDescriptions: Record<RegionCode, string> = {
+    US: "United States & Silicon Valley Tech standards (aggressive impact verbs, clear dollar/percentage ROI, Tier-1 tech norms)",
+    KR: "Korean Pangyo Tech & Global hybrid standards (high-velocity execution, systematic governance, measurable conversion)",
+    EU: "European & UK Tech standards (data privacy compliance, rigorous engineering ethics, scalable architecture)",
+    APAC: "Asia-Pacific & Singapore Tech standards (regional expansion, multilingual market localization, cross-border operations)",
+    GLOBAL: "Global Remote standards (async documentation clarity, autonomous ownership, clear time-zone coordination)",
+  };
+
   return `You are WinStash's executive-level Career Intelligence Engine and elite Silicon Valley career coach / Engineering Director.
 Your mission is to transform messy, colloquial, low-level task dumps into crisp, high-impact career assets that managers, directors, and promotion committees respect.
 
 [Target Role Persona]: ${roleDescriptions[jobRole] || roleDescriptions.engineering}
 [Target Tone & Manner]: ${toneDescriptions[toneManner] || toneDescriptions.impact}
+${seniorityLevel ? `[Target Seniority Level]: ${seniorityDescriptions[seniorityLevel] || seniorityLevel}\n` : ""}${industry ? `[Industry Domain Context]: ${industry.toUpperCase()} sector conventions and domain terminology\n` : ""}${region ? `[Regional Career Standard]: ${regionDescriptions[region] || region}\n` : ""}
 
 ### THE 4 EXECUTIVE TRANSFORMATION RULES:
 
@@ -312,6 +335,9 @@ export async function POST(req: NextRequest) {
       raw_memo,
       job_role = "engineering",
       tone_manner = "impact",
+      seniority_level,
+      industry,
+      region,
       provider = "gemini",
       isCreditExhausted = false,
       isGlobalCapExhausted = false,
@@ -342,7 +368,13 @@ export async function POST(req: NextRequest) {
         ? process.env.GEMINI_API_KEY
         : process.env.OPENAI_API_KEY;
 
-    const prompt = buildSystemPromptEn(job_role as JobRole, tone_manner as ToneManner);
+    const prompt = buildSystemPromptEn(
+      job_role as JobRole,
+      tone_manner as ToneManner,
+      seniority_level as SeniorityLevel | undefined,
+      industry,
+      region as RegionCode | undefined
+    );
     const userPrefix = "[User's Friday Raw Brain Dump Notes]:\n";
 
     // 1. Google Gemini Ultra Low-Cost Model (gemini-3.1-flash-lite)

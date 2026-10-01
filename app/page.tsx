@@ -19,7 +19,7 @@ import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCa
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
-import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
+import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, SeniorityLevel, RegionCode } from "@/types/career";
 import { INITIAL_CAREER_RECORDS_EN } from "@/lib/initialDataEn";
 import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
@@ -35,6 +35,9 @@ export default function Home() {
   const [isClientLoaded, setIsClientLoaded] = useState(false);
   const [jobRole, setJobRole] = useState<JobRole>(() => getSettings().jobRole || "engineering");
   const [toneManner, setToneManner] = useState<ToneManner>(() => getSettings().toneManner || "impact");
+  const [seniorityLevel, setSeniorityLevel] = useState<SeniorityLevel | undefined>(() => getSettings().seniorityLevel);
+  const [industry, setIndustry] = useState<string | undefined>(() => getSettings().industry);
+  const [region, setRegion] = useState<RegionCode | undefined>(() => getSettings().region);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isPersonaLoaded, setIsPersonaLoaded] = useState(false);
 
@@ -51,8 +54,18 @@ export default function Home() {
       if (persona) {
         setJobRole(persona.jobRole);
         setToneManner(persona.toneManner);
+        if (persona.seniorityLevel) setSeniorityLevel(persona.seniorityLevel);
+        if (persona.industry) setIndustry(persona.industry);
+        if (persona.region) setRegion(persona.region);
         const current = getSettings();
-        saveSettings({ ...current, jobRole: persona.jobRole, toneManner: persona.toneManner });
+        saveSettings({
+          ...current,
+          jobRole: persona.jobRole,
+          toneManner: persona.toneManner,
+          seniorityLevel: persona.seniorityLevel,
+          industry: persona.industry,
+          region: persona.region,
+        });
       } else {
         setShowOnboarding(true);
       }
@@ -98,7 +111,11 @@ export default function Home() {
     const current = getSettings();
     saveSettings({ ...current, jobRole: role });
     if (user) {
-      saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), role, toneManner);
+      saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), role, toneManner, {
+        seniorityLevel,
+        industry,
+        region,
+      });
     }
   };
 
@@ -107,7 +124,50 @@ export default function Home() {
     const current = getSettings();
     saveSettings({ ...current, toneManner: tone });
     if (user) {
-      saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, tone);
+      saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, tone, {
+        seniorityLevel,
+        industry,
+        region,
+      });
+    }
+  };
+
+  const handleSeniorityChange = (level: SeniorityLevel | undefined) => {
+    setSeniorityLevel(level);
+    const current = getSettings();
+    saveSettings({ ...current, seniorityLevel: level });
+    if (user) {
+      saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, toneManner, {
+        seniorityLevel: level,
+        industry,
+        region,
+      });
+    }
+  };
+
+  const handleIndustryChange = (ind: string | undefined) => {
+    setIndustry(ind);
+    const current = getSettings();
+    saveSettings({ ...current, industry: ind });
+    if (user) {
+      saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, toneManner, {
+        seniorityLevel,
+        industry: ind,
+        region,
+      });
+    }
+  };
+
+  const handleRegionChange = (reg: RegionCode | undefined) => {
+    setRegion(reg);
+    const current = getSettings();
+    saveSettings({ ...current, region: reg });
+    if (user) {
+      saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, toneManner, {
+        seniorityLevel,
+        industry,
+        region: reg,
+      });
     }
   };
 
@@ -146,6 +206,9 @@ export default function Home() {
           raw_memo: rawMemo,
           job_role: role,
           tone_manner: tone,
+          seniority_level: seniorityLevel,
+          industry,
+          region,
           provider: settings.provider,
           isCreditExhausted: isAdmin ? false : Boolean(creditStatus?.isUserExhausted),
           isGlobalExhausted: isAdmin ? false : Boolean(creditStatus?.isGlobalExhausted),
@@ -392,6 +455,12 @@ export default function Home() {
         onDataImported={handleDataImported}
         jobRole={jobRole}
         onJobRoleChange={handleJobRoleChange}
+        seniorityLevel={seniorityLevel}
+        onSeniorityLevelChange={handleSeniorityChange}
+        industry={industry}
+        onIndustryChange={handleIndustryChange}
+        region={region}
+        onRegionChange={handleRegionChange}
       />
 
       {/* Onboarding Modal */}
