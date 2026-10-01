@@ -105,7 +105,7 @@ export async function getSummaryCache(
 }
 
 /**
- * Saves synthesized summary into Firestore and LocalStorage
+ * Saves synthesized summary into Firestore and LocalStorage, and tracks the latest entry per type
  */
 export async function saveSummaryCache(
   userId: string,
@@ -119,6 +119,11 @@ export async function saveSummaryCache(
         `${LOCAL_STORAGE_CACHE_PREFIX}${userId}_${entry.cacheKey}`,
         JSON.stringify(entry)
       );
+      // Track as latest generated summary for this type
+      localStorage.setItem(
+        `${LOCAL_STORAGE_CACHE_PREFIX}${userId}_latest_${entry.type}`,
+        JSON.stringify(entry)
+      );
     } catch (e) {
       console.warn("Local storage cache write failed:", e);
     }
@@ -129,10 +134,50 @@ export async function saveSummaryCache(
     try {
       const docRef = doc(db, "users", userId, "summary_cache", entry.cacheKey);
       await setDoc(docRef, entry);
+
+      // Track as latest generated summary in Firestore
+      const latestDocRef = doc(db, "users", userId, "summary_cache", `latest_${entry.type}`);
+      await setDoc(latestDocRef, entry);
     } catch (e) {
       console.error("Firestore summary cache write failed:", e);
     }
   }
+}
+
+/**
+ * Retrieves the most recently generated summary cache entry for a given type (brag | star)
+ */
+export async function getLatestSummaryCache(
+  userId: string,
+  isDemo: boolean,
+  type: "brag" | "star"
+): Promise<SummaryCacheEntry | null> {
+  // 1. Check LocalStorage first for instant latency
+  if (typeof window !== "undefined") {
+    try {
+      const localData = localStorage.getItem(`${LOCAL_STORAGE_CACHE_PREFIX}${userId}_latest_${type}`);
+      if (localData) {
+        return JSON.parse(localData) as SummaryCacheEntry;
+      }
+    } catch (e) {
+      console.warn("Failed to read latest summary cache from localStorage:", e);
+    }
+  }
+
+  // 2. Fallback to Firestore
+  if (isFirebaseConfigured && db && !isDemo && userId) {
+    try {
+      const docRef = doc(db, "users", userId, "summary_cache", `latest_${type}`);
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        return snapshot.data() as SummaryCacheEntry;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch latest summary cache from Firestore:", e);
+    }
+  }
+
+  return null;
 }
 
 /**

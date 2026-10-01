@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   ShieldCheck,
   Eye,
@@ -20,6 +20,7 @@ import { filterRecordsByPeriod, getDetailedRecordDateInfo } from "@/lib/periodUt
 import {
   buildSummaryCacheKey,
   getSummaryCache,
+  getLatestSummaryCache,
   saveSummaryCache,
   isSummaryStale,
   isCacheValid,
@@ -74,6 +75,32 @@ export function StarResumeTab({
       }
     }
   }, [records, latestRecordYear, selectedYear]);
+
+  // Automatically restore settings from the most recently generated AI summary
+  const hasRestoredRef = useRef(false);
+  useEffect(() => {
+    if (records.length === 0 || !userId || hasRestoredRef.current) return;
+
+    const restoreLatestSummary = async () => {
+      try {
+        const latest = await getLatestSummaryCache(userId, isDemo, "star");
+        if (latest && Array.isArray(latest.items) && latest.items.length > 0) {
+          hasRestoredRef.current = true;
+          if (latest.year) setSelectedYear(latest.year);
+          if (latest.half) setSelectedHalf(latest.half);
+          if (latest.scope) setScale(latest.scope);
+          if (latest.toneManner && onToneMannerChange) {
+            onToneMannerChange(latest.toneManner);
+          }
+          setCachedEntry(latest);
+        }
+      } catch (err) {
+        console.warn("Failed to restore latest star portfolio:", err);
+      }
+    };
+
+    restoreLatestSummary();
+  }, [records.length, userId, isDemo, onToneMannerChange]);
 
   // Professional Scope (3 | 5 | 10) & View Density ("detailed" | "compact")
   const [scale, setScale] = useState<3 | 5 | 10>(3);
@@ -268,25 +295,8 @@ export function StarResumeTab({
   };
 
   const copyStarPortfolio = async () => {
-    let text = "";
-    if (displayedItems.length > 0) {
-      text = formatStarPortfolio(displayedItems, activeJobRole);
-    } else if (filteredRecords.length > 0) {
-      const fallbackItems: SynthesizedStarItem[] = filteredRecords.map((r, idx) => ({
-        id: r.id,
-        rank: idx + 1,
-        title: r.star_portfolio?.title || "Career Accomplishment Story",
-        period_span: r.target_week?.label || getDetailedRecordDateInfo(r).displayLabel,
-        situation: r.star_portfolio?.situation || "",
-        task: r.star_portfolio?.task || "",
-        action: r.star_portfolio?.action || "",
-        result: r.star_portfolio?.result || "",
-        nda_tags: r.star_portfolio?.nda_tags || ["Confidential"],
-      }));
-      const itemsToFormat = isNdaMasked ? fallbackItems.map((i) => maskSynthesizedStarItem(i, "en")) : fallbackItems;
-      text = formatStarPortfolio(itemsToFormat, activeJobRole);
-    }
-    if (!text) return;
+    if (displayedItems.length === 0) return;
+    const text = formatStarPortfolio(displayedItems, activeJobRole);
     try {
       await navigator.clipboard.writeText(text);
       setIsAllCopied(true);
@@ -413,7 +423,7 @@ export function StarResumeTab({
 
           <button
             onClick={copyStarPortfolio}
-            disabled={displayedItems.length === 0 && filteredRecords.length === 0}
+            disabled={displayedItems.length === 0}
             className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white shadow-xs hover:shadow-amber-500/20 transition-all cursor-pointer disabled:cursor-not-allowed"
             title="Copy ATS-optimized STAR Career Portfolio case studies"
           >
@@ -566,9 +576,9 @@ export function StarResumeTab({
         ))}
 
         {displayedItems.length === 0 && (
-          <>
+          <div className="p-10 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 space-y-4">
             {filteredRecords.length === 0 ? (
-              <div className="p-10 text-center rounded-2xl bg-white dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 space-y-3">
+              <>
                 <Briefcase className="w-9 h-9 mx-auto text-zinc-300 dark:text-zinc-600" />
                 <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                   No weekly logs found for the selected period
@@ -576,160 +586,43 @@ export function StarResumeTab({
                 <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                   Log your weekly accomplishments in the Weekly Snippets drawer first, or adjust your year/half filters.
                 </p>
-              </div>
+              </>
             ) : (
-              <div className="space-y-4">
-                {/* Synthesis Prompt Banner */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                        Showing {filteredRecords.length} Individual Weekly Career Stories (STAR Format)
-                      </h4>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                        Below are your recent accomplishments structured into STAR case studies. You can also aggregate them into a {scale}-story executive portfolio anytime.
-                      </p>
-                    </div>
+              <>
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400 shadow-xs">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div className="space-y-1.5 max-w-md mx-auto">
+                  <div className="flex items-center justify-center flex-wrap gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">{selectedYear}</span>
+                    {selectedHalf !== "ALL" ? (
+                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">{selectedHalf}</span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800">Full Year</span>
+                    )}
+                    <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-bold">{scale} Stories</span>
+                    <span className="px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300">{toneManner}</span>
                   </div>
+                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    No Career Portfolio Generated Yet for this Selection
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Ready to aggregate {filteredRecords.length} weekly accomplishment notes into {scale} polished STAR resume case studies.
+                  </p>
+                </div>
+                <div className="pt-2">
                   <button
                     onClick={handleSynthesizeWithAi}
                     disabled={isSynthesizing}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-all shrink-0 cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/20 transition-all cursor-pointer disabled:opacity-50"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Generate {scale}-Story Portfolio</span>
+                    <span>Generate AI STAR Case Studies ({filteredRecords.length} Logs)</span>
                   </button>
                 </div>
-
-                {/* Individual Weekly STAR Cards */}
-                <div className="space-y-4">
-                  {filteredRecords.map((record, idx) => {
-                    const isLatest = idx === 0;
-                    const dateInfo = getDetailedRecordDateInfo(record);
-                    const rawItem: SynthesizedStarItem = {
-                      id: record.id,
-                      rank: idx + 1,
-                      title: record.star_portfolio?.title || "Career Accomplishment Story",
-                      period_span: record.target_week?.label || dateInfo.displayLabel,
-                      situation: record.star_portfolio?.situation || "",
-                      task: record.star_portfolio?.task || "",
-                      action: record.star_portfolio?.action || "",
-                      result: record.star_portfolio?.result || "",
-                      nda_tags: record.star_portfolio?.nda_tags || ["Confidential"],
-                    };
-                    const item = isNdaMasked ? maskSynthesizedStarItem(rawItem, "en") : rawItem;
-
-                    return (
-                      <div
-                        key={record.id}
-                        className={`bg-white dark:bg-zinc-900 border rounded-2xl shadow-xs transition-all hover:border-amber-500/40 ${
-                          isLatest
-                            ? "border-amber-500/50 ring-1 ring-amber-500/20"
-                            : "border-zinc-200 dark:border-zinc-800"
-                        } ${density === "compact" ? "p-4 space-y-3" : "p-5 sm:p-6 space-y-4"}`}
-                      >
-                        {/* Headline Header */}
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center flex-wrap gap-2">
-                              <span className="flex items-center justify-center px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 text-xs font-bold font-mono">
-                                #{idx + 1}
-                              </span>
-                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-zinc-400" />
-                                <span>{item.period_span}</span>
-                              </span>
-                              {isLatest && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white flex items-center gap-1 shadow-xs">
-                                  <span>🔥</span>
-                                  <span>Latest Entry</span>
-                                </span>
-                              )}
-                            </div>
-                            <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-50 leading-snug pt-1">
-                              {item.title}
-                            </h3>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 no-print">
-                            <button
-                              onClick={() =>
-                                copySingleItem(
-                                  record.id,
-                                  formatSingleStarItem(item)
-                                )
-                              }
-                              className="p-1.5 rounded-lg text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                              title="Copy STAR Story"
-                            >
-                              {copiedId === record.id ? (
-                                <Check className="w-3.5 h-3.5 text-amber-500" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* STAR Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                          <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800/80 space-y-1">
-                            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
-                              Situation
-                            </span>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                              {item.situation}
-                            </p>
-                          </div>
-                          <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800/80 space-y-1">
-                            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
-                              Task
-                            </span>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                              {item.task}
-                            </p>
-                          </div>
-                          <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800/80 space-y-1">
-                            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
-                              Action
-                            </span>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                              {item.action}
-                            </p>
-                          </div>
-                          <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800/80 space-y-1">
-                            <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
-                              Result
-                            </span>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                              {item.result}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Tags */}
-                        {item.nda_tags && item.nda_tags.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
-                            {item.nda_tags.map((tag, tIdx) => (
-                              <span
-                                key={tIdx}
-                                className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-900/40"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              </>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
