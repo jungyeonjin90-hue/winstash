@@ -76,18 +76,18 @@ export function UpgradeModal({
   const handleCancelSubscription = async () => {
     if (!user) return;
     const confirmed = confirm(
-      "정말 Pro 멤버십을 해지하시겠습니까?\n\n해지 시 무료 플랜(기본 5회 입력, 3회 종합)으로 변경됩니다."
+      "Are you sure you want to cancel your Pro membership?\n\nOnce cancelled, your account will revert to the Free plan (5 inputs, 3 syntheses)."
     );
     if (!confirmed) return;
 
     setIsCancelling(true);
     try {
       await setUserPlan(user.uid, "free", Boolean(user.isDemo));
-      alert("Pro 구독이 성공적으로 해지되었습니다. 무료 플랜으로 전환되었습니다.");
+      alert("Your Pro membership has been cancelled. Your account has been reverted to the Free plan.");
       onClose();
     } catch (err) {
       console.error("Subscription cancellation error:", err);
-      alert("구독 해지 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      alert("Failed to cancel subscription. Please try again or visit the Lemon Squeezy portal.");
     } finally {
       setIsCancelling(false);
     }
@@ -182,7 +182,7 @@ export function UpgradeModal({
               >
                 <AlertTriangle className="w-4 h-4" />
                 <span>
-                  {isCancelling ? "해지 처리 중..." : "Cancel Pro Subscription (구독 해지)"}
+                  {isCancelling ? "Cancelling..." : "Cancel Pro Subscription"}
                 </span>
               </button>
             </div>

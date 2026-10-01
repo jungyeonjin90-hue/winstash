@@ -139,7 +139,7 @@ export function SettingsModalEn({
                 }}
                 className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors cursor-pointer"
               >
-                <span>구독 관리 및 해지</span>
+                <span>Manage / Cancel Subscription</span>
               </button>
             ) : (
               <button
