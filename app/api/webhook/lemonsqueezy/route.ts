@@ -52,7 +52,9 @@ export async function POST(req: NextRequest) {
       eventName === "subscription_created" ||
       eventName === "subscription_updated" ||
       eventName === "subscription_resumed" ||
+      eventName === "order_created" ||
       status === "active" ||
+      status === "paid" ||
       status === "on_trial";
 
     const isExpired =
