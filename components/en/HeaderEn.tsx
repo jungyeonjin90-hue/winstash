@@ -1,10 +1,11 @@
 "use client";
 
 
-import { Layers, Settings, Briefcase, LogOut, MessageSquarePlus, Sparkles } from "lucide-react";
+import { Settings, Briefcase, LogOut, MessageSquarePlus, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { CreditStatus } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
+import { WinStashBrandBadge } from "@/components/WinStashLogo";
 
 interface HeaderEnProps {
   onOpenSettings: () => void;
@@ -22,9 +23,7 @@ export function HeaderEn({ onOpenSettings, onOpenFeedback, recordCount, creditSt
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Logo and Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-            <Layers className="w-5 h-5 text-white" />
-          </div>
+          <WinStashBrandBadge size="md" />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-50">

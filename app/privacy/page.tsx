@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck, Lock, EyeOff, Trash2, Mail, Sparkles, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Lock, EyeOff, Trash2, Mail, CheckCircle2, Sparkles } from "lucide-react";
+import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -22,9 +23,7 @@ export default function PrivacyPolicyPage() {
             <span>Back to WinStash</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs">
-              <Sparkles className="w-4 h-4" />
-            </div>
+            <WinStashBrandBadge size="sm" />
             <span className="font-extrabold text-sm tracking-tight">WinStash</span>
           </div>
         </div>
