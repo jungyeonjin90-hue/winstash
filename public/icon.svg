@@ -1,23 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4338ca" />
-      <stop offset="50%" stop-color="#4f46e5" />
-      <stop offset="100%" stop-color="#7c3aed" />
-    </linearGradient>
-  </defs>
-  <!-- Background Rounded Badge -->
-  <rect width="100" height="100" rx="24" fill="url(#grad)" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%">
+  <!-- Obsidian Dark Rounded Badge Background -->
+  <rect width="1024" height="1024" rx="220" fill="#111113" />
   
-  <!-- 3-Tier Isometric Vault Line Art -->
-  <g transform="translate(18, 18) scale(2.66)" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Top Isometric Diamond Tier -->
-    <polygon points="12 2 21 7 12 12 3 7" stroke="#ffffff" />
-    <!-- Tier 2: Middle Layer -->
-    <path d="M3 12l9 5 9-5" stroke="#ffffff" />
-    <!-- Tier 3: Bottom Layer -->
-    <path d="M3 17l9 5 9-5" stroke="#ffffff" />
-    <!-- Center Axis -->
-    <line x1="12" y1="12" x2="12" y2="22" stroke="#ffffff" />
+  <g fill="#ffffff">
+    <!-- Outer Frame Top Left -->
+    <rect x="233" y="263" width="102" height="16" rx="2" />
+    <!-- Outer Frame Top Right -->
+    <rect x="393" y="263" width="401" height="16" rx="2" />
+    <!-- Outer Frame Left -->
+    <rect x="233" y="263" width="16" height="551" rx="2" />
+    <!-- Outer Frame Right -->
+    <rect x="778" y="263" width="16" height="551" rx="2" />
+    <!-- Outer Frame Bottom -->
+    <rect x="233" y="798" width="561" height="16" rx="2" />
+
+    <!-- Inner Frame Left -->
+    <rect x="282" y="311" width="16" height="455" rx="2" />
+    <!-- Inner Frame Right -->
+    <rect x="730" y="311" width="16" height="455" rx="2" />
+    <!-- Inner Frame Top Left -->
+    <rect x="282" y="311" width="53" height="16" rx="2" />
+    <!-- Inner Frame Top Right -->
+    <rect x="393" y="311" width="353" height="16" rx="2" />
+    <!-- Inner Frame Bottom -->
+    <rect x="282" y="750" width="464" height="16" rx="2" />
+
+    <!-- Drawer Divider 1 -->
+    <rect x="282" y="457" width="464" height="16" rx="1" />
+    <!-- Drawer Divider 2 -->
+    <rect x="282" y="604" width="464" height="16" rx="1" />
+
+    <!-- Drawer Handles -->
+    <rect x="430" y="311" width="166" height="36" rx="3" />
+    <rect x="430" y="457" width="166" height="36" rx="3" />
+    <rect x="430" y="604" width="166" height="36" rx="3" />
+
+    <!-- Stylus / 1-Input Key entering from top into vault -->
+    <polygon points="355,223 371,223 371,552 363,571 355,552" />
   </g>
 </svg>
