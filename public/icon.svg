@@ -1,41 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%">
-  <!-- Obsidian Dark Rounded Badge Background -->
-  <rect width="1024" height="1024" rx="220" fill="#111113" />
+  <!-- Clean Light Rounded Badge Background -->
+  <rect width="1024" height="1024" rx="220" fill="#ffffff" />
+  <rect width="1024" height="1024" rx="220" fill="none" stroke="#e4e4e7" stroke-width="16" />
   
-  <g fill="#ffffff">
-    <!-- Outer Frame Top Left -->
+  <g fill="#111113">
+    <!-- Outer Vault Frame: Top Left Segment -->
     <rect x="233" y="263" width="102" height="16" rx="2" />
-    <!-- Outer Frame Top Right -->
+    <!-- Outer Vault Frame: Top Right Segment -->
     <rect x="393" y="263" width="401" height="16" rx="2" />
-    <!-- Outer Frame Left -->
+    <!-- Outer Vault Frame: Left Pillar -->
     <rect x="233" y="263" width="16" height="551" rx="2" />
-    <!-- Outer Frame Right -->
+    <!-- Outer Vault Frame: Right Pillar -->
     <rect x="778" y="263" width="16" height="551" rx="2" />
-    <!-- Outer Frame Bottom -->
+    <!-- Outer Vault Frame: Base Floor -->
     <rect x="233" y="798" width="561" height="16" rx="2" />
 
-    <!-- Inner Frame Left -->
+    <!-- Inner Chamber Left -->
     <rect x="282" y="311" width="16" height="455" rx="2" />
-    <!-- Inner Frame Right -->
+    <!-- Inner Chamber Right -->
     <rect x="730" y="311" width="16" height="455" rx="2" />
-    <!-- Inner Frame Top Left -->
+    <!-- Inner Chamber Top Left -->
     <rect x="282" y="311" width="53" height="16" rx="2" />
-    <!-- Inner Frame Top Right -->
+    <!-- Inner Chamber Top Right -->
     <rect x="393" y="311" width="353" height="16" rx="2" />
-    <!-- Inner Frame Bottom -->
+    <!-- Inner Chamber Floor -->
     <rect x="282" y="750" width="464" height="16" rx="2" />
 
-    <!-- Drawer Divider 1 -->
+    <!-- Drawer Divider 1 (Separates Tier 1 & Tier 2) -->
     <rect x="282" y="457" width="464" height="16" rx="1" />
-    <!-- Drawer Divider 2 -->
+    <!-- Drawer Divider 2 (Separates Tier 2 & Tier 3) -->
     <rect x="282" y="604" width="464" height="16" rx="1" />
 
-    <!-- Drawer Handles -->
+    <!-- Drawer Handle Notch 1 (Weekly Sync) -->
     <rect x="430" y="311" width="166" height="36" rx="3" />
+    <!-- Drawer Handle Notch 2 (Brag Review) -->
     <rect x="430" y="457" width="166" height="36" rx="3" />
+    <!-- Drawer Handle Notch 3 (Portfolio Vault) -->
     <rect x="430" y="604" width="166" height="36" rx="3" />
 
-    <!-- Stylus / 1-Input Key entering from top into vault -->
+    <!-- 1-Input Stylus/Key entering through top portal -->
     <polygon points="355,223 371,223 371,552 363,571 355,552" />
   </g>
 </svg>

@@ -66,8 +66,8 @@ export function WinStashVaultIcon({
 }
 
 /**
- * WinStash Brand Logo Badge (Obsidian Dark Badge + Pure White Modular Vault)
- * Minimalist, tech-forward, eliminating generic purple AI gradient.
+ * WinStash Brand Logo Badge (Clean Minimal White Badge + Dark Line Art)
+ * Architectural, crisp, Notion/Bauhaus aesthetic
  */
 export function WinStashBrandBadge({
   size = "md",
@@ -88,7 +88,7 @@ export function WinStashBrandBadge({
 
   return (
     <div
-      className={`${sizeClasses[size]} bg-[#111113] flex items-center justify-center text-white shrink-0 border border-zinc-800 shadow-sm shadow-black/40 hover:border-zinc-700 transition-colors`}
+      className={`${sizeClasses[size]} bg-white dark:bg-zinc-900 flex items-center justify-center text-zinc-900 dark:text-zinc-100 shrink-0 border border-zinc-200/90 dark:border-zinc-800 shadow-xs hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors`}
       aria-label="WinStash Brand Badge"
     >
       <WinStashVaultIcon className={iconSizes[size]} />
