@@ -261,7 +261,7 @@ export default function HomeKo() {
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight">
             금요일 퇴근 전 1분,{" "}
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+            <span className="text-indigo-600 dark:text-indigo-400">
               대충 털어놓으세요.
             </span>
           </h1>

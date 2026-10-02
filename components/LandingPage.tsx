@@ -246,7 +246,7 @@ export function LandingPage() {
                 누구도 열어볼 수 없도록 철저히 격리됩니다.
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                CareerPulse는 Google 보안 인증 기반의 엄격한 데이터 격리 체계와 엔터프라이즈 보안 프로토콜을 준수합니다. 타 사용자나 제3자의 접근이 원천 차단됩니다.
+                WinStash는 Google 보안 인증 기반의 엄격한 데이터 격리 체계와 엔터프라이즈 보안 프로토콜을 준수합니다. 타 사용자나 제3자의 접근이 원천 차단됩니다.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
@@ -307,7 +307,7 @@ export function LandingPage() {
 
       {/* Footer */}
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-2">
-        <p>© 2026 CareerPulse. 직장인을 위한 1분 주간 기록 3-Way 커리어 OS.</p>
+        <p>© 2026 WinStash. 직장인을 위한 1분 주간 기록 3-Way 커리어 OS.</p>
         <p className="text-[11px] text-zinc-400">
           엔터프라이즈급 데이터 보안, AES-256 저장 암호화 및 AI 모델 미학습 보증
         </p>

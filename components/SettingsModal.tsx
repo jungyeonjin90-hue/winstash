@@ -81,7 +81,7 @@ export function SettingsModal({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                CareerPulse 환경 설정
+                WinStash 환경 설정
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 AI 엔진 사양, 데이터 백업 및 보관소를 관리합니다.
@@ -97,13 +97,13 @@ export function SettingsModal({
         </div>
 
         {/* Section 1: AI Engine Info Banner */}
-        <div className="bg-gradient-to-br from-indigo-50/80 via-white to-violet-50/80 dark:from-indigo-950/30 dark:via-zinc-900 dark:to-violet-950/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 space-y-2">
+        <div className="bg-zinc-50 dark:bg-zinc-900/60 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-2">
           <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 dark:text-indigo-300">
             <Sparkles className="w-4 h-4 text-indigo-500" />
-            <span>최신 고성능 AI 엔진 탑재 (Gemini 2.0)</span>
+            <span>최신 고성능 AI 엔진 탑재</span>
           </div>
           <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            CareerPulse는 사용자가 별도 복잡한 API 키를 발급받을 필요 없이, 서버 내장 최신 AI 엔진을 통해 주간보고·연봉협상 시트·STAR 포트폴리오를 가장 세련된 비즈니스 문체로 자동 변환합니다.
+            WinStash는 사용자가 별도 복잡한 API 키를 발급받을 필요 없이, 서버 내장 최신 AI 엔진을 통해 주간보고·연봉협상 시트·STAR 포트폴리오를 가장 세련된 비즈니스 문체로 자동 변환합니다.
           </p>
         </div>
 
