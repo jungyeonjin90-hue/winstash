@@ -276,37 +276,42 @@ export function LandingPageEn() {
       <main className="flex-1 flex flex-col items-center">
         {/* 2. Hero Header Section */}
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-8 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/80 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm font-semibold shadow-xs">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm font-semibold shadow-xs">
             <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
             <span>Turn 60-Second Friday Dumps into Career Assets</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50 text-balance">
-            Stop scrambling before reviews and 1:1s. <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-500 bg-clip-text text-transparent">
-              Dump 1 min on Friday. AI does the rest.
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50">
+            <span className="block">
+              Stop scrambling <span className="whitespace-nowrap">before reviews &amp; 1:1s.</span>
+            </span>
+            <span className="block mt-2 sm:mt-3">
+              Dump 1 min on Friday.{" "}
+              <span className="whitespace-nowrap text-indigo-600 dark:text-indigo-400">
+                AI does the rest.
+              </span>
             </span>
           </h1>
 
-          <div className="max-w-2xl mx-auto space-y-4">
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal text-balance">
-              Write what you shipped, solved, or led without worrying about formatting or structure.
-              WinStash automatically turns raw Friday notes into:
+          <div className="max-w-3xl mx-auto space-y-4">
+            <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+              Write what you shipped, solved, or led—no formatting required. <br className="hidden sm:inline" />
+              WinStash automatically turns raw Friday notes into 3 ready-to-use career assets:
             </p>
 
-            {/* 3단 가로 나열 태그 형태 (깔끔하고 컴팩트함) */}
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs">
+            {/* 3단 가로 나열 태그 형태 (1줄 정렬 유지) */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 sm:gap-3 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
                 <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <span>Manager-ready weekly updates</span>
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>Promotion-ready reviews</span>
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
                 <CheckCircle2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                 <span>Interview-ready career stories</span>
               </span>
@@ -330,16 +335,16 @@ export function LandingPageEn() {
 
           {/* Trust Guarantees */}
           <div className="pt-1 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-            <div className="flex items-center gap-1.5">
-              <Check className="w-4 h-4 text-emerald-500" />
-              <span>Free forever to log — unlock your full history anytime</span>
+            <div className="flex items-center gap-1.5 whitespace-nowrap">
+              <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Free forever to log raw notes</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Check className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center gap-1.5 whitespace-nowrap">
+              <Check className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>No credit card required</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Check className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center gap-1.5 whitespace-nowrap">
+              <Check className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>1-click Google setup</span>
             </div>
           </div>
@@ -352,8 +357,9 @@ export function LandingPageEn() {
               <Cpu className="w-3.5 h-3.5" />
               <span>Live Interactive Transformation Engine</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              See How 1 Raw Friday Memo Unlocks 3 Strategic Drawers
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <span>See How 1 Raw Friday Memo</span>{" "}
+              <span className="whitespace-nowrap">Unlocks 3 Strategic Drawers</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
               Select your job persona below to witness the real-time AI synthesis in action.
@@ -698,8 +704,9 @@ export function LandingPageEn() {
         {/* 4. Section 3: The 3 Core Value Drawers */}
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800">
           <div className="text-center space-y-2 mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              One Weekly Action. Three Career-Defining Assets.
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <span>One Weekly Action.</span>{" "}
+              <span className="whitespace-nowrap">Three Career-Defining Assets.</span>
             </h2>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
               Never start from a blank page again when annual review or unexpected recruiter outreach arrives.
@@ -784,7 +791,8 @@ export function LandingPageEn() {
                 <span>Enterprise-Grade Privacy Architecture</span>
               </div>
               <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-                Your proprietary company data stays confidential. Period.
+                <span>Your proprietary company data</span>{" "}
+                <span className="whitespace-nowrap">stays confidential. Period.</span>
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
                 Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash enforces zero-knowledge access controls, client anonymity masking, and bank-grade data isolation.
@@ -914,12 +922,12 @@ export function LandingPageEn() {
 
         {/* 8. Section 7: Final High-Conversion CTA & Footer */}
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center space-y-6">
-          <div className="p-8 sm:p-14 rounded-3xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-2xl space-y-6">
+          <div className="p-8 sm:p-14 rounded-3xl bg-zinc-900 border border-zinc-800 text-white shadow-2xl space-y-6">
             <h3 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-              Start building your career vault this Friday. <br />
-              Never lose another promotion-worthy win.
+              <span className="block">Start building your career vault this Friday.</span>
+              <span className="block mt-1 sm:mt-2 text-zinc-300">Never lose another promotion-worthy win.</span>
             </h3>
-            <p className="text-xs sm:text-base text-indigo-100 max-w-xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
               Join forward-thinking engineers, product managers, and leaders taking command of their professional story in 1 minute a week.
             </p>
             <div className="pt-2 flex items-center justify-center">
