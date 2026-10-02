@@ -405,7 +405,8 @@ export async function POST(req: NextRequest) {
       industry,
       region as RegionCode | undefined
     );
-    const userPrefix = "[User's Friday Raw Brain Dump Notes]:\n";
+    const userPrefix = "[User's Friday Raw Brain Dump Notes]:\n<user_raw_notes>\n";
+    const userSuffix = "\n</user_raw_notes>";
 
     // 1. Google Gemini Ultra Low-Cost Model (gemini-3.1-flash-lite)
     if (provider === "gemini" && apiKey) {
@@ -429,7 +430,7 @@ export async function POST(req: NextRequest) {
                     role: "user",
                     parts: [
                       {
-                        text: `${prompt}\n\n${userPrefix}${raw_memo}`,
+                        text: `${prompt}\n\n${userPrefix}${raw_memo}${userSuffix}`,
                       },
                     ],
                   },

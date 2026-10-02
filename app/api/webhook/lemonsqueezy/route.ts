@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { adminDb } from "@/lib/firebaseAdmin";
 
 /**
  * Lemon Squeezy Webhook Handler
@@ -84,22 +85,26 @@ export async function POST(req: NextRequest) {
     const isPro = (isCurrentlyActive || hasRemainingPeriod) && !isRefunded && !isExplicitlyExpired;
     const finalPlan = isPro ? "pro" : "free";
 
-    if (db) {
+    const updateData = {
+      plan: finalPlan,
+      planStatus: status,
+      lemonSqueezyCustomerId: String(attributes.customer_id || ""),
+      lemonSqueezySubscriptionId: String(data.id || ""),
+      renewsAt: attributes.renews_at || null,
+      endsAt: attributes.ends_at || null,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (adminDb) {
+      await adminDb.collection("users").doc(userId).set(updateData, { merge: true });
+      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status}) via Admin SDK`);
+    } else if (db) {
+      console.warn("[LemonSqueezy Webhook] Admin SDK not configured, falling back to client SDK write.");
       const userRef = doc(db, "users", userId);
-      await setDoc(
-        userRef,
-        {
-          plan: finalPlan,
-          planStatus: status,
-          lemonSqueezyCustomerId: String(attributes.customer_id || ""),
-          lemonSqueezySubscriptionId: String(data.id || ""),
-          renewsAt: attributes.renews_at || null,
-          endsAt: attributes.ends_at || null,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status})`);
+      await setDoc(userRef, updateData, { merge: true });
+      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status}) via client SDK fallback`);
+    } else {
+      console.error("[LemonSqueezy Webhook] Neither Admin SDK nor client DB is available!");
     }
 
     return NextResponse.json({

@@ -40,16 +40,13 @@ export function checkServerRateLimit(
   limit: number = 10,
   windowMs: number = 60 * 1000
 ): RateLimitResult {
-  if (!ip || ip === "unknown-ip") {
-    // If IP cannot be determined, permit gracefully but with strict individual count
-    return { success: true, remaining: limit, resetSeconds: 0 };
-  }
+  const effectiveIp = ip && ip.trim().length > 0 ? ip.trim() : "unknown-ip";
 
   const now = Date.now();
-  const record = ipCache.get(ip);
+  const record = ipCache.get(effectiveIp);
 
   if (!record || now > record.resetTime) {
-    ipCache.set(ip, {
+    ipCache.set(effectiveIp, {
       count: 1,
       resetTime: now + windowMs,
     });
@@ -79,16 +76,18 @@ export function checkServerRateLimit(
 }
 
 /**
- * Extracts client IP securely from standard HTTP headers (Vercel Anycast / Cloudflare / Proxies)
+ * Extracts client IP securely from standard HTTP headers (Cloudflare, Vercel, Standard Proxies)
  */
 export function getClientIp(req: Request): string {
+  const cfIp = req.headers.get("cf-connecting-ip");
+  if (cfIp) return cfIp.trim();
+
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {
     return forwarded.split(",")[0].trim();
-  }
-  const realIp = req.headers.get("x-real-ip");
-  if (realIp) {
-    return realIp.trim();
   }
   return "unknown-ip";
 }

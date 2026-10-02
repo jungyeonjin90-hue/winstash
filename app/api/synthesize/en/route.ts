@@ -76,7 +76,9 @@ Required JSON Schema:
 }
 
 Input Weekly Records:
-${recordsContext}`;
+<user_weekly_records>
+${recordsContext}
+</user_weekly_records>`;
   } else {
     // type === "star"
     return `You are an elite Silicon Valley executive career coach and Staff PM / Engineering Director.
@@ -125,7 +127,9 @@ Required JSON Schema:
 }
 
 Input Weekly Records:
-${recordsContext}`;
+<user_weekly_records>
+${recordsContext}
+</user_weekly_records>`;
   }
 }
 
