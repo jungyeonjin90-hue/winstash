@@ -185,7 +185,7 @@ export function UpgradeModal({
             </div>
 
             {/* Pricing Card */}
-            <div className="relative p-5 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-white to-violet-50/70 dark:from-indigo-950/30 dark:via-zinc-900 dark:to-violet-950/30 border-2 border-indigo-500/30 dark:border-indigo-500/40 space-y-4">
+            <div className="relative p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border-2 border-indigo-500/30 dark:border-indigo-500/40 space-y-4">
               <div className="flex items-baseline justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-3">
                 <div>
                   <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase">
@@ -244,7 +244,7 @@ export function UpgradeModal({
                 href={checkoutUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-500 hover:to-violet-600 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
               >
                 <Zap className="w-4 h-4 fill-white" />
                 <span>Upgrade to Pro Now (${PRO_PRICE_USD}/mo)</span>

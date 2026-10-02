@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Filter, Calendar, CalendarRange } from "lucide-react";
+import { Calendar, CalendarRange } from "lucide-react";
 import { CareerRecord } from "@/types/career";
 import { getRecordPeriodInfo } from "@/lib/periodUtils";
 

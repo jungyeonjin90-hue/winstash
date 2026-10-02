@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransformationOutput, JobRole, ToneManner } from "@/types/career";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
+import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 
 function buildSystemPromptKo(jobRole: JobRole = "engineering", toneManner: ToneManner = "impact"): string {
   const roleDescriptions: Record<JobRole, string> = {
@@ -194,14 +195,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Server-Side Authentication & Quota Enforcement (Critical Security Fix)
+    const quotaCheck = await verifyServerAuthAndQuota(req, "transform");
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        { error: quotaCheck.error || "무료 변환 크레딧이 소진되었습니다." },
+        { status: quotaCheck.status || 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       raw_memo,
       job_role = "engineering",
       tone_manner = "impact",
       provider = "gemini",
-      isCreditExhausted = false,
-      isGlobalCapExhausted = false,
     } = body;
 
     if (!raw_memo || typeof raw_memo !== "string" || raw_memo.trim().length === 0) {
@@ -221,28 +229,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (isGlobalCapExhausted) {
-      return NextResponse.json(
-        { error: "서비스 전체 프로모션 무료 변환 한도(10,000회)가 모두 소진되었습니다." },
-        { status: 403 }
-      );
-    }
-    if (isCreditExhausted) {
-      return NextResponse.json(
-        { error: "기본 제공 무료 변환 5회를 모두 사용하셨습니다." },
-        { status: 403 }
-      );
-    }
-
     const apiKey =
       provider === "gemini"
         ? process.env.GEMINI_API_KEY
         : process.env.OPENAI_API_KEY;
 
     const prompt = buildSystemPromptKo(job_role as JobRole, tone_manner as ToneManner);
-    const userPrefix = "[사용자의 주간 메모 원자재]:\n";
+    const userPrefix = "<user_raw_notes>\n";
+    const userSuffix = "\n</user_raw_notes>";
 
-    // Google Gemini API 연동 (초저가 gemini-3.1-flash-lite 최우선)
+    // Google Gemini API 연동 (systemInstruction 분리 + XML 격리)
     if (provider === "gemini" && apiKey) {
       const modelsToTry = [
         "gemini-3.1-flash-lite",
@@ -259,12 +255,15 @@ export async function POST(req: NextRequest) {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
+                systemInstruction: {
+                  parts: [{ text: prompt }],
+                },
                 contents: [
                   {
                     role: "user",
                     parts: [
                       {
-                        text: `${prompt}\n\n${userPrefix}${raw_memo}`,
+                        text: `${userPrefix}${raw_memo}${userSuffix}`,
                       },
                     ],
                   },
@@ -283,6 +282,7 @@ export async function POST(req: NextRequest) {
             if (text) {
               const parsed = JSON.parse(text) as TransformationOutput;
               if (parsed.weekly_report && parsed.brag_sheet_item && parsed.star_portfolio) {
+                await quotaCheck.deduct?.();
                 return NextResponse.json(parsed);
               }
             }
@@ -299,6 +299,7 @@ export async function POST(req: NextRequest) {
       job_role as JobRole,
       tone_manner as ToneManner
     );
+    await quotaCheck.deduct?.();
     return NextResponse.json(fallback);
   } catch (error) {
     console.error("Transform API Error (KO):", error);

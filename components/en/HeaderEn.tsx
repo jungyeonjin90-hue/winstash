@@ -100,7 +100,7 @@ export function HeaderEn({
               <button
                 type="button"
                 onClick={onOpenUpgrade}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-500/10 via-violet-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-xs cursor-pointer transition-all hover:border-indigo-400 active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-xs cursor-pointer transition-all hover:border-indigo-400 active:scale-95"
                 title="WinStash Pro Active. Click to manage membership."
               >
                 <Zap className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 fill-indigo-600 dark:fill-indigo-400" />
@@ -148,7 +148,7 @@ export function HeaderEn({
                       className="w-8 h-8 rounded-full border border-zinc-200 dark:border-zinc-700 object-cover"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
                       {(user.displayName || user.email || "U").charAt(0).toUpperCase()}
                     </div>
                   )}

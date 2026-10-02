@@ -165,7 +165,7 @@ export function SettingsModalEn({
                   onClose();
                   onOpenUpgrade?.();
                 }}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xs hover:opacity-95 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:opacity-95 transition-all cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5 fill-white" />
                 <span>Upgrade to Pro ($5.99)</span>

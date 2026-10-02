@@ -259,7 +259,7 @@ export function QuickLogger({
               <button
                 type="button"
                 onClick={onUpgradeClick}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 via-indigo-600 to-violet-600 hover:from-amber-600 hover:to-indigo-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
               >
                 <Zap className="w-4 h-4 fill-white" />
                 <span>Pro 업그레이드 ($5.99)</span>
@@ -269,7 +269,7 @@ export function QuickLogger({
                 type="button"
                 onClick={() => handleSubmit()}
                 disabled={!memo.trim() || isLoading}
-                className="flex items-center justify-center min-w-[200px] gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="flex items-center justify-center min-w-[200px] gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white shadow-md shadow-indigo-600/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? (
                   <LoadingMessages />

@@ -388,7 +388,7 @@ export default function Home() {
 
           <h1 className="text-2xl sm:text-4xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight text-balance">
             Friday 1-min brain dump.{" "}
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+            <span className="text-indigo-600 dark:text-indigo-400">
               Never forget your wins.
             </span>
           </h1>

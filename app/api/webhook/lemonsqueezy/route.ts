@@ -105,6 +105,10 @@ export async function POST(req: NextRequest) {
       console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status}) via client SDK fallback`);
     } else {
       console.error("[LemonSqueezy Webhook] Neither Admin SDK nor client DB is available!");
+      return NextResponse.json(
+        { error: "Database service unavailable to persist subscription" },
+        { status: 503 }
+      );
     }
 
     return NextResponse.json({

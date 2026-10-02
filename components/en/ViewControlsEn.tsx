@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, List, Sparkles, RefreshCw, Loader2 } from "lucide-react";
+import { LayoutGrid, List, Sparkles } from "lucide-react";
 import { SynthesisScale } from "@/types/career";
 
 export type ViewDensity = "detailed" | "compact";

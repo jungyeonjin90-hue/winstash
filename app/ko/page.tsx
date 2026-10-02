@@ -20,6 +20,7 @@ import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/cr
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
 import { Sparkles, CheckCircle2, Layers, Loader2, Globe } from "lucide-react";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { getAuthToken } from "@/lib/firebase";
 
 export default function HomeKo() {
   const { user, loading: authLoading } = useAuth();
@@ -114,17 +115,19 @@ export default function HomeKo() {
     setIsLoading(true);
     try {
       const settings = getSettings();
-      // 한국어 격리 전용 엔드포인트 호출
+      const authToken = await getAuthToken();
+      // 한국어 격리 전용 엔드포인트 호출 (서버 사이드 인증 헤더 전송)
       const res = await fetch("/api/transform/ko", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({
           raw_memo: rawMemo,
           job_role: role,
           tone_manner: tone,
           provider: settings.provider,
-          isCreditExhausted: isPro ? false : Boolean(creditStatus?.isUserExhausted),
-          isGlobalExhausted: isPro ? false : Boolean(creditStatus?.isGlobalExhausted),
         }),
       });
 

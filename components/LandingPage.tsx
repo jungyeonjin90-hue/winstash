@@ -12,6 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { WinStashBrandBadge } from "@/components/WinStashLogo";
 
 export function LandingPage() {
   const { signInWithGoogle, signInWithDemo, isFirebaseConfigured } = useAuth();
@@ -46,12 +47,10 @@ export function LandingPage() {
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-600/25">
-              <Sparkles className="w-5 h-5" />
-            </div>
+            <WinStashBrandBadge size="md" />
             <div>
-              <span className="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-zinc-900 via-indigo-950 to-zinc-900 dark:from-white dark:via-indigo-200 dark:to-zinc-100 bg-clip-text text-transparent">
-                CareerPulse
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-zinc-900 dark:text-zinc-50">
+                WinStash
               </span>
               <span className="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800">
                 3-Way 커리어 OS
@@ -102,7 +101,7 @@ export function LandingPage() {
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight sm:leading-tight">
             금요일 퇴근 전 1분, <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-500 bg-clip-text text-transparent">
+            <span className="text-indigo-600 dark:text-indigo-400">
               대충 털어놓기만 하세요.
             </span>
           </h1>
@@ -116,7 +115,7 @@ export function LandingPage() {
             <button
               onClick={handleGoogleLogin}
               disabled={isSigningIn}
-              className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-sm sm:text-base font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-sm sm:text-base font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/30 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
             >
               <GoogleIcon className="w-5 h-5 bg-white p-0.5 rounded-full" />
               <span>{isSigningIn ? "로그인 중..." : "Google 계정으로 1초 만에 시작하기"}</span>
