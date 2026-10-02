@@ -19,6 +19,7 @@ import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCa
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
+import { getAuthToken } from "@/lib/firebase";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, SeniorityLevel, RegionCode } from "@/types/career";
 import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
@@ -203,10 +204,21 @@ export default function Home() {
     setIsLoading(true);
     try {
       const settings = getSettings();
+      const token = await getAuthToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      if (user?.isDemo) {
+        headers["x-demo-user"] = "true";
+      }
+
       // Pure Global English AI Engine
       const res = await fetch("/api/transform", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           raw_memo: rawMemo,
           job_role: role,
@@ -222,6 +234,11 @@ export default function Home() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
+        if (res.status === 403) {
+          setUpgradeTriggerReason(existingRecordId ? "edit" : "input");
+          setIsUpgradeModalOpen(true);
+          return;
+        }
         throw new Error(errorData.error || "Transformation request failed.");
       }
 

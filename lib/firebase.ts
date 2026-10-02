@@ -73,4 +73,16 @@ if (isFirebaseConfigured) {
   }
 }
 
+export async function getAuthToken(): Promise<string | null> {
+  if (typeof window === "undefined" || !auth || !auth.currentUser) {
+    return null;
+  }
+  try {
+    return await auth.currentUser.getIdToken();
+  } catch (err) {
+    console.warn("Failed to get Firebase Auth ID token:", err);
+    return null;
+  }
+}
+
 export { app, auth, db, googleProvider, analytics };

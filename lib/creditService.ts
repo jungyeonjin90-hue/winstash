@@ -265,33 +265,10 @@ export async function consumeFreeCredit(
     return status;
   }
 
-  // 1. Firebase Firestore 실시간 업데이트
+  // 1. 실제 계정의 크레딧 차감은 서버 API(/api/transform, /api/synthesize/en)에서 Firebase Admin SDK로 안전하게 원자 차감됨 (M-1)
+  // 클라이언트의 중복 increment를 방지하고 실시간 Firestore 최신 상태를 반환함
   if (isFirebaseConfigured && db && !isDemo) {
-    try {
-      const userUsageRef = doc(db, "users", userId, "usage", "summary");
-      await setDoc(
-        userUsageRef,
-        {
-          freeUsedCount: increment(1),
-          lastUsedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-
-      const globalUsageRef = doc(db, "system", "usage");
-      await setDoc(
-        globalUsageRef,
-        {
-          totalCount: increment(1),
-          lastUsedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-
-      return getCreditStatus(userId, isDemo, userEmail);
-    } catch (e) {
-      console.warn("Firestore consume failed, falling back to local:", e);
-    }
+    return getCreditStatus(userId, isDemo, userEmail);
   }
 
   // 2. 데모 또는 로컬 스토리지 카운트 증가
@@ -355,21 +332,9 @@ export async function consumeSynthesisQuota(
     return status;
   }
 
+  // 1. 실제 계정의 크레딧 차감은 서버 API에서 원자 차감되므로 클라이언트 중복 차감 방지 (M-1)
   if (isFirebaseConfigured && db && !isDemo) {
-    try {
-      const synUsageRef = doc(db, "users", userId, "usage", "synthesis");
-      await setDoc(
-        synUsageRef,
-        {
-          [type === "brag" ? "bragUsedCount" : "starUsedCount"]: increment(1),
-          lastUsedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-      return getCreditStatus(userId, isDemo, userEmail);
-    } catch (e) {
-      console.warn("Firestore synthesis consume failed, fallback to local:", e);
-    }
+    return getCreditStatus(userId, isDemo, userEmail);
   }
 
   if (typeof window !== "undefined") {

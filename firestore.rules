@@ -20,7 +20,14 @@ service cloud.firestore {
       // 본인 계정 삭제 허용
       allow delete: if request.auth != null && request.auth.uid == userId;
 
-      // 사용자 하위 컬렉션 (records, persona, summary_cache, usage 등)은 본인에게 읽기/쓰기 허용
+      // 사용자 하위 컬렉션 중 usage는 서버(Firebase Admin SDK)에서만 원자적으로 관리 (M-1 위변조 원천 방지)
+      // 클라이언트는 실시간 조회만 가능하고 임의 쓰기는 차단
+      match /usage/{document=**} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+
+      // 사용자 하위 컬렉션 (records, persona, summary_cache 등)은 본인에게 읽기/쓰기 허용
       match /{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }

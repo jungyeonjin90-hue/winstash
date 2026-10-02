@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode } from "@/types/career";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
+import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
@@ -349,6 +350,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Server-Side Authentication & Quota Enforcement (M-1)
+    const quotaCheck = await verifyServerAuthAndQuota(req, "transform");
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        { error: quotaCheck.error || "Free transformation credit limit reached" },
+        { status: quotaCheck.status || 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       raw_memo,
@@ -449,6 +459,7 @@ export async function POST(req: NextRequest) {
             if (text) {
               const parsed = JSON.parse(text) as TransformationOutput;
               if (parsed.weekly_report && parsed.brag_sheet_item && parsed.star_portfolio) {
+                await quotaCheck.deduct?.();
                 return NextResponse.json(parsed);
               }
             }
@@ -465,6 +476,7 @@ export async function POST(req: NextRequest) {
       job_role as JobRole,
       tone_manner as ToneManner
     );
+    await quotaCheck.deduct?.();
     return NextResponse.json(fallback);
   } catch (error) {
     console.error("Transform API Error (Global EN):", error);

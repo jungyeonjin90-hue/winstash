@@ -24,8 +24,5 @@ export const MAX_GLOBAL_SERVICE_CREDITS = 10000;
 // 5. 연속 클릭 방지 쿨다운 (10초)
 export const SYNTHESIS_COOLDOWN_MS = 10000;
 
-// 6. 일일 AI 종합 기본 상한 (5회)
-export const MAX_DAILY_SYNTHESIS_LIMIT = 5;
-
-// 7. Pro 플랜 월간 정기구독 가격 ($5.99 USD)
+// 6. Pro 플랜 월간 정기구독 가격 ($5.99 USD)
 export const PRO_MONTHLY_PRICE_USD = 5.99;

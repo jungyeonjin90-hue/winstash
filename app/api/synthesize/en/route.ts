@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem, SynthesizedStarItem } from "@/types/career";
 import { checkServerRateLimit, getClientIp } from "@/lib/serverRateLimit";
+import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 
 /**
  * Builds the AI Synthesis prompt with strict factual grounding & dynamic scope rules
@@ -166,6 +167,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ items: [] });
     }
 
+    // 2. Server-Side Authentication & Quota Enforcement (M-1)
+    const quotaCheck = await verifyServerAuthAndQuota(
+      req,
+      type === "star" ? "star" : "brag"
+    );
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        { error: quotaCheck.error || "Synthesis quota limit reached" },
+        { status: quotaCheck.status || 403 }
+      );
+    }
+
     // Support up to 100 weekly logs for multi-year Portfolio STAR synthesis
     const safeRecords = (records as CareerRecord[]).slice(0, 100);
 
@@ -217,6 +230,7 @@ export async function POST(req: NextRequest) {
             if (text) {
               const parsed = JSON.parse(text);
               if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+                await quotaCheck.deduct?.();
                 return NextResponse.json({ items: parsed.items });
               }
             }
@@ -229,6 +243,7 @@ export async function POST(req: NextRequest) {
 
     // Pure 100% User-Record Fallback (Zero hardcoded fake projects)
     // If AI generation is temporarily unavailable, directly map the user's actual weekly records
+    await quotaCheck.deduct?.();
     if (type === "brag") {
       const directItems: SynthesizedBragItem[] = records.map((r, idx) => ({
         id: `direct-brag-${idx + 1}`,

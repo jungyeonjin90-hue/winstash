@@ -27,12 +27,11 @@ import {
   SummaryCacheEntry,
 } from "@/lib/summaryCacheService";
 import {
-  checkDailySynthesisLimit,
-  recordDailySynthesisUsage,
   checkSynthesisCooldown,
   recordSynthesisCooldown,
 } from "@/lib/rateLimitService";
 import { checkSynthesisQuota, consumeSynthesisQuota } from "@/lib/creditService";
+import { getAuthToken } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 
 interface BragDocumentTabProps {
@@ -206,9 +205,16 @@ export function BragDocumentTab({
         selectedQuarter !== "ALL" ? selectedQuarter : ""
       }`.trim();
 
+      const token = await getAuthToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (isDemo) headers["x-demo-user"] = "true";
+
       const res = await fetch("/api/synthesize/en", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           type: "brag",
           scope: scale,
@@ -219,13 +225,20 @@ export function BragDocumentTab({
         }),
       });
 
-      if (!res.ok) throw new Error("AI Synthesis request failed");
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        if (res.status === 403) {
+          if (onUpgradeClick) onUpgradeClick();
+          else alert(errJson.error || "Synthesis quota limit reached.");
+          return;
+        }
+        throw new Error(errJson.error || "AI Synthesis request failed");
+      }
       const data = await res.json();
       const items: SynthesizedBragItem[] = data.items || [];
 
-      // Record quota and daily usage on success
+      // Record quota on success
       await consumeSynthesisQuota(userId, "brag", isDemo, user?.email);
-      recordDailySynthesisUsage(userId, user?.email);
 
       // Save into cache
       const newEntry: SummaryCacheEntry = {
