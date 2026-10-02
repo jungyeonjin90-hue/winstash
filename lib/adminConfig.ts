@@ -3,6 +3,7 @@
  */
 export const ADMIN_EMAILS: readonly string[] = [
   "jungyeonjin90@gmail.com",
+  "thestudioplus26@gmail.com",
 ];
 
 /**
