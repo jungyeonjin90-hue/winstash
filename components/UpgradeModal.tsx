@@ -275,24 +275,23 @@ export function UpgradeModal({
                   className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>WinStash Pro 오픈 준비 중 (${PRO_PRICE_USD}/mo)</span>
+                  <span>Pro Membership Opening Soon (${PRO_PRICE_USD}/mo)</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
 
-              {/* 준비중 / 곧 오픈 안내 배너 */}
+              {/* Pro Opening Soon Banner */}
               {!IS_PAYMENT_GATEWAY_LIVE && isComingSoonClicked && (
                 <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-950 dark:text-amber-200 text-center space-y-1.5 animate-in fade-in zoom-in-95 duration-200 shadow-xs">
                   <div className="flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm text-amber-800 dark:text-amber-300">
                     <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span>결제 시스템 오픈 준비 중입니다 (Coming Soon)</span>
+                    <span>WinStash Pro is Opening Soon!</span>
                   </div>
                   <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
-                    현재 글로벌 결제(Lemon Squeezy) 최종 승인 심사가 진행 중입니다. <br className="hidden sm:inline" />
-                    승인이 완료되는 즉시 Pro 결제가 정식 오픈됩니다.
+                    We&apos;re putting the finishing touches on Pro membership.
                   </p>
                   <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 pt-0.5">
-                    🎉 정식 오픈 전까지 모든 주간 메모와 성과를 무료로 편하게 기록해 두세요!
+                    🎉 In the meantime, feel free to keep logging and stashing all your career wins for free!
                   </p>
                 </div>
               )}
@@ -300,7 +299,7 @@ export function UpgradeModal({
               <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-500 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  {IS_PAYMENT_GATEWAY_LIVE ? "Lemon Squeezy MoR Verified" : "Lemon Squeezy MoR In Review"}
+                  Lemon Squeezy MoR Verified
                 </span>
                 <span>·</span>
                 <span className="flex items-center gap-1">
