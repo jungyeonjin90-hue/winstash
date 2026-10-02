@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { X, UserCircle, Briefcase, Award, Building, Globe, LogOut, CheckCircle2, MessageSquarePlus, Sparkles, Zap } from "lucide-react";
 import { JobRole, SeniorityLevel, RegionCode } from "@/types/career";
 import { useAuth } from "@/context/AuthContext";
@@ -37,6 +38,16 @@ export function SettingsModalEn({
 }: SettingsModalEnProps) {
   const { user, signOut } = useAuth();
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSignOut = async () => {
@@ -47,7 +58,12 @@ export function SettingsModalEn({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+    >
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
@@ -56,7 +72,7 @@ export function SettingsModalEn({
               <UserCircle className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-50">
+              <h3 id="settings-dialog-title" className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-50">
                 WinStash Settings
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -66,6 +82,7 @@ export function SettingsModalEn({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close settings"
             className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />

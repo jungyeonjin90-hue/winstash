@@ -13,21 +13,34 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get("x-signature") || "";
     const secret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
 
-    // 1. Verify Webhook Signature if secret is configured
-    if (secret) {
-      const hmac = crypto.createHmac("sha256", secret);
-      const digest = Buffer.from(hmac.update(rawBody).digest("hex"), "utf8");
-      const signatureBuffer = Buffer.from(signature, "utf8");
+    // 1. Verify Webhook Signature (Fail-Closed)
+    if (!secret) {
+      console.error("[LemonSqueezy Webhook] Missing LEMON_SQUEEZY_WEBHOOK_SECRET in environment variables.");
+      return NextResponse.json(
+        { error: "Webhook secret is not configured on server" },
+        { status: 500 }
+      );
+    }
 
-      if (
-        digest.length !== signatureBuffer.length ||
-        !crypto.timingSafeEqual(digest, signatureBuffer)
-      ) {
-        return NextResponse.json(
-          { error: "Invalid webhook signature" },
-          { status: 401 }
-        );
-      }
+    if (!signature) {
+      return NextResponse.json(
+        { error: "Missing x-signature header" },
+        { status: 401 }
+      );
+    }
+
+    const hmac = crypto.createHmac("sha256", secret);
+    const digest = Buffer.from(hmac.update(rawBody).digest("hex"), "utf8");
+    const signatureBuffer = Buffer.from(signature, "utf8");
+
+    if (
+      digest.length !== signatureBuffer.length ||
+      !crypto.timingSafeEqual(digest, signatureBuffer)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401 }
+      );
     }
 
     const payload = JSON.parse(rawBody);
@@ -47,27 +60,36 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine Pro membership status
-    // Active subscription statuses: "active", "on_trial", "past_due" (grace period)
-    const isPro =
-      eventName === "subscription_created" ||
-      eventName === "subscription_updated" ||
-      eventName === "subscription_resumed" ||
-      eventName === "order_created" ||
-      status === "active" ||
-      status === "paid" ||
-      status === "on_trial";
+    // Active states: active, on_trial, paid (orders or recurring)
+    // Inactive states: expired, past_due, unpaid, paused, refunded
+    const isRefunded =
+      eventName === "order_refunded" ||
+      eventName === "subscription_payment_refunded";
 
-    const isExpired =
+    const isExplicitlyExpired =
       eventName === "subscription_expired" ||
       status === "expired" ||
-      (eventName === "subscription_cancelled" && status !== "active");
+      status === "unpaid";
+
+    const isCurrentlyActive =
+      (status === "active" || status === "on_trial" || status === "paid") &&
+      !isRefunded &&
+      !isExplicitlyExpired;
+
+    // Grace period for cancelled subscription before ends_at
+    const endsAtTime = attributes.ends_at ? new Date(attributes.ends_at).getTime() : 0;
+    const hasRemainingPeriod =
+      status === "cancelled" && endsAtTime > Date.now() && !isRefunded;
+
+    const isPro = (isCurrentlyActive || hasRemainingPeriod) && !isRefunded && !isExplicitlyExpired;
+    const finalPlan = isPro ? "pro" : "free";
 
     if (db) {
       const userRef = doc(db, "users", userId);
       await setDoc(
         userRef,
         {
-          plan: isExpired ? "free" : isPro ? "pro" : "free",
+          plan: finalPlan,
           planStatus: status,
           lemonSqueezyCustomerId: String(attributes.customer_id || ""),
           lemonSqueezySubscriptionId: String(data.id || ""),
@@ -77,7 +99,7 @@ export async function POST(req: NextRequest) {
         },
         { merge: true }
       );
-      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${isExpired ? "free" : isPro ? "pro" : "free"}`);
+      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status})`);
     }
 
     return NextResponse.json({

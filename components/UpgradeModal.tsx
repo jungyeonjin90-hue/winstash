@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { AppUser } from "@/context/AuthContext";
 import { buildLemonSqueezyCheckoutUrl, PRO_PRICE_USD } from "@/lib/lemonSqueezyConfig";
-import { setUserPlan } from "@/lib/creditService";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -31,8 +30,6 @@ export function UpgradeModal({
   triggerReason = "header",
   isPro = false,
 }: UpgradeModalProps) {
-  const [isCancelling, setIsCancelling] = useState(false);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -64,23 +61,12 @@ export function UpgradeModal({
     }
   };
 
-  const handleCancelSubscription = async () => {
-    if (!user) return;
-    const confirmed = confirm(
-      "Are you sure you want to cancel your Pro membership?\n\nOnce cancelled, your account will revert to the Free plan (5 inputs, 3 syntheses)."
+  const handleCancelSubscription = () => {
+    const shouldOpenPortal = confirm(
+      "To prevent unauthorized cancellations and ensure your current billing cycle is respected, subscriptions are managed directly through the Lemon Squeezy Customer Portal.\n\nWould you like to open the portal now to cancel your subscription or update your payment details?"
     );
-    if (!confirmed) return;
-
-    setIsCancelling(true);
-    try {
-      await setUserPlan(user.uid, "free", Boolean(user.isDemo));
-      alert("Your Pro membership has been cancelled. Your account has been reverted to the Free plan.");
-      onClose();
-    } catch (err) {
-      console.error("Subscription cancellation error:", err);
-      alert("Failed to cancel subscription. Please try again or visit the Lemon Squeezy portal.");
-    } finally {
-      setIsCancelling(false);
+    if (shouldOpenPortal) {
+      window.open("https://app.lemonsqueezy.com/my-orders", "_blank", "noopener,noreferrer");
     }
   };
 
@@ -158,23 +144,19 @@ export function UpgradeModal({
                 href="https://app.lemonsqueezy.com/my-orders"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-700"
+                className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-700"
               >
                 <ExternalLink className="w-4 h-4" />
                 <span>Lemon Squeezy Billing Portal (Invoices & Cards)</span>
               </a>
 
-              {/* Direct In-App Cancellation Button */}
               <button
                 type="button"
                 onClick={handleCancelSubscription}
-                disabled={isCancelling}
-                className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl font-medium text-xs text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer"
               >
-                <AlertTriangle className="w-4 h-4" />
-                <span>
-                  {isCancelling ? "Cancelling..." : "Cancel Pro Subscription"}
-                </span>
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Looking to cancel your subscription?</span>
               </button>
             </div>
           </>
@@ -204,7 +186,7 @@ export function UpgradeModal({
                   <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase">
                     Pro Monthly
                   </span>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Coffee 1-cup price per month</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Less than a cup of coffee per month</p>
                 </div>
                 <div className="text-right">
                   <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100">

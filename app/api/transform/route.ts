@@ -360,6 +360,7 @@ export async function POST(req: NextRequest) {
       provider = "gemini",
       isCreditExhausted = false,
       isGlobalCapExhausted = false,
+      isGlobalExhausted = false,
     } = body;
 
     if (!raw_memo || typeof raw_memo !== "string" || raw_memo.trim().length === 0) {
@@ -379,7 +380,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (isGlobalCapExhausted) {
+    if (isGlobalCapExhausted || isGlobalExhausted) {
       return NextResponse.json(
         { error: "The global promotional free quota (10,000 requests) has been exhausted." },
         { status: 403 }
@@ -387,7 +388,7 @@ export async function POST(req: NextRequest) {
     }
     if (isCreditExhausted) {
       return NextResponse.json(
-        { error: "You have used all 5 free transformations. Pro plans are coming soon!" },
+        { error: "You have used all 5 free transformations. Please upgrade to WinStash Pro for unlimited access." },
         { status: 403 }
       );
     }

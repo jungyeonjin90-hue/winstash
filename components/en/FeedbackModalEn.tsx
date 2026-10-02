@@ -28,7 +28,7 @@ export function FeedbackModalEn({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // 모달이 열릴 때 초기화
+  // 모달이 열릴 때 초기화 및 Escape 키 리스너 등록
   useEffect(() => {
     if (isOpen) {
       setType(initialType);
@@ -39,6 +39,16 @@ export function FeedbackModalEn({
       setIsSuccess(false);
     }
   }, [isOpen, initialType, user?.email]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen && !isSubmitting) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isSubmitting, onClose]);
 
   if (!isOpen) return null;
 
@@ -90,7 +100,12 @@ export function FeedbackModalEn({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="feedback-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+    >
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
@@ -99,7 +114,7 @@ export function FeedbackModalEn({
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-50">
+              <h3 id="feedback-dialog-title" className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-50">
                 Share Feedback & Report Issues
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">

@@ -196,7 +196,7 @@ export function QuickLoggerEn({
           {/* Left info badge / shortcut hint */}
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-mono hidden sm:inline-block">
-              Press ⌘+Enter to submit · AI drafts for reference (verify before use)
+              Press ⌘/Ctrl+Enter to submit · AI drafts for reference (verify before use)
             </span>
           </div>
 

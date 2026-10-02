@@ -111,7 +111,14 @@ export async function getCreditStatus(
       const userDocRef = doc(db, "users", userId);
       const userDocSnap = await getDoc(userDocRef);
       const userData = userDocSnap.exists() ? userDocSnap.data() : null;
-      const isPro = userData?.plan === "pro" && (userData?.planStatus !== "cancelled" && userData?.planStatus !== "expired");
+      const planStatus = userData?.planStatus;
+      const endsAt = userData?.endsAt ? new Date(userData.endsAt).getTime() : 0;
+      const isPro =
+        userData?.plan === "pro" &&
+        (planStatus === "active" ||
+          planStatus === "on_trial" ||
+          planStatus === "paid" ||
+          (planStatus === "cancelled" && endsAt > Date.now()));
       const plan: UserPlan = isPro ? "pro" : "free";
 
       // 1-2. 개인 변환 사용량 조회

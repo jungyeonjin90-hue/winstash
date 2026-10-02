@@ -79,7 +79,7 @@ const SHOWCASE_DATA: Record<string, ShowcaseData> = {
     role: "Software Engineering",
     roleBadge: "Staff Engineer / Tech Lead",
     rawMemo:
-      "Toss payment gateway threw 50+ timeouts/min during flash sale. Did emergency hotfix on Friday. Root cause: connection pool starvation in HikariCP. Tuned maxPoolSize, added Redis L2 cache for hot settlement queries. Latency plummeted from 1,200ms to 85ms (93% drop), error rate hit 0%. Next week: Grafana executive APM dashboard.",
+      "Primary payment gateway threw 50+ timeouts/min during flash sale. Did emergency hotfix on Friday. Root cause: connection pool starvation in HikariCP. Tuned maxPoolSize, added Redis L2 cache for hot settlement queries. Latency plummeted from 1,200ms to 85ms (93% drop), error rate hit 0%. Next week: Grafana executive APM dashboard.",
     weeklySnippet: {
       done: [
         "Resolved critical payment gateway timeout crisis under flash-sale concurrency",
@@ -121,7 +121,7 @@ const SHOWCASE_DATA: Record<string, ShowcaseData> = {
     role: "Product Management",
     roleBadge: "Lead / Principal PM",
     rawMemo:
-      "Shipped 3-step streamlined onboarding experiment to 100% of global mobile traffic with 1-click social auth. Monitored telemetry for 7 days: drop-off dropped from 38% to 19%, overall signup conversion rate (CVR) surged by +24%. Team celebrated over Friday demo.",
+      "Shipped 3-step streamlined onboarding experiment to 100% of global mobile traffic with 1-click social auth. Monitored telemetry for 7 days: drop-off plummeted from 38% to 19%, overall signup conversion rate (CVR) surged by +24%. Team celebrated over Friday demo.",
     weeklySnippet: {
       done: [
         "Shipped 3-step progressive onboarding experiment to 100% of global mobile users",
@@ -458,7 +458,7 @@ export function LandingPageEn() {
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "weekly"
                         ? "bg-white/20 text-white"
-                        : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
                     Slack Sync
@@ -479,7 +479,7 @@ export function LandingPageEn() {
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "brag"
                         ? "bg-white/20 text-white"
-                        : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
                     Brag Sheet
@@ -500,7 +500,7 @@ export function LandingPageEn() {
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "star"
                         ? "bg-white/20 text-white"
-                        : "bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
                     }`}
                   >
                     STAR Format
@@ -819,7 +819,7 @@ export function LandingPageEn() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block font-semibold">1-Click Permanent Data Purge</strong>
-                    <span className="text-zinc-400">Export full JSON backups anytime or wipe your entire database in 1 second.</span>
+                    <span className="text-zinc-400">Export your data anytime or permanently wipe your account and notes in 1 click.</span>
                   </div>
                 </div>
               </div>
@@ -866,6 +866,10 @@ export function LandingPageEn() {
                 a: "Yes, completely free. It is free forever to log your achievements, and you get 5 full AI transformations right upon signing in with your Google account. No credit card required. You can log your wins freely and unlock your full history anytime.",
               },
               {
+                q: "What happens after my 5 free transformations?",
+                a: "You can continue logging your weekly notes for free forever. To unlock unlimited weekly brain dumps, past log edits, and full executive syntheses (Brag Sheet & STAR Portfolio), you can upgrade to WinStash Pro for just $5.99/month (cancel anytime).",
+              },
+              {
                 q: "Can I use WinStash if I am not a Software Engineer?",
                 a: "Absolutely. WinStash supports 6 dedicated career personas (Engineering, Product Management, Product Design, Growth & Marketing, Sales & BD, BizOps & Finance) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). AI tunes metrics and domain-specific terminology for your exact discipline.",
               },
@@ -888,6 +892,7 @@ export function LandingPageEn() {
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  aria-expanded={openFaq === idx}
                   className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 cursor-pointer"
                 >
                   <span>{faq.q}</span>
