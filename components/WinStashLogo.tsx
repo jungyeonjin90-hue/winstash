@@ -8,6 +8,8 @@ import React from "react";
  * Tier 1: Weekly Snippets / Sync
  * Tier 2: Brag Document / Performance Review
  * Tier 3: STAR Career Portfolio
+ *
+ * Tightly-cropped viewBox (183 188 660 660) eliminates dead whitespace and maximizes legibility.
  */
 export function WinStashVaultIcon({
   className = "w-5 h-5",
@@ -17,7 +19,7 @@ export function WinStashVaultIcon({
 }) {
   return (
     <svg
-      viewBox="0 0 1024 1024"
+      viewBox="183 188 660 660"
       fill="currentColor"
       className={className}
       xmlns="http://www.w3.org/2000/svg"
@@ -66,8 +68,8 @@ export function WinStashVaultIcon({
 }
 
 /**
- * WinStash Brand Logo Badge (Clean Minimal White Badge + Dark Line Art)
- * Architectural, crisp, Notion/Bauhaus aesthetic
+ * WinStash Brand Logo Badge (Clean Minimal White Badge + Maximized Drawer Icon)
+ * 여백을 대폭 줄여 서랍 형태가 한눈에 시원하고 선명하게 보이도록 최적화
  */
 export function WinStashBrandBadge({
   size = "md",
@@ -75,15 +77,15 @@ export function WinStashBrandBadge({
   size?: "sm" | "md" | "lg";
 }) {
   const sizeClasses = {
-    sm: "w-7 h-7 rounded-lg",
-    md: "w-9 h-9 sm:w-10 sm:h-10 rounded-xl",
-    lg: "w-12 h-12 rounded-2xl",
+    sm: "w-7 h-7 rounded-lg p-0.5",
+    md: "w-9 h-9 sm:w-10 sm:h-10 rounded-xl p-1",
+    lg: "w-12 h-12 rounded-2xl p-1.5",
   };
 
   const iconSizes = {
-    sm: "w-4 h-4",
-    md: "w-5 h-5 sm:w-6 sm:h-6",
-    lg: "w-7 h-7",
+    sm: "w-6 h-6",
+    md: "w-7.5 h-7.5 sm:w-8 sm:h-8",
+    lg: "w-10 h-10",
   };
 
   return (
