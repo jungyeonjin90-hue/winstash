@@ -13,7 +13,11 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { AppUser } from "@/context/AuthContext";
-import { buildLemonSqueezyCheckoutUrl, PRO_PRICE_USD } from "@/lib/lemonSqueezyConfig";
+import {
+  buildLemonSqueezyCheckoutUrl,
+  PRO_PRICE_USD,
+  IS_PAYMENT_GATEWAY_LIVE,
+} from "@/lib/lemonSqueezyConfig";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -30,6 +34,8 @@ export function UpgradeModal({
   triggerReason = "header",
   isPro = false,
 }: UpgradeModalProps) {
+  const [isComingSoonClicked, setIsComingSoonClicked] = useState(false);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -39,6 +45,12 @@ export function UpgradeModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsComingSoonClicked(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -175,6 +187,11 @@ export function UpgradeModal({
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>WinStash Pro Membership</span>
+                {!IS_PAYMENT_GATEWAY_LIVE && (
+                  <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/15 text-amber-700 dark:text-amber-300 font-extrabold uppercase border border-amber-500/30">
+                    Soon
+                  </span>
+                )}
               </div>
               <h2 id="upgrade-dialog-title" className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
                 Invest in Your Promotion & Career
@@ -240,21 +257,50 @@ export function UpgradeModal({
 
             {/* CTA Button */}
             <div className="space-y-3">
-              <a
-                href={checkoutUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
-              >
-                <Zap className="w-4 h-4 fill-white" />
-                <span>Upgrade to Pro Now (${PRO_PRICE_USD}/mo)</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
+              {IS_PAYMENT_GATEWAY_LIVE ? (
+                <a
+                  href={checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 fill-white" />
+                  <span>Upgrade to Pro Now (${PRO_PRICE_USD}/mo)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsComingSoonClicked(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>WinStash Pro 오픈 준비 중 (${PRO_PRICE_USD}/mo)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+
+              {/* 준비중 / 곧 오픈 안내 배너 */}
+              {!IS_PAYMENT_GATEWAY_LIVE && isComingSoonClicked && (
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-950 dark:text-amber-200 text-center space-y-1.5 animate-in fade-in zoom-in-95 duration-200 shadow-xs">
+                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+                    <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <span>결제 시스템 오픈 준비 중입니다 (Coming Soon)</span>
+                  </div>
+                  <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
+                    현재 글로벌 결제(Lemon Squeezy) 최종 승인 심사가 진행 중입니다. <br className="hidden sm:inline" />
+                    승인이 완료되는 즉시 Pro 결제가 정식 오픈됩니다.
+                  </p>
+                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 pt-0.5">
+                    🎉 정식 오픈 전까지 모든 주간 메모와 성과를 무료로 편하게 기록해 두세요!
+                  </p>
+                </div>
+              )}
 
               <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-500 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  Lemon Squeezy MoR Verified
+                  {IS_PAYMENT_GATEWAY_LIVE ? "Lemon Squeezy MoR Verified" : "Lemon Squeezy MoR In Review"}
                 </span>
                 <span>·</span>
                 <span className="flex items-center gap-1">

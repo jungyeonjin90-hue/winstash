@@ -5,6 +5,14 @@
 export const PRO_PRICE_USD = 5.99;
 
 /**
+ * Flag indicating whether Lemon Squeezy payment is live or in review/coming soon.
+ * Once Lemon Squeezy approves the store, set NEXT_PUBLIC_LEMON_SQUEEZY_IS_LIVE="true" in .env.local / Vercel,
+ * or change this default to true.
+ */
+export const IS_PAYMENT_GATEWAY_LIVE =
+  process.env.NEXT_PUBLIC_LEMON_SQUEEZY_IS_LIVE === "true";
+
+/**
  * Base Checkout URL for WinStash Pro Monthly ($5.99)
  * Configurable via NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL environment variable.
  */
