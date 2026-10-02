@@ -862,12 +862,12 @@ export function LandingPageEn() {
           <div className="space-y-3 pt-4">
             {[
               {
-                q: "Are the first 5 runs really 100% free? Do I need a credit card?",
-                a: "Yes, completely free. It is free forever to log your achievements, and you get 5 full AI transformations right upon signing in with your Google account. No credit card required. You can log your wins freely and unlock your full history anytime.",
+                q: "What is included in the free plan? Do I need a credit card?",
+                a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 5 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 executive STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
               },
               {
-                q: "What happens after my 5 free transformations?",
-                a: "You can continue logging your weekly notes for free forever. To unlock unlimited weekly brain dumps, past log edits, and full executive syntheses (Brag Sheet & STAR Portfolio), you can upgrade to WinStash Pro for just $5.99/month (cancel anytime).",
+                q: "What happens after I use my free AI credits?",
+                a: "You can continue logging and storing your weekly notes for free forever. To unlock unlimited weekly brain dumps, past log edits, and unlimited executive syntheses across all quarters and years, you can upgrade to WinStash Pro for just $5.99/month (cancel anytime).",
               },
               {
                 q: "Can I use WinStash if I am not a Software Engineer?",

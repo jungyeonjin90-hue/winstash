@@ -30,12 +30,13 @@ import {
   checkSynthesisCooldown,
   recordSynthesisCooldown,
 } from "@/lib/rateLimitService";
-import { checkSynthesisQuota, consumeSynthesisQuota } from "@/lib/creditService";
+import { checkSynthesisQuota, consumeSynthesisQuota, CreditStatus } from "@/lib/creditService";
 import { getAuthToken } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 
 interface BragDocumentTabProps {
   records: CareerRecord[];
+  creditStatus?: CreditStatus | null;
   jobRole?: JobRole;
   toneManner?: ToneManner;
   onJobRoleChange?: (role: JobRole) => void;
@@ -45,6 +46,7 @@ interface BragDocumentTabProps {
 
 export function BragDocumentTab({
   records,
+  creditStatus,
   jobRole = "engineering",
   toneManner = "impact",
   onJobRoleChange,
@@ -399,6 +401,38 @@ export function BragDocumentTab({
               <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Summary Up to Date (Saved in DB)</span>
             </div>
+          )}
+
+          {/* Quota Badge (Pre-flight transparency) */}
+          {creditStatus && (
+            creditStatus.isPro || creditStatus.isAdmin ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/70 shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
+                <span>Pro Unlimited Reviews</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={creditStatus.remainingBragCredits === 0 ? onUpgradeClick : undefined}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border shadow-xs transition-all ${
+                  creditStatus.remainingBragCredits > 0
+                    ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/70"
+                    : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/70 hover:border-amber-400 cursor-pointer active:scale-95 animate-pulse"
+                }`}
+                title={
+                  creditStatus.remainingBragCredits > 0
+                    ? `${creditStatus.remainingBragCredits} of ${creditStatus.maxBragCredits} free reviews remaining.`
+                    : "Free reviews exhausted. Click to upgrade to Pro ($5.99/mo)."
+                }
+              >
+                <Sparkles className={`w-3.5 h-3.5 ${creditStatus.remainingBragCredits > 0 ? "text-emerald-500" : "text-amber-500 fill-amber-500"}`} />
+                <span>
+                  {creditStatus.remainingBragCredits > 0
+                    ? `${creditStatus.remainingBragCredits} of ${creditStatus.maxBragCredits} Free Reviews Left`
+                    : "0 of 3 Left · Upgrade to Pro"}
+                </span>
+              </button>
+            )
           )}
         </div>
 

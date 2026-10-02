@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MessageSquare, TrendingUp, ShieldCheck, History, Sparkles } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner } from "@/types/career";
+import { CreditStatus } from "@/lib/creditService";
 import { trackEvent } from "@/lib/analytics";
 import { WeeklySnippetsTab } from "./tabs/WeeklySnippetsTab";
 import { BragDocumentTab } from "./tabs/BragDocumentTab";
@@ -14,6 +15,7 @@ interface DashboardTabsEnProps {
   onDeleteRecord?: (id: string) => void;
   onEditRecord?: (rawMemo: string, existingRecordId: string) => Promise<void>;
   onUpgradeClick?: () => void;
+  creditStatus?: CreditStatus | null;
   jobRole?: JobRole;
   toneManner?: ToneManner;
   onJobRoleChange?: (role: JobRole) => void;
@@ -27,6 +29,7 @@ export function DashboardTabsEn({
   onDeleteRecord,
   onEditRecord,
   onUpgradeClick,
+  creditStatus,
   jobRole = "engineering",
   toneManner = "impact",
   onJobRoleChange,
@@ -124,6 +127,7 @@ export function DashboardTabsEn({
             <div className={activeTab === "brag" ? "block" : "hidden"}>
               <BragDocumentTab
                 records={records}
+                creditStatus={creditStatus}
                 jobRole={jobRole}
                 toneManner={toneManner}
                 onJobRoleChange={onJobRoleChange}
@@ -135,6 +139,7 @@ export function DashboardTabsEn({
             <div className={activeTab === "vault" ? "block" : "hidden"}>
               <StarResumeTab
                 records={records}
+                creditStatus={creditStatus}
                 jobRole={jobRole}
                 toneManner={toneManner}
                 onJobRoleChange={onJobRoleChange}

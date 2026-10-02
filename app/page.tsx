@@ -453,6 +453,7 @@ export default function Home() {
                 setUpgradeTriggerReason("brag");
                 setIsUpgradeModalOpen(true);
               }}
+              creditStatus={creditStatus}
               jobRole={jobRole}
               toneManner={toneManner}
               onJobRoleChange={handleJobRoleChange}
