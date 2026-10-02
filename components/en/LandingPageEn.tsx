@@ -285,9 +285,9 @@ export function LandingPageEn() {
             <span className="block">
               Stop scrambling <span className="whitespace-nowrap">before reviews &amp; 1:1s.</span>
             </span>
-            <span className="block mt-2 sm:mt-3">
+            <span className="block mt-2 sm:mt-3 text-indigo-600 dark:text-indigo-400">
               Dump 1 min on Friday.{" "}
-              <span className="whitespace-nowrap text-indigo-600 dark:text-indigo-400">
+              <span className="whitespace-nowrap">
                 AI does the rest.
               </span>
             </span>
