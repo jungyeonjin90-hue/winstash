@@ -13,7 +13,7 @@ function buildSynthesisPrompt(
   toneManner: ToneManner,
   periodLabel: string,
   records: CareerRecord[]
-): string {
+): { systemInstruction: string; userContent: string } {
   const scopeNames: Record<number, string> = {
     3: "Executive Brief (Top strategic achievements for C-Suite & VP syncs)",
     5: "Core Highlights (Standard achievements for performance review & promotion)",
@@ -35,8 +35,10 @@ ${metric ? `- Initial Metric Draft: ${metric}` : ""}`;
     })
     .join("\n\n");
 
+  const userContent = `[Input Weekly Records for Synthesis]:\n<user_weekly_records>\n${recordsContext}\n</user_weekly_records>`;
+
   if (type === "brag") {
-    return `You are an elite Silicon Valley executive career coach and Staff PM / Engineering Director.
+    const systemInstruction = `You are an elite Silicon Valley executive career coach and Staff PM / Engineering Director.
 You have been provided with ${records.length} real weekly accomplishment records from ${periodLabel}.
 Your goal is to SYNTHESIZE, DEDUPLICATE, and ELEVATE these entries into high-impact Brag Document items (Target: up to ${scope} items).
 
@@ -46,9 +48,9 @@ Narrative Tone & Voice: ${toneManner.toUpperCase()}
 
 CRITICAL ACCURACY & GROUNDING RULES:
 1. STRICT FACTUAL GROUNDING & RECORD ISOLATION:
-   - You MUST ONLY synthesize projects, achievements, and metrics that are EXPLICITLY grounded in the "Input Weekly Records" below.
+   - You MUST ONLY synthesize projects, achievements, and metrics that are EXPLICITLY grounded in the "Input Weekly Records" provided by the user.
    - NEVER invent unmentioned client names, fictional systems, or fabricated metrics that have no basis in the user's notes.
-   - DO NOT reference, borrow, or hallucinate ANY external sample projects (e.g. Payment Gateway, HikariCP, Redis L2, Onboarding Funnel, CAC Ads) unless they are EXPLICITLY written in the user's notes below.
+   - DO NOT reference, borrow, or hallucinate ANY external sample projects (e.g. Payment Gateway, HikariCP, Redis L2, Onboarding Funnel, CAC Ads) unless they are EXPLICITLY written in the user's notes.
    - Output items derived 100% EXCLUSIVELY from the ${records.length} provided log(s).
 2. DYNAMIC SCOPE (DO NOT FORCE FICTIONAL ITEMS):
    - The user has provided ${records.length} weekly log(s). If there are fewer logs than the requested maximum (${scope}), DO NOT hallucinate additional fictional projects to fill the quota!
@@ -74,15 +76,11 @@ Required JSON Schema:
       "source_record_count": ${records.length}
     }
   ]
-}
-
-Input Weekly Records:
-<user_weekly_records>
-${recordsContext}
-</user_weekly_records>`;
+}`;
+    return { systemInstruction, userContent };
   } else {
     // type === "star"
-    return `You are an elite Silicon Valley executive career coach and Staff PM / Engineering Director.
+    const systemInstruction = `You are an elite Silicon Valley executive career coach and Staff PM / Engineering Director.
 You have been provided with ${records.length} real weekly accomplishment records from ${periodLabel}.
 Your goal is to SYNTHESIZE, DEDUPLICATE, and ELEVATE these entries into resume-worthy STAR Case Studies (Target: up to ${scope} items).
 
@@ -92,9 +90,9 @@ Narrative Tone & Voice: ${toneManner.toUpperCase()}
 
 CRITICAL ACCURACY & GROUNDING RULES:
 1. STRICT FACTUAL GROUNDING & RECORD ISOLATION:
-   - You MUST ONLY synthesize projects, situations, tasks, actions, and results that are EXPLICITLY grounded in the "Input Weekly Records" below.
+   - You MUST ONLY synthesize projects, situations, tasks, actions, and results that are EXPLICITLY grounded in the "Input Weekly Records" provided by the user.
    - NEVER invent unmentioned client names, fictional outages, or fabricated tools that have no basis in the user's notes.
-   - DO NOT reference, borrow, or hallucinate ANY external sample projects (e.g. Payment Gateway, HikariCP, Redis L2, Onboarding Funnel, CAC Ads) unless they are EXPLICITLY written in the user's notes below.
+   - DO NOT reference, borrow, or hallucinate ANY external sample projects (e.g. Payment Gateway, HikariCP, Redis L2, Onboarding Funnel, CAC Ads) unless they are EXPLICITLY written in the user's notes.
    - Output case studies derived 100% EXCLUSIVELY from the ${records.length} provided log(s).
 2. DYNAMIC SCOPE (DO NOT FORCE FICTIONAL ITEMS):
    - The user has provided ${records.length} weekly log(s). If there are fewer logs than the requested maximum (${scope}), DO NOT hallucinate additional fictional projects to fill the quota!
@@ -125,12 +123,8 @@ Required JSON Schema:
       "source_record_count": ${records.length}
     }
   ]
-}
-
-Input Weekly Records:
-<user_weekly_records>
-${recordsContext}
-</user_weekly_records>`;
+}`;
+    return { systemInstruction, userContent };
   }
 }
 
@@ -209,10 +203,13 @@ export async function POST(req: NextRequest) {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
+                systemInstruction: {
+                  parts: [{ text: prompt.systemInstruction }],
+                },
                 contents: [
                   {
                     role: "user",
-                    parts: [{ text: prompt }],
+                    parts: [{ text: prompt.userContent }],
                   },
                 ],
                 generationConfig: {

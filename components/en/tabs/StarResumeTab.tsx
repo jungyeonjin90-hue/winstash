@@ -418,7 +418,7 @@ export function StarResumeTab({
               )}
               <span>
                 {isSynthesizing
-                  ? "Synthesizing AI Resumes..."
+                  ? "Synthesizing Career Portfolio..."
                   : filteredRecords.length === 0
                   ? "No Weekly Logs in this Period"
                   : isStale

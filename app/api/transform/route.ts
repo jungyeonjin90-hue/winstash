@@ -435,12 +435,15 @@ export async function POST(req: NextRequest) {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
+                systemInstruction: {
+                  parts: [{ text: prompt }],
+                },
                 contents: [
                   {
                     role: "user",
                     parts: [
                       {
-                        text: `${prompt}\n\n${userPrefix}${raw_memo}${userSuffix}`,
+                        text: `${userPrefix}${raw_memo}${userSuffix}`,
                       },
                     ],
                   },

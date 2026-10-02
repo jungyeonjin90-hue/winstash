@@ -71,7 +71,12 @@ export function UpgradeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upgrade-dialog-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+    >
       <div
         className="relative w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-6"
         onClick={(e) => e.stopPropagation()}
@@ -95,7 +100,7 @@ export function UpgradeModal({
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
                 <span>WinStash Pro Active</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h2 id="upgrade-dialog-title" className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
                 Manage Your Subscription
               </h2>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md mx-auto">
@@ -171,7 +176,7 @@ export function UpgradeModal({
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>WinStash Pro Membership</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              <h2 id="upgrade-dialog-title" className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
                 Invest in Your Promotion & Career
               </h2>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md mx-auto">
