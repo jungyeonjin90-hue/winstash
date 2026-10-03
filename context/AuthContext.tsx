@@ -146,8 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         signOutRef.current?.();
         const isKorean =
-          (typeof window !== "undefined" && window.location.pathname.startsWith("/ko")) ||
-          (typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("ko"));
+          typeof window !== "undefined" && window.location.pathname.startsWith("/ko");
 
         alert(
           isKorean
