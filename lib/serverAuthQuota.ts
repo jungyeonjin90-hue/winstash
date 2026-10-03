@@ -36,8 +36,9 @@ export async function verifyServerAuthAndQuota(
 
   const isDemoRequest = req.headers.get("x-demo-user") === "true";
 
-  // 1. Demo User request handling (isolated sandbox)
-  if (isDemoRequest) {
+  // 1. Demo User request handling (Strictly prohibited in production to prevent unauthenticated LLM abuse)
+  // In production, every request MUST provide a valid authenticated Firebase Google user token.
+  if (isDemoRequest && process.env.NODE_ENV !== "production") {
     return { allowed: true, userId: "demo-user-1234", isPro: false };
   }
 

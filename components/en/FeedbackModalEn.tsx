@@ -74,7 +74,7 @@ export function FeedbackModalEn({
         type,
         title: title.trim(),
         message: message.trim(),
-        userEmail: email.trim() || (user?.email ?? "anonymous@winstash.app"),
+        userEmail: email.trim() || (user?.email ?? "anonymous@winstash.net"),
         userId: user?.uid || "guest",
         metadata,
       });

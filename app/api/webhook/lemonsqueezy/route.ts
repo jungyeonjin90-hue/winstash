@@ -44,7 +44,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const payload = JSON.parse(rawBody);
+    let payload: any;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON webhook payload" },
+        { status: 400 }
+      );
+    }
     const eventName = payload.meta?.event_name as string;
     const customData = payload.meta?.custom_data || {};
     const userId = customData.user_id as string | undefined;
