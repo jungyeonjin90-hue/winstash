@@ -3,6 +3,9 @@ import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem, SynthesizedStar
 import { checkServerRateLimit, getClientIp } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 
+// Allow long-running LLM synthesis (Vercel default of 10s causes empty 500/504 responses)
+export const maxDuration = 60;
+
 /**
  * Builds the AI Synthesis prompt with strict factual grounding & dynamic scope rules
  */
@@ -186,11 +189,11 @@ export async function POST(req: NextRequest) {
       safeRecords
     );
 
-    // Call official Google Gemini models (verified working models in priority order)
+    // Call official Google Gemini models (fastest verified model first to stay within serverless time limits)
     if (apiKey) {
       const modelsToTry = [
-        "gemini-flash-latest",
         "gemini-3.1-flash-lite",
+        "gemini-flash-latest",
         "gemini-3.8-flash",
       ];
 
