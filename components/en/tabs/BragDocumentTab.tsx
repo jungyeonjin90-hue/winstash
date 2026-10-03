@@ -44,6 +44,31 @@ interface BragDocumentTabProps {
   onUpgradeClick?: () => void;
 }
 
+const BRAG_LOADING_MESSAGES = [
+  "Aggregating weekly logs...",
+  "Calculating quantified business impact...",
+  "Structuring executive brag bullets...",
+  "Almost done! Polishing achievements...",
+];
+
+function BragSynthesizingMessage() {
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIdx((prev) => (prev + 1) % BRAG_LOADING_MESSAGES.length);
+    }, 1800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span className="inline-flex items-center gap-2 animate-in fade-in duration-300">
+      <Sparkles className="w-4 h-4 animate-spin text-white shrink-0" />
+      <span className="min-w-[240px] text-center">{BRAG_LOADING_MESSAGES[msgIdx]}</span>
+    </span>
+  );
+}
+
 export function BragDocumentTab({
   records,
   creditStatus,
@@ -400,19 +425,19 @@ export function BragDocumentTab({
               } disabled:opacity-50`}
             >
               {isSynthesizing ? (
-                <Sparkles className="w-4 h-4 animate-spin text-white" />
+                <BragSynthesizingMessage />
               ) : (
-                <Sparkles className="w-4 h-4 text-white" />
+                <>
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span>
+                    {filteredRecords.length === 0
+                      ? "No Weekly Logs in this Period"
+                      : isStale
+                      ? `Update Summary (${filteredRecords.length} Logs)`
+                      : `Generate Brag Summary (${filteredRecords.length} Logs)`}
+                  </span>
+                </>
               )}
-              <span>
-                {isSynthesizing
-                  ? "Synthesizing AI Summary..."
-                  : filteredRecords.length === 0
-                  ? "No Weekly Logs in this Period"
-                  : isStale
-                  ? `Update Summary (${filteredRecords.length} Logs)`
-                  : `Generate Brag Summary (${filteredRecords.length} Logs)`}
-              </span>
             </button>
           ) : (
             <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 shadow-xs select-none">
@@ -620,8 +645,14 @@ export function BragDocumentTab({
                     disabled={isSynthesizing}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Generate AI Brag Summary ({filteredRecords.length} Logs)</span>
+                    {isSynthesizing ? (
+                      <BragSynthesizingMessage />
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Generate AI Brag Summary ({filteredRecords.length} Logs)</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </>

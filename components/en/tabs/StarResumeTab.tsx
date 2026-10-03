@@ -45,6 +45,31 @@ interface StarResumeTabProps {
   onUpgradeClick?: () => void;
 }
 
+const STAR_LOADING_MESSAGES = [
+  "Analyzing multi-week projects...",
+  "Framing Situation & Task hurdles...",
+  "Distilling Action & Measurable Results...",
+  "Finalizing interview-ready case studies...",
+];
+
+function StarSynthesizingMessage() {
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIdx((prev) => (prev + 1) % STAR_LOADING_MESSAGES.length);
+    }, 1800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span className="inline-flex items-center gap-2 animate-in fade-in duration-300">
+      <Sparkles className="w-4 h-4 animate-spin text-white shrink-0" />
+      <span className="min-w-[250px] text-center">{STAR_LOADING_MESSAGES[msgIdx]}</span>
+    </span>
+  );
+}
+
 export function StarResumeTab({
   records,
   creditStatus,
@@ -425,19 +450,19 @@ export function StarResumeTab({
               } disabled:opacity-50`}
             >
               {isSynthesizing ? (
-                <Sparkles className="w-4 h-4 animate-spin text-white" />
+                <StarSynthesizingMessage />
               ) : (
-                <Sparkles className="w-4 h-4 text-white" />
+                <>
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span>
+                    {filteredRecords.length === 0
+                      ? "No Weekly Logs in this Period"
+                      : isStale
+                      ? `Update Portfolio (${filteredRecords.length} Logs)`
+                      : `Generate Career Portfolio (${filteredRecords.length} Logs)`}
+                  </span>
+                </>
               )}
-              <span>
-                {isSynthesizing
-                  ? "Synthesizing Career Portfolio..."
-                  : filteredRecords.length === 0
-                  ? "No Weekly Logs in this Period"
-                  : isStale
-                  ? `Update Portfolio (${filteredRecords.length} Logs)`
-                  : `Generate Career Portfolio (${filteredRecords.length} Logs)`}
-              </span>
             </button>
           ) : (
             <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/80 shadow-xs select-none">
@@ -689,8 +714,14 @@ export function StarResumeTab({
                     disabled={isSynthesizing}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/20 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Generate AI STAR Case Studies ({filteredRecords.length} Logs)</span>
+                    {isSynthesizing ? (
+                      <StarSynthesizingMessage />
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Generate AI STAR Case Studies ({filteredRecords.length} Logs)</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </>
