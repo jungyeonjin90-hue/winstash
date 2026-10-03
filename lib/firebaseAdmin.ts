@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
-import { getAuth, Auth } from "firebase-admin/auth";
+import type { Auth } from "firebase-admin/auth";
 
 /**
  * Firebase Admin SDK Singleton for Server-Side Route Handlers
@@ -58,7 +58,20 @@ function initializeFirebaseAdmin(): App | null {
 const adminApp = initializeFirebaseAdmin();
 
 export const adminDb: Firestore | null = adminApp ? getFirestore(adminApp) : null;
-export const adminAuth: Auth | null = adminApp ? getAuth(adminApp) : null;
+
+// firebase-admin/auth pulls in jwks-rsa -> ESM-only jose, which can throw
+// ERR_REQUIRE_ESM at load time on some serverless runtimes. Load it defensively
+// so a failure degrades gracefully instead of crashing every API route.
+let _adminAuth: Auth | null = null;
+if (adminApp) {
+  try {
+    const authModule = await import("firebase-admin/auth");
+    _adminAuth = authModule.getAuth(adminApp);
+  } catch (error) {
+    console.error("[FirebaseAdmin] Failed to load firebase-admin/auth:", error);
+  }
+}
+export const adminAuth: Auth | null = _adminAuth;
 
 export function isFirebaseAdminConfigured(): boolean {
   return adminDb !== null;
