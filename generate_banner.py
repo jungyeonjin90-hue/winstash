@@ -79,7 +79,7 @@ def create_stunning_twitter_banner():
         cur_x += bw + 10
 
     # Domain Tag (bottom left)
-    draw.text((92, 412), "winstash.xyz", font=f_url, fill=(165, 180, 252, 255))
+    draw.text((92, 412), "winstash.net", font=f_url, fill=(165, 180, 252, 255))
     draw.text((205, 414), "— 100% Free Open Beta", font=f_card_sub, fill=(113, 113, 122, 255))
 
     # ================= RIGHT SIDE: Precision Glassmorphism UI Mockup =================

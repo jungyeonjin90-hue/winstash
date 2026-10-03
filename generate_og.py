@@ -85,7 +85,7 @@ def create_og_image():
         cur_x += bw + 10
 
     # Domain Tag (bottom left)
-    draw.text((left_x, 485), "winstash.xyz", font=f_url, fill=(165, 180, 252, 255))
+    draw.text((left_x, 485), "winstash.net", font=f_url, fill=(165, 180, 252, 255))
     draw.text((left_x + 125, 487), "— 100% Free Open Beta", font=f_card_sub, fill=(113, 113, 122, 255))
 
     # ================= RIGHT SIDE: Precision Glassmorphism Card =================

@@ -109,7 +109,7 @@ ${p.action}
 ${p.result}
 
 ---
-Formatted with WinStash (https://winstash.xyz/ko)`;
+Formatted with WinStash (https://winstash.net/ko)`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -149,7 +149,7 @@ Formatted with WinStash (https://winstash.xyz/ko)`;
       text += `[Result]    ${p.result}\n\n\n`;
     });
 
-    text += `\n---\nFormatted with WinStash (https://winstash.xyz/ko)\n`;
+    text += `\n---\nFormatted with WinStash (https://winstash.net/ko)\n`;
     return text.trim();
   };
 

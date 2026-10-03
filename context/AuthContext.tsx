@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithDemo = () => {
     const demoUser: AppUser = {
       uid: "demo-user-1234",
-      email: "demo.pro@winstash.xyz",
+      email: "demo.pro@winstash.net",
       displayName: "Demo User",
       photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces",
       isDemo: true,

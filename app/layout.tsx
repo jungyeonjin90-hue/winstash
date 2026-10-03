@@ -14,12 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://winstash.xyz"),
+  metadataBase: new URL("https://winstash.net"),
   title: "WinStash - Never Forget Your Wins | 1-Min Friday Notes to Career Assets",
   description:
     "Turn 1-minute Friday notes into manager-ready weekly syncs, promotion brag sheets, and career portfolios. Never forget what you shipped.",
   verification: {
-    google: "qKa_dC23HOY2U3XVvOP3rdC4nyvltfy_dgjghEXxKPQ",
+    google: [
+      "a7NjIvBTtR627n1EqGwav6v2_hO9NpAA9tbojTw8kN8",
+      "qKa_dC23HOY2U3XVvOP3rdC4nyvltfy_dgjghEXxKPQ",
+    ],
   },
   manifest: "/manifest.json",
   icons: {
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
     title: "WinStash - Never Forget Your Wins",
     description:
       "1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio. Write rough notes on Friday, auto-fill your career assets.",
-    url: "https://winstash.xyz",
+    url: "https://winstash.net",
     siteName: "WinStash",
     images: [
       {
