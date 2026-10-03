@@ -34,18 +34,6 @@ const PRESET_MEMOS_EN = [
     label: "🎨 Design System & +18% Checkout (Design)",
     text: "Unified mobile checkout design system tokens and conducted 12 moderated usability sessions on payment friction. Rolled out redesigned 1-screen payment sheet, lifting mobile completion rate by +18% and cutting user input errors by 35%.",
   },
-  {
-    label: "🎯 Search Ads CAC -18% (Marketing)",
-    text: "A/B tested search & paid social landing pages with high-intent benefit messaging and instant coupon issuance. Drove a 32% increase in signup conversion and reduced customer acquisition cost (CAC) by 18% over 2 weeks.",
-  },
-  {
-    label: "💼 $320k Enterprise Deal & -14d Cycle (Sales)",
-    text: "Closed $320k ARR multi-year enterprise license with Tier-1 logistics prospect. Championed tailored technical PoC with solution engineering, cutting standard sales cycle duration from 45 days down to 31 days (14-day acceleration).",
-  },
-  {
-    label: "🛠️ 4-Hour Reconciliation Automation (Ops)",
-    text: "Automated manual weekly financial reconciliation using a Python pipeline and corporate Slack Bot. Codified 8 edge cases with finance. Slashed Friday manual review time from 4 hours to 3 minutes with 0% error discrepancy.",
-  },
 ];
 
 const LOADING_MESSAGES_EN = [
