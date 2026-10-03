@@ -51,8 +51,8 @@ function getStoredDemoUser(): AppUser | null {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AppUser | null>(() => getStoredDemoUser());
-  const [loading, setLoading] = useState<boolean>(() => isFirebaseConfigured);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const signOut = useCallback(async () => {
     try {
@@ -64,6 +64,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined") {
         localStorage.removeItem(DEMO_USER_STORAGE_KEY);
         localStorage.removeItem(LAST_ACTIVITY_KEY);
+        // Purge any lingering user-scoped or app-scoped caches to guarantee zero cross-account leakage
+        try {
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (
+              k &&
+              (k.startsWith("career_pulse_") ||
+                k.startsWith("winstash_"))
+            ) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+        } catch (storageErr) {
+          console.warn("Storage cleanup error on sign out:", storageErr);
+        }
       }
       setUser(null);
     } catch (err: unknown) {
@@ -94,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           trackEvent("user_authenticated", { method: "google" });
         } else {
-          setUser(getStoredDemoUser());
+          setUser(process.env.NODE_ENV !== "production" ? getStoredDemoUser() : null);
         }
         setLoading(false);
       });

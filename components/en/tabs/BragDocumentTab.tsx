@@ -88,6 +88,13 @@ export function BragDocumentTab({
 
   // Automatically restore settings from the most recently generated AI summary
   const hasRestoredRef = useRef(false);
+
+  // Reset cached entry when switching accounts
+  useEffect(() => {
+    hasRestoredRef.current = false;
+    setCachedEntry(null);
+  }, [userId]);
+
   useEffect(() => {
     if (records.length === 0 || !userId || hasRestoredRef.current) return;
 

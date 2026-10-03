@@ -91,6 +91,12 @@ export function StarResumeTab({
     }
   }, [records.length, defaultStartYear, defaultEndYear]);
 
+  // Reset cached entry when switching accounts
+  useEffect(() => {
+    hasRestoredRef.current = false;
+    setCachedEntry(null);
+  }, [userId]);
+
   useEffect(() => {
     if (records.length === 0 || !userId || hasRestoredRef.current) return;
 

@@ -71,18 +71,32 @@ export default function HomeKo() {
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
-  const [jobRole, setJobRole] = useState<JobRole>(() => getSettings().jobRole || "engineering");
-  const [toneManner, setToneManner] = useState<ToneManner>(() => getSettings().toneManner || "impact");
+  const [jobRole, setJobRole] = useState<JobRole>("engineering");
+  const [toneManner, setToneManner] = useState<ToneManner>("impact");
 
   // Firestore 동기화
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setRecords([]);
+      setIsClientLoaded(false);
+      setCreditStatus(null);
+      setJobRole("engineering");
+      setToneManner("impact");
+      return;
+    }
+
+    setRecords([]);
+    setIsClientLoaded(false);
+
+    const userSettings = getSettings(user.uid);
+    setJobRole(userSettings.jobRole || "engineering");
+    setToneManner(userSettings.toneManner || "impact");
 
     const unsubscribeRecords = subscribeUserRecords(
       user.uid,
       Boolean(user.isDemo),
       (syncedRecords) => {
-        setRecords(syncedRecords);
+        setRecords(syncedRecords || []);
         setIsClientLoaded(true);
       },
       (error) => {
@@ -111,8 +125,8 @@ export default function HomeKo() {
 
   const handleJobRoleChange = (role: JobRole) => {
     setJobRole(role);
-    const current = getSettings();
-    saveSettings({ ...current, jobRole: role });
+    const current = getSettings(user?.uid);
+    saveSettings({ ...current, jobRole: role }, user?.uid);
     if (user) {
       saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), role, toneManner);
     }
@@ -120,8 +134,8 @@ export default function HomeKo() {
 
   const handleToneMannerChange = (tone: ToneManner) => {
     setToneManner(tone);
-    const current = getSettings();
-    saveSettings({ ...current, toneManner: tone });
+    const current = getSettings(user?.uid);
+    saveSettings({ ...current, toneManner: tone }, user?.uid);
     if (user) {
       saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, tone);
     }

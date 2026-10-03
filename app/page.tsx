@@ -37,11 +37,11 @@ export default function Home() {
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
-  const [jobRole, setJobRole] = useState<JobRole>(() => getSettings().jobRole || "engineering");
-  const [toneManner, setToneManner] = useState<ToneManner>(() => getSettings().toneManner || "impact");
-  const [seniorityLevel, setSeniorityLevel] = useState<SeniorityLevel | undefined>(() => getSettings().seniorityLevel);
-  const [industry, setIndustry] = useState<string | undefined>(() => getSettings().industry);
-  const [region, setRegion] = useState<RegionCode | undefined>(() => getSettings().region);
+  const [jobRole, setJobRole] = useState<JobRole>("engineering");
+  const [toneManner, setToneManner] = useState<ToneManner>("impact");
+  const [seniorityLevel, setSeniorityLevel] = useState<SeniorityLevel | undefined>(undefined);
+  const [industry, setIndustry] = useState<string | undefined>(undefined);
+  const [region, setRegion] = useState<RegionCode | undefined>(undefined);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isPersonaLoaded, setIsPersonaLoaded] = useState(false);
 
@@ -103,7 +103,34 @@ export default function Home() {
 
   // Subscribe to user records & credit status, load persona
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // User is logged out: Immediately wipe all state to ensure zero cross-account data retention
+      setRecords([]);
+      setIsClientLoaded(false);
+      setIsPersonaLoaded(false);
+      setShowOnboarding(false);
+      setCreditStatus(null);
+      setJobRole("engineering");
+      setToneManner("impact");
+      setSeniorityLevel(undefined);
+      setIndustry(undefined);
+      setRegion(undefined);
+      return;
+    }
+
+    // User is logged in: First reset state to prevent brief flash of prior user's state
+    setRecords([]);
+    setIsClientLoaded(false);
+    setIsPersonaLoaded(false);
+    setShowOnboarding(false);
+
+    // Read user-scoped settings if available, else clean defaults
+    const userSettings = getSettings(user.uid);
+    setJobRole(userSettings.jobRole || "engineering");
+    setToneManner(userSettings.toneManner || "impact");
+    setSeniorityLevel(userSettings.seniorityLevel);
+    setIndustry(userSettings.industry);
+    setRegion(userSettings.region);
 
     // Purge legacy unkeyed caches immediately to prevent ghost summaries
     purgeLegacySummaryCaches();
@@ -117,7 +144,7 @@ export default function Home() {
         if (persona.seniorityLevel) setSeniorityLevel(persona.seniorityLevel);
         if (persona.industry) setIndustry(persona.industry);
         if (persona.region) setRegion(persona.region);
-        const current = getSettings();
+        const current = getSettings(user.uid);
         saveSettings({
           ...current,
           jobRole: persona.jobRole,
@@ -125,7 +152,7 @@ export default function Home() {
           seniorityLevel: persona.seniorityLevel,
           industry: persona.industry,
           region: persona.region,
-        });
+        }, user.uid);
       } else {
         setShowOnboarding(true);
       }
@@ -168,8 +195,8 @@ export default function Home() {
 
   const handleJobRoleChange = (role: JobRole) => {
     setJobRole(role);
-    const current = getSettings();
-    saveSettings({ ...current, jobRole: role });
+    const current = getSettings(user?.uid);
+    saveSettings({ ...current, jobRole: role }, user?.uid);
     if (user) {
       saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), role, toneManner, {
         seniorityLevel,
@@ -181,8 +208,8 @@ export default function Home() {
 
   const handleToneMannerChange = (tone: ToneManner) => {
     setToneManner(tone);
-    const current = getSettings();
-    saveSettings({ ...current, toneManner: tone });
+    const current = getSettings(user?.uid);
+    saveSettings({ ...current, toneManner: tone }, user?.uid);
     if (user) {
       saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, tone, {
         seniorityLevel,
@@ -194,8 +221,8 @@ export default function Home() {
 
   const handleSeniorityChange = (level: SeniorityLevel | undefined) => {
     setSeniorityLevel(level);
-    const current = getSettings();
-    saveSettings({ ...current, seniorityLevel: level });
+    const current = getSettings(user?.uid);
+    saveSettings({ ...current, seniorityLevel: level }, user?.uid);
     if (user) {
       saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, toneManner, {
         seniorityLevel: level,
@@ -207,8 +234,8 @@ export default function Home() {
 
   const handleIndustryChange = (ind: string | undefined) => {
     setIndustry(ind);
-    const current = getSettings();
-    saveSettings({ ...current, industry: ind });
+    const current = getSettings(user?.uid);
+    saveSettings({ ...current, industry: ind }, user?.uid);
     if (user) {
       saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, toneManner, {
         seniorityLevel,
@@ -220,8 +247,8 @@ export default function Home() {
 
   const handleRegionChange = (reg: RegionCode | undefined) => {
     setRegion(reg);
-    const current = getSettings();
-    saveSettings({ ...current, region: reg });
+    const current = getSettings(user?.uid);
+    saveSettings({ ...current, region: reg }, user?.uid);
     if (user) {
       saveUserPersonaToFirestore(user.uid, Boolean(user.isDemo), jobRole, toneManner, {
         seniorityLevel,

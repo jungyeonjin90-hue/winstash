@@ -33,15 +33,10 @@ export function subscribeUserRecords(
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        // 최초 가입자라서 기록이 0건이면 고품질 샘플 데이터 자동 시딩
+        // 신규 가입자이거나 기록이 0건인 경우 즉시 빈 배열로 화면 리셋
         if (snapshot.empty) {
-          try {
-            await seedInitialRecordsToFirestore(userId);
-            // 시딩 후 snapshot 리스너가 재발화하므로 리턴
-            return;
-          } catch (e) {
-            console.error("Initial seeding failed:", e);
-          }
+          onUpdate([]);
+          return;
         }
 
         const records: CareerRecord[] = snapshot.docs.map((docSnap) => {

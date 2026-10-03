@@ -31,10 +31,17 @@ export const DEFAULT_SETTINGS: AppSettings = {
   enableFirebase: false,
 };
 
-export function getSettings(): AppSettings {
+function getSettingsKey(userId?: string): string {
+  return userId ? `${SETTINGS_KEY}_${userId}` : SETTINGS_KEY;
+}
+
+export function getSettings(userId?: string): AppSettings {
   if (typeof window === "undefined") return DEFAULT_SETTINGS;
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
+    // If a specific userId is requested, only read that user's settings.
+    // If none exists, return pure defaults (never fall back to another user's settings).
+    const key = getSettingsKey(userId);
+    const raw = localStorage.getItem(key);
     if (!raw) return DEFAULT_SETTINGS;
     return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
   } catch (err) {
@@ -43,9 +50,16 @@ export function getSettings(): AppSettings {
   }
 }
 
-export function saveSettings(settings: AppSettings): void {
+export function saveSettings(settings: AppSettings, userId?: string): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  const key = getSettingsKey(userId);
+  localStorage.setItem(key, JSON.stringify(settings));
+}
+
+export function clearUserSettings(userId?: string): void {
+  if (typeof window === "undefined") return;
+  const key = getSettingsKey(userId);
+  localStorage.removeItem(key);
 }
 
 export function getStoredRecords(): CareerRecord[] {
