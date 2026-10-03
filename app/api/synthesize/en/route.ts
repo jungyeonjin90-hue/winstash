@@ -186,13 +186,12 @@ export async function POST(req: NextRequest) {
       safeRecords
     );
 
-    // Call official Google Gemini models
+    // Call official Google Gemini models (verified working models in priority order)
     if (apiKey) {
       const modelsToTry = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash-lite",
         "gemini-flash-latest",
+        "gemini-3.1-flash-lite",
+        "gemini-3.8-flash",
       ];
 
       for (const model of modelsToTry) {
@@ -217,7 +216,7 @@ export async function POST(req: NextRequest) {
                   temperature: 0.1, // Low temperature for high factual accuracy
                 },
               }),
-              signal: AbortSignal.timeout(15000),
+              signal: AbortSignal.timeout(30000),
             }
           );
 
@@ -231,6 +230,8 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ items: parsed.items });
               }
             }
+          } else {
+            console.warn(`Gemini synthesis model ${model} returned HTTP ${response.status}`);
           }
         } catch (err) {
           console.warn(`Gemini synthesis error with model ${model}, trying next:`, err);

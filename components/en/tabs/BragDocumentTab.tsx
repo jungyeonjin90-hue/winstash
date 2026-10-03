@@ -60,6 +60,12 @@ export function BragDocumentTab({
   // Derive latest record year or fallback to current calendar year
   const latestRecordYear = useMemo(() => {
     if (records.length > 0) {
+      const years = records
+        .map((r) => parseInt(getDetailedRecordDateInfo(r).year, 10))
+        .filter((y) => !isNaN(y));
+      if (years.length > 0) {
+        return String(Math.max(...years));
+      }
       return getDetailedRecordDateInfo(records[0]).year;
     }
     return String(new Date().getFullYear());
@@ -180,7 +186,10 @@ export function BragDocumentTab({
 
   // 5. Trigger AI Synthesis on-demand (costs 1 API call, then cached permanently)
   const handleSynthesizeWithAi = async () => {
-    if (filteredRecords.length === 0) return;
+    if (filteredRecords.length === 0) {
+      alert("No weekly logs found in the selected period. Please choose a period with logs or add a new weekly memo first.");
+      return;
+    }
 
     // 1. Anti-spam cooldown check (bypassed for admin)
     const cooldown = checkSynthesisCooldown(userId, user?.email);
@@ -261,8 +270,10 @@ export function BragDocumentTab({
 
       await saveSummaryCache(userId, isDemo, newEntry);
       setCachedEntry(newEntry);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("AI Synthesis error:", err);
+      const message = err instanceof Error ? err.message : "Failed to synthesize accomplishments. Please check your network or try again.";
+      alert(`⚠️ ${message}`);
     } finally {
       setIsSynthesizing(false);
     }

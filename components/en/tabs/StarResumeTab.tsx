@@ -192,7 +192,10 @@ export function StarResumeTab({
 
   // 5. Trigger AI Synthesis on-demand
   const handleSynthesizeWithAi = async () => {
-    if (filteredRecords.length === 0) return;
+    if (filteredRecords.length === 0) {
+      alert("No weekly logs found in the selected year range. Please choose a range with logs or add a new weekly memo first.");
+      return;
+    }
 
     // 1. Anti-spam cooldown check (bypassed for admin)
     const cooldown = checkSynthesisCooldown(userId, user?.email);
@@ -273,8 +276,10 @@ export function StarResumeTab({
 
       await saveSummaryCache(userId, isDemo, newEntry);
       setCachedEntry(newEntry);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("AI STAR Synthesis error:", err);
+      const message = err instanceof Error ? err.message : "Failed to synthesize STAR portfolio. Please check your network or try again.";
+      alert(`⚠️ ${message}`);
     } finally {
       setIsSynthesizing(false);
     }
