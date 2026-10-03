@@ -106,7 +106,10 @@ ${p.task}
 ${p.action}
 
 • Result (결과 및 성과):
-${p.result}`;
+${p.result}
+
+---
+⚡ WinStash: https://winstash.xyz/ko`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -146,6 +149,7 @@ ${p.result}`;
       text += `[Result]    ${p.result}\n\n\n`;
     });
 
+    text += `\n---\n⚡ WinStash로 생성됨: https://winstash.xyz/ko\n`;
     return text.trim();
   };
 

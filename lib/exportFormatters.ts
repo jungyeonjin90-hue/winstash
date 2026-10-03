@@ -4,7 +4,7 @@ import { SynthesizedStarItem, SynthesizedBragItem, CareerRecord, JobRole } from 
  * Signature watermark appended to all synthesized clipboard exports.
  * Protects brand moat, viral distribution loop, and prevents cheap copycat scraping.
  */
-export const WINSTASH_WATERMARK = "\n\n---\n⚡ Synthesized with WinStash 3-Way Career OS";
+export const WINSTASH_WATERMARK = "\n\n---\n⚡ Synthesized with WinStash: https://winstash.xyz";
 
 /**
  * Formats a single weekly career record into a universally compatible Markdown snippet.

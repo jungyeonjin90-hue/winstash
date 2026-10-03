@@ -19,6 +19,8 @@ export function WeeklyReportTab({ record }: WeeklyReportTabProps) {
     weekday: "short",
   });
 
+  const KO_WATERMARK = "\n\n---\n⚡ WinStash로 1분 만에 생성됨: https://winstash.xyz/ko";
+
   const generateSlackMarkdown = () => {
     return `📢 *[주간 업무 보고] ${formattedDate}*
 
@@ -29,7 +31,7 @@ ${record.weekly_report.done.map((item) => `• ${item}`).join("\n")}
 ${record.weekly_report.in_progress.map((item) => `• ${item}`).join("\n")}
 
 🗓️ *차주 예정 업무*
-${record.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}`;
+${record.weekly_report.next_week.map((item) => `• ${item}`).join("\n")}${KO_WATERMARK}`;
   };
 
   const generateEmailText = () => {
@@ -44,7 +46,7 @@ ${record.weekly_report.in_progress.map((item) => `- ${item}`).join("\n")}
 [차주 예정 업무]
 ${record.weekly_report.next_week.map((item) => `- ${item}`).join("\n")}
 
-감사합니다.`;
+감사합니다.${KO_WATERMARK}`;
   };
 
   const copyToClipboard = async (type: "slack" | "email") => {
