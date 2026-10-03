@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb, isFirebaseAdminConfigured } from "./firebaseAdmin";
 import { isAdminEmail } from "./adminConfig";
+import { verifyFirebaseIdTokenLightweight } from "./lightweightAuth";
 import {
   MAX_USER_FREE_CREDITS,
   MAX_FREE_BRAG_SYNTHESIS,
@@ -21,7 +22,8 @@ export interface QuotaVerificationResult {
 
 /**
  * Server-Side Authentication & Quota Enforcement Guardrail (M-1)
- * Verifies Firebase Auth ID Token and enforces atomic credit consumption directly in Firestore.
+ * Verifies Firebase Auth ID Token using robust lightweight verification
+ * and enforces atomic credit consumption directly in Firestore.
  */
 export async function verifyServerAuthAndQuota(
   req: NextRequest,
@@ -34,21 +36,12 @@ export async function verifyServerAuthAndQuota(
 
   const isDemoRequest = req.headers.get("x-demo-user") === "true";
 
-  // 1. If Admin SDK is not configured yet (e.g. local setup without service keys)
-  if (!isFirebaseAdminConfigured() || !adminAuth || !adminDb) {
-    if (isDemoRequest) {
-      return { allowed: true, isPro: false };
-    }
-    // Allow gracefully in development while Admin SDK keys are being configured
-    return { allowed: true };
-  }
-
-  // 2. Demo User request handling
+  // 1. Demo User request handling (isolated sandbox)
   if (isDemoRequest) {
     return { allowed: true, userId: "demo-user-1234", isPro: false };
   }
 
-  // 3. Reject unauthenticated requests in production
+  // 2. Reject unauthenticated requests in production
   if (!token) {
     return {
       allowed: false,
@@ -57,23 +50,32 @@ export async function verifyServerAuthAndQuota(
     };
   }
 
-  // 4. Verify ID Token with Firebase Admin
-  let decoded;
+  // 3. Verify ID Token (Robust dual-check: adminAuth if ready, lightweight crypto verifier as rock-solid primary)
+  let decoded: { uid: string; email?: string | null };
   try {
-    decoded = await adminAuth.verifyIdToken(token);
-  } catch (err) {
-    console.warn("[AuthQuota] Invalid ID token received:", err);
-    return {
-      allowed: false,
-      error: "Authentication session expired or invalid. Please refresh and try again.",
-      status: 401,
-    };
+    if (adminAuth) {
+      decoded = await adminAuth.verifyIdToken(token);
+    } else {
+      decoded = await verifyFirebaseIdTokenLightweight(token);
+    }
+  } catch (initialErr) {
+    try {
+      // If adminAuth threw or wasn't loaded, verify directly via Google x509 public certificates
+      decoded = await verifyFirebaseIdTokenLightweight(token);
+    } catch (err) {
+      console.warn("[AuthQuota] Invalid ID token received:", err);
+      return {
+        allowed: false,
+        error: "Authentication session expired or invalid. Please refresh and try again.",
+        status: 401,
+      };
+    }
   }
 
   const userId = decoded.uid;
   const userEmail = decoded.email || null;
 
-  // 5. Admin Bypass
+  // 4. Admin Bypass
   if (isAdminEmail(userEmail)) {
     return {
       allowed: true,
@@ -82,6 +84,11 @@ export async function verifyServerAuthAndQuota(
       isPro: true,
       isAdmin: true,
     };
+  }
+
+  // 5. If Firestore Admin is not initialized yet (e.g. local dev fallback)
+  if (!adminDb) {
+    return { allowed: true, userId, userEmail, isPro: false };
   }
 
   // 6. Query User Plan & Membership Status
