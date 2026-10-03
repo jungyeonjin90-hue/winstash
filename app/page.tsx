@@ -29,6 +29,7 @@ export default function Home() {
   const { user, loading: authLoading } = useAuth();
 
   const [records, setRecords] = useState<CareerRecord[]>([]);
+  const [activeRecordId, setActiveRecordId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -106,6 +107,7 @@ export default function Home() {
     if (!user) {
       // User is logged out: Immediately wipe all state to ensure zero cross-account data retention
       setRecords([]);
+      setActiveRecordId(undefined);
       setIsClientLoaded(false);
       setIsPersonaLoaded(false);
       setShowOnboarding(false);
@@ -368,6 +370,7 @@ export default function Home() {
 
       // Optimistic local state update for instantaneous reactivity
       setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
+      setActiveRecordId(newRecord.id);
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
 
       trackEvent("memo_transformed", {
@@ -520,6 +523,7 @@ export default function Home() {
           {isClientLoaded && (
             <DashboardTabsEn
               records={records}
+              activeRecordId={activeRecordId}
               onDeleteRecord={handleDeleteRecord}
               onEditRecord={async (memo, id) => {
                 await handleTransform(memo, undefined, jobRole, toneManner, id);

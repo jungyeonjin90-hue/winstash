@@ -20,9 +20,14 @@ import { formatWeeklySnippet } from "@/lib/exportFormatters";
 interface WeeklySnippetsTabProps {
   records: CareerRecord[];
   initialRecordId?: string;
+  activeRecordId?: string;
 }
 
-export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTabProps) {
+export function WeeklySnippetsTab({
+  records,
+  initialRecordId,
+  activeRecordId,
+}: WeeklySnippetsTabProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [showRawMemo, setShowRawMemo] = useState(false);
 
@@ -73,6 +78,20 @@ export function WeeklySnippetsTab({ records, initialRecordId }: WeeklySnippetsTa
       }))
       .sort((a, b) => Number(b.monthNum) - Number(a.monthNum)); // reverse chronological
   }, [recordsWithDateInfo, selectedYear]);
+
+  // Whenever activeRecordId changes (user just logged or updated a raw note),
+  // immediately snap year, month, and selectedRecordId to that exact period!
+  useEffect(() => {
+    if (activeRecordId && records.length > 0) {
+      const target = records.find((r) => r.id === activeRecordId);
+      if (target) {
+        setSelectedRecordId(target.id);
+        const targetInfo = getDetailedRecordDateInfo(target);
+        setSelectedYear(targetInfo.year);
+        setSelectedMonth(targetInfo.month);
+      }
+    }
+  }, [activeRecordId, records]);
 
   // Automatically select the most recent record when records load asynchronously or change
   useEffect(() => {

@@ -26,6 +26,7 @@ export default function HomeKo() {
   const { user, loading: authLoading } = useAuth();
 
   const [records, setRecords] = useState<CareerRecord[]>([]);
+  const [activeRecordId, setActiveRecordId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -78,6 +79,7 @@ export default function HomeKo() {
   useEffect(() => {
     if (!user) {
       setRecords([]);
+      setActiveRecordId(undefined);
       setIsClientLoaded(false);
       setCreditStatus(null);
       setJobRole("engineering");
@@ -228,6 +230,8 @@ export default function HomeKo() {
         star_portfolio: output.star_portfolio,
       };
 
+      setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
+      setActiveRecordId(newRecord.id);
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
 
       const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));
@@ -371,6 +375,7 @@ export default function HomeKo() {
           {isClientLoaded && (
             <DashboardTabs
               records={records}
+              activeRecordId={activeRecordId}
               onDeleteRecord={handleDeleteRecord}
               onEditRecord={async (memo, id) => {
                 await handleTransform(memo, undefined, jobRole, toneManner, id);

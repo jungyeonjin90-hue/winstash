@@ -10,6 +10,7 @@ import { TimelineArchiveTab } from "./tabs/TimelineArchiveTab";
 
 interface DashboardTabsProps {
   records: CareerRecord[];
+  activeRecordId?: string;
   onDeleteRecord: (id: string) => void;
   onEditRecord?: (rawMemo: string, existingRecordId: string) => Promise<void>;
   jobRole?: JobRole;
@@ -20,6 +21,7 @@ interface DashboardTabsProps {
 
 export function DashboardTabs({
   records,
+  activeRecordId,
   onDeleteRecord,
   onEditRecord,
   jobRole,
@@ -28,6 +30,14 @@ export function DashboardTabs({
   onToneMannerChange,
 }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("weekly");
+
+  // Automatically switch tab and focus on newly recorded week
+  useEffect(() => {
+    if (activeRecordId) {
+      setSelectedRecordId(activeRecordId);
+      setActiveTab("weekly");
+    }
+  }, [activeRecordId]);
 
   // Synchronize activeTab with URL search params and browser history
   useEffect(() => {

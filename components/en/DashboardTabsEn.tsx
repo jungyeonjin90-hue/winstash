@@ -12,6 +12,7 @@ import { TimelineArchiveTabEn } from "./tabs/TimelineArchiveTabEn";
 
 interface DashboardTabsEnProps {
   records: CareerRecord[];
+  activeRecordId?: string;
   onDeleteRecord?: (id: string) => void;
   onEditRecord?: (rawMemo: string, existingRecordId: string) => Promise<void>;
   onUpgradeClick?: () => void;
@@ -26,6 +27,7 @@ export type TabType = "weekly" | "brag" | "vault" | "archive";
 
 export function DashboardTabsEn({
   records,
+  activeRecordId,
   onDeleteRecord,
   onEditRecord,
   onUpgradeClick,
@@ -36,6 +38,13 @@ export function DashboardTabsEn({
   onToneMannerChange,
 }: DashboardTabsEnProps) {
   const [activeTab, setActiveTab] = useState<TabType>("weekly");
+
+  // Automatically switch tab to weekly snippets when user creates or updates a record
+  useEffect(() => {
+    if (activeRecordId) {
+      setActiveTab("weekly");
+    }
+  }, [activeRecordId]);
 
   // Synchronize activeTab with URL search params and browser history (Back/Forward navigation)
   useEffect(() => {
@@ -165,7 +174,7 @@ export function DashboardTabsEn({
         ) : (
           <>
             <div className={activeTab === "weekly" ? "block" : "hidden"}>
-              <WeeklySnippetsTab records={records} />
+              <WeeklySnippetsTab records={records} activeRecordId={activeRecordId} />
             </div>
 
             <div className={activeTab === "brag" ? "block" : "hidden"}>
