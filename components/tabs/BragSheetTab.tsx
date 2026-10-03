@@ -116,7 +116,7 @@ export function BragSheetTab({
       text += `   - 비즈니스 임팩트: ${item.business_impact}\n\n`;
     });
 
-    text += `\n---\n⚡ WinStash로 생성됨: https://winstash.xyz/ko\n`;
+    text += `\n---\nFormatted with WinStash (https://winstash.xyz/ko)\n`;
     return text.trim();
   };
 
@@ -131,7 +131,7 @@ export function BragSheetTab({
   };
 
   const handleCopySingle = async (item: SynthesizedBragItem) => {
-    const text = `[${item.quarter_span}] ${item.title}\n• 성과 지표: ${item.metric_summary}\n• 비즈니스 임팩트: ${item.business_impact}\n\n---\n⚡ WinStash: https://winstash.xyz/ko`;
+    const text = `[${item.quarter_span}] ${item.title}\n• 성과 지표: ${item.metric_summary}\n• 비즈니스 임팩트: ${item.business_impact}\n\n---\nFormatted with WinStash (https://winstash.xyz/ko)`;
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(item.id);

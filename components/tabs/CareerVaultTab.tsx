@@ -109,7 +109,7 @@ ${p.action}
 ${p.result}
 
 ---
-⚡ WinStash: https://winstash.xyz/ko`;
+Formatted with WinStash (https://winstash.xyz/ko)`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -149,7 +149,7 @@ ${p.result}
       text += `[Result]    ${p.result}\n\n\n`;
     });
 
-    text += `\n---\n⚡ WinStash로 생성됨: https://winstash.xyz/ko\n`;
+    text += `\n---\nFormatted with WinStash (https://winstash.xyz/ko)\n`;
     return text.trim();
   };
 

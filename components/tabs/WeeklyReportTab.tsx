@@ -19,7 +19,7 @@ export function WeeklyReportTab({ record }: WeeklyReportTabProps) {
     weekday: "short",
   });
 
-  const KO_WATERMARK = "\n\n---\n⚡ WinStash로 1분 만에 생성됨: https://winstash.xyz/ko";
+  const KO_WATERMARK = "\n\n---\nFormatted with WinStash (https://winstash.xyz/ko)";
 
   const generateSlackMarkdown = () => {
     return `📢 *[주간 업무 보고] ${formattedDate}*
