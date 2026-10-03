@@ -145,8 +145,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem(LAST_ACTIVITY_KEY);
         }
         signOutRef.current?.();
+        const isKorean =
+          (typeof window !== "undefined" && window.location.pathname.startsWith("/ko")) ||
+          (typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("ko"));
+
         alert(
-          "You have been automatically signed out due to 30 minutes of inactivity for your security."
+          isKorean
+            ? "보안을 위해 30분 동안 활동이 없어 자동으로 안전하게 로그아웃되었습니다."
+            : "You have been automatically signed out due to 30 minutes of inactivity for your security."
         );
       }
     };
@@ -208,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithDemo = () => {
     const demoUser: AppUser = {
       uid: "demo-user-1234",
-      email: "demo.pro@careerpulse.io",
+      email: "demo.pro@winstash.xyz",
       displayName: "Demo User",
       photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces",
       isDemo: true,
