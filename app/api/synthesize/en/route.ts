@@ -189,12 +189,14 @@ export async function POST(req: NextRequest) {
       safeRecords
     );
 
-    // Call official Google Gemini models (fastest verified model first to stay within serverless time limits)
+    // Call official Google Gemini models:
+    // Priority 1: gemini-3.8-flash for high-caliber executive phrasing in Brag & STAR synthesis (~$0.001/req)
+    // Fallbacks: gemini-3.1-flash-lite, gemini-flash-latest for instant resilience
     if (apiKey) {
       const modelsToTry = [
+        "gemini-3.8-flash",
         "gemini-3.1-flash-lite",
         "gemini-flash-latest",
-        "gemini-3.8-flash",
       ];
 
       for (const model of modelsToTry) {
