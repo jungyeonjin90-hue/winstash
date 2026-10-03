@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, TrendingUp, ShieldCheck, History, Calendar, ChevronDown, Trash2 } from "lucide-react";
 import { CareerRecord, TabType, JobRole, ToneManner } from "@/types/career";
 import { WeeklyReportTab } from "./tabs/WeeklyReportTab";
@@ -28,6 +28,54 @@ export function DashboardTabs({
   onToneMannerChange,
 }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("weekly");
+
+  // Synchronize activeTab with URL search params and browser history
+  useEffect(() => {
+    const validTabs: TabType[] = ["weekly", "brag", "vault", "timeline"];
+
+    const readTabFromUrl = (): TabType => {
+      if (typeof window === "undefined") return "weekly";
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "archive" || tabParam === "timeline") {
+        return "timeline";
+      }
+      if (tabParam && validTabs.includes(tabParam as TabType)) {
+        return tabParam as TabType;
+      }
+      return "weekly";
+    };
+
+    const initialTab = readTabFromUrl();
+    if (initialTab !== "weekly") {
+      setActiveTab(initialTab);
+    }
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (e.state?.modal) return;
+      const currentTab = readTabFromUrl();
+      setActiveTab(currentTab);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const handleTabChange = (tab: TabType) => {
+    if (tab === activeTab) return;
+    setActiveTab(tab);
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "weekly") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.pushState({ tab }, "", url.toString());
+    }
+  };
+
   const [selectedRecordId, setSelectedRecordId] = useState<string>(
     records[0]?.id || ""
   );
@@ -91,7 +139,7 @@ export function DashboardTabs({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2.5 sm:gap-3 p-3 rounded-xl transition-all text-left cursor-pointer ${
                 isActive
                   ? tab.activeBg

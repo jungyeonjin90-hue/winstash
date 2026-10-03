@@ -45,6 +45,62 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isPersonaLoaded, setIsPersonaLoaded] = useState(false);
 
+  // Modal handlers with browser history support (Back button closes modal instead of leaving site)
+  const openSettingsModal = () => {
+    setIsSettingsOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ modal: "settings" }, "");
+    }
+  };
+
+  const closeSettingsModal = () => {
+    setIsSettingsOpen(false);
+    if (typeof window !== "undefined" && window.history.state?.modal === "settings") {
+      window.history.back();
+    }
+  };
+
+  const openFeedbackModal = () => {
+    setIsFeedbackOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ modal: "feedback" }, "");
+    }
+  };
+
+  const closeFeedbackModal = () => {
+    setIsFeedbackOpen(false);
+    if (typeof window !== "undefined" && window.history.state?.modal === "feedback") {
+      window.history.back();
+    }
+  };
+
+  const openUpgradeModal = (reason: "input" | "edit" | "brag" | "star" | "header" = "header") => {
+    setUpgradeTriggerReason(reason);
+    setIsUpgradeModalOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ modal: "upgrade" }, "");
+    }
+  };
+
+  const closeUpgradeModal = () => {
+    setIsUpgradeModalOpen(false);
+    if (typeof window !== "undefined" && window.history.state?.modal === "upgrade") {
+      window.history.back();
+    }
+  };
+
+  // Close open modals when browser Back button is pressed
+  useEffect(() => {
+    const handlePopState = () => {
+      setIsSettingsOpen(false);
+      setIsFeedbackOpen(false);
+      setIsUpgradeModalOpen(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   // Subscribe to user records & credit status, load persona
   useEffect(() => {
     if (!user) return;
@@ -196,8 +252,7 @@ export default function Home() {
     }
 
     if (!isPro && creditStatus?.isUserExhausted) {
-      setUpgradeTriggerReason(existingRecordId ? "edit" : "input");
-      setIsUpgradeModalOpen(true);
+      openUpgradeModal(existingRecordId ? "edit" : "input");
       return;
     }
 
@@ -235,8 +290,7 @@ export default function Home() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         if (res.status === 403) {
-          setUpgradeTriggerReason(existingRecordId ? "edit" : "input");
-          setIsUpgradeModalOpen(true);
+          openUpgradeModal(existingRecordId ? "edit" : "input");
           return;
         }
         throw new Error(errorData.error || "Transformation request failed.");
@@ -367,12 +421,9 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950">
       {/* Header */}
       <HeaderEn
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenFeedback={() => setIsFeedbackOpen(true)}
-        onOpenUpgrade={() => {
-          setUpgradeTriggerReason("header");
-          setIsUpgradeModalOpen(true);
-        }}
+        onOpenSettings={openSettingsModal}
+        onOpenFeedback={openFeedbackModal}
+        onOpenUpgrade={() => openUpgradeModal("header")}
         recordCount={records.length}
         creditStatus={creditStatus}
       />
@@ -421,10 +472,7 @@ export default function Home() {
             isLoading={isLoading}
             existingRecords={records}
             creditStatus={creditStatus}
-            onUpgradeClick={() => {
-              setUpgradeTriggerReason("input");
-              setIsUpgradeModalOpen(true);
-            }}
+            onUpgradeClick={() => openUpgradeModal("input")}
           />
         </section>
 
@@ -449,10 +497,7 @@ export default function Home() {
               onEditRecord={async (memo, id) => {
                 await handleTransform(memo, undefined, jobRole, toneManner, id);
               }}
-              onUpgradeClick={() => {
-                setUpgradeTriggerReason("brag");
-                setIsUpgradeModalOpen(true);
-              }}
+              onUpgradeClick={() => openUpgradeModal("brag")}
               creditStatus={creditStatus}
               jobRole={jobRole}
               toneManner={toneManner}
@@ -467,7 +512,7 @@ export default function Home() {
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 px-4">
         <p>© 2026 WinStash. Never forget your wins. 1-Min Friday notes into career assets.</p>
         <button
-          onClick={() => setIsFeedbackOpen(true)}
+          onClick={openFeedbackModal}
           className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4 cursor-pointer font-medium"
         >
           Send Feedback & Bug Report
@@ -477,14 +522,14 @@ export default function Home() {
       {/* Feedback & Bug Report Modal */}
       <FeedbackModalEn
         isOpen={isFeedbackOpen}
-        onClose={() => setIsFeedbackOpen(false)}
+        onClose={closeFeedbackModal}
         onSuccess={(msg) => showToast(msg)}
       />
 
       {/* Upgrade / Subscription Management Modal */}
       <UpgradeModal
         isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
+        onClose={closeUpgradeModal}
         user={user}
         triggerReason={upgradeTriggerReason}
         isPro={Boolean(creditStatus?.isPro)}
@@ -493,12 +538,9 @@ export default function Home() {
       {/* Settings Modal */}
       <SettingsModalEn
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onOpenFeedback={() => setIsFeedbackOpen(true)}
-        onOpenUpgrade={() => {
-          setUpgradeTriggerReason("header");
-          setIsUpgradeModalOpen(true);
-        }}
+        onClose={closeSettingsModal}
+        onOpenFeedback={openFeedbackModal}
+        onOpenUpgrade={() => openUpgradeModal("header")}
         isPro={Boolean(creditStatus?.isPro)}
         jobRole={jobRole}
         onJobRoleChange={handleJobRoleChange}

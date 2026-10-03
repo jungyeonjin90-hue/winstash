@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageSquare, TrendingUp, ShieldCheck, History, Sparkles } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner } from "@/types/career";
 import { CreditStatus } from "@/lib/creditService";
@@ -37,9 +37,53 @@ export function DashboardTabsEn({
 }: DashboardTabsEnProps) {
   const [activeTab, setActiveTab] = useState<TabType>("weekly");
 
+  // Synchronize activeTab with URL search params and browser history (Back/Forward navigation)
+  useEffect(() => {
+    const validTabs: TabType[] = ["weekly", "brag", "vault", "archive"];
+
+    const readTabFromUrl = (): TabType => {
+      if (typeof window === "undefined") return "weekly";
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab") as TabType | null;
+      if (tabParam && validTabs.includes(tabParam)) {
+        return tabParam;
+      }
+      return "weekly";
+    };
+
+    // 1. Initial sync on mount
+    const initialTab = readTabFromUrl();
+    if (initialTab !== "weekly") {
+      setActiveTab(initialTab);
+    }
+
+    // 2. Handle browser Back / Forward buttons
+    const handlePopState = (e: PopStateEvent) => {
+      // If the popped state was a modal, let modal listener handle it
+      if (e.state?.modal) return;
+      const currentTab = readTabFromUrl();
+      setActiveTab(currentTab);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const handleTabChange = (tab: TabType) => {
+    if (tab === activeTab) return;
     setActiveTab(tab);
     trackEvent("dashboard_tab_switched", { tab });
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "weekly") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      // Push state so browser Back/Forward naturally walks through tab history
+      window.history.pushState({ tab }, "", url.toString());
+    }
   };
 
   // Most recent record

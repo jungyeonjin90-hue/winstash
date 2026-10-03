@@ -29,6 +29,45 @@ export default function HomeKo() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  // Modal handlers with browser history support (Back button closes modal instead of leaving site)
+  const openSettingsModal = () => {
+    setIsSettingsOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ modal: "settings" }, "");
+    }
+  };
+
+  const closeSettingsModal = () => {
+    setIsSettingsOpen(false);
+    if (typeof window !== "undefined" && window.history.state?.modal === "settings") {
+      window.history.back();
+    }
+  };
+
+  const openUpgradeModal = () => {
+    setIsUpgradeModalOpen(true);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ modal: "upgrade" }, "");
+    }
+  };
+
+  const closeUpgradeModal = () => {
+    setIsUpgradeModalOpen(false);
+    if (typeof window !== "undefined" && window.history.state?.modal === "upgrade") {
+      window.history.back();
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setIsSettingsOpen(false);
+      setIsUpgradeModalOpen(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
@@ -247,7 +286,7 @@ export default function HomeKo() {
       </div>
 
       <Header
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSettings={openSettingsModal}
         recordCount={records.length}
         creditStatus={creditStatus}
       />
@@ -292,7 +331,7 @@ export default function HomeKo() {
             isLoading={isLoading}
             existingRecords={records}
             creditStatus={creditStatus}
-            onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            onUpgradeClick={openUpgradeModal}
           />
         </section>
 
@@ -337,14 +376,14 @@ export default function HomeKo() {
 
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={closeSettingsModal}
         onDataReset={handleDataReset}
         onDataImported={handleDataImported}
       />
 
       <UpgradeModal
         isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
+        onClose={closeUpgradeModal}
         user={user}
         triggerReason="input"
       />

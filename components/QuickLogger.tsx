@@ -112,6 +112,18 @@ export function QuickLogger({
     }
   }, [selectedWeek.year, selectedWeek.month, selectedWeek.weekOfMonth, existingRecord?.id, existingRecord?.raw_memo]);
 
+  // 작성 중인 메모가 있을 때 브라우저 뒤로가기나 탭 종료 방지
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (memo.trim().length > 10 && !isLoading && memo !== existingRecord?.raw_memo) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [memo, isLoading, existingRecord?.raw_memo]);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!memo.trim() || isLoading) return;

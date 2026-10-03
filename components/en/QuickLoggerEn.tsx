@@ -93,6 +93,18 @@ export function QuickLoggerEn({
     }
   }, [selectedWeek.year, selectedWeek.month, selectedWeek.weekOfMonth, existingRecord?.id, existingRecord?.raw_memo]);
 
+  // Prevent accidental tab closure or browser back exit when user has typed an unsaved draft
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (memo.trim().length > 10 && !isLoading && memo !== existingRecord?.raw_memo) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [memo, isLoading, existingRecord?.raw_memo]);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!memo.trim() || isLoading) return;
