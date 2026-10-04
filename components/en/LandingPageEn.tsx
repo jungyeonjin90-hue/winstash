@@ -853,7 +853,7 @@ export function LandingPageEn() {
               Frequently Asked Questions
             </h2>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-              Everything you need to know about WinStash free trial, privacy, and export formats.
+              Everything you need to know about WinStash free plan, privacy, and export formats.
             </p>
           </div>
 
@@ -918,7 +918,7 @@ export function LandingPageEn() {
               <span className="block mt-1 sm:mt-2 text-zinc-300">Never lose another promotion-worthy win.</span>
             </h3>
             <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
-              Join forward-thinking engineers, product managers, and leaders taking command of their professional story in 1 minute a week.
+              Built for engineers, product managers, and anyone who reports to someone. Take command of your career story in 1 minute a week.
             </p>
             <div className="pt-2 flex flex-col items-center justify-center gap-2.5">
               <button
