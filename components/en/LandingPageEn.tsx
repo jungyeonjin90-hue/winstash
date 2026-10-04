@@ -955,10 +955,24 @@ export function LandingPageEn() {
         <p>© 2026 WinStash. AI Career Memory for Everything You Do.</p>
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <Link
+            href="/terms"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline-offset-4 hover:underline"
+          >
+            Terms of Service
+          </Link>
+          <span>·</span>
+          <Link
             href="/privacy"
             className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline-offset-4 hover:underline"
           >
             Privacy Policy
+          </Link>
+          <span>·</span>
+          <Link
+            href="/refund"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline-offset-4 hover:underline"
+          >
+            Refund Policy
           </Link>
           <span>·</span>
           <a

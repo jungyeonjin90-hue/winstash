@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Sparkles,
   ShieldCheck,
@@ -309,8 +310,25 @@ export function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-2">
+      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-3">
         <p>© 2026 WinStash. 직장인을 위한 1분 주간 기록 3-Way 커리어 OS.</p>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+          <Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            이용약관 (Terms)
+          </Link>
+          <span>·</span>
+          <Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            개인정보처리방침 (Privacy)
+          </Link>
+          <span>·</span>
+          <Link href="/refund" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            환불 정책 (Refund)
+          </Link>
+          <span>·</span>
+          <a href="mailto:thestudioplus26@gmail.com" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            고객지원 (Support)
+          </a>
+        </div>
         <p className="text-[11px] text-zinc-400">
           엔터프라이즈급 데이터 보안, AES-256 저장 암호화 및 AI 모델 미학습 보증
         </p>

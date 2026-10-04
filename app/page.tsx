@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { HeaderEn } from "@/components/en/HeaderEn";
 import { QuickLoggerEn } from "@/components/en/QuickLoggerEn";
 import { DashboardTabsEn } from "@/components/en/DashboardTabsEn";
@@ -540,14 +541,44 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 px-4">
-        <p>© 2026 WinStash. Never forget your wins. 1-Min Friday notes into career assets.</p>
-        <button
-          onClick={openFeedbackModal}
-          className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4 cursor-pointer font-medium"
-        >
-          Send Feedback & Bug Report
-        </button>
+      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400 flex flex-col sm:flex-row items-center justify-between gap-3 px-6 max-w-7xl mx-auto">
+        <p>© 2026 WinStash. 1-Min Friday notes into career assets.</p>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400 font-medium">
+          <Link
+            href="/terms"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4"
+          >
+            Terms of Service
+          </Link>
+          <span>·</span>
+          <Link
+            href="/privacy"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4"
+          >
+            Privacy Policy
+          </Link>
+          <span>·</span>
+          <Link
+            href="/refund"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4"
+          >
+            Refund Policy
+          </Link>
+          <span>·</span>
+          <a
+            href="mailto:thestudioplus26@gmail.com"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4"
+          >
+            Support
+          </a>
+          <span>·</span>
+          <button
+            onClick={openFeedbackModal}
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4 cursor-pointer"
+          >
+            Feedback
+          </button>
+        </div>
       </footer>
 
       {/* Feedback & Bug Report Modal */}

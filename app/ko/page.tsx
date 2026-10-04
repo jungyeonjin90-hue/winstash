@@ -389,8 +389,25 @@ export default function HomeKo() {
         </section>
       </main>
 
-      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400">
+      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-6 mt-12 text-center text-xs text-zinc-400 flex flex-col sm:flex-row items-center justify-between gap-3 px-6 max-w-7xl mx-auto">
         <p>© 2026 WinStash. 1-Input 3-Output 커리어 운영체제.</p>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-zinc-500 dark:text-zinc-400 font-medium">
+          <Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            이용약관
+          </Link>
+          <span>·</span>
+          <Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            개인정보처리방침
+          </Link>
+          <span>·</span>
+          <Link href="/refund" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            환불 정책
+          </Link>
+          <span>·</span>
+          <a href="mailto:thestudioplus26@gmail.com" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
+            고객지원
+          </a>
+        </div>
       </footer>
 
       <SettingsModal
