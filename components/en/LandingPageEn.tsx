@@ -336,7 +336,7 @@ export function LandingPageEn() {
               <ArrowRight className="w-4 h-4" />
             </button>
             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-              Free during beta · Pro ($5.99/mo) comes after launch
+              Free to start · Pro ($5.99/mo) comes after launch
             </p>
           </div>
 
@@ -872,8 +872,8 @@ export function LandingPageEn() {
                 a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 5 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
               },
               {
-                q: "What happens after the free public beta? Will WinStash stay free?",
-                a: "WinStash is completely free during our public beta. You can log, store, and synthesize your career wins without cost. After launch, logging your raw weekly career notes remains free forever, and unlimited AI syntheses will be available with WinStash Pro for $5.99/mo (cancel anytime).",
+                q: "What happens after I use my free AI credits?",
+                a: "You can continue logging and storing your weekly notes for free forever. During our public beta, active users who share feedback can get credits topped up anytime. When we launch, WinStash Pro ($5.99/mo) will unlock unlimited syntheses.",
               },
               {
                 q: "Can I use WinStash if I am not a Software Engineer?",
@@ -941,7 +941,7 @@ export function LandingPageEn() {
                 <ArrowRight className="w-4 h-4" />
               </button>
               <p className="text-xs text-zinc-400 font-medium">
-                Free during beta · Pro ($5.99/mo) comes after launch
+                Free to start · Pro ($5.99/mo) comes after launch
               </p>
             </div>
           </div>
