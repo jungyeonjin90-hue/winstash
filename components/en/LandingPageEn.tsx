@@ -281,7 +281,7 @@ export function LandingPageEn() {
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm font-semibold shadow-xs">
             <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
-            <span>Turn 60-Second Friday Dumps into Career Assets</span>
+            <span>100% Free Public Beta · 1-Click Google Setup</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50">
@@ -298,8 +298,8 @@ export function LandingPageEn() {
 
           <div className="max-w-3xl mx-auto space-y-4">
             <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
-              Write what you shipped, solved, or led—no formatting required. <br className="hidden sm:inline" />
-              WinStash automatically turns raw Friday notes into 3 ready-to-use career assets:
+              Built for engineers, product managers, business planners, and anyone who owes their manager an update. <br className="hidden sm:inline" />
+              Write what you shipped, solved, or led—no formatting required. WinStash automatically turns raw Friday notes into 3 ready-to-use career assets:
             </p>
 
             {/* 3단 가로 나열 태그 형태 (1줄 정렬 유지) */}
@@ -322,7 +322,7 @@ export function LandingPageEn() {
           </div>
 
           {/* Large High-Conversion Primary CTA Button */}
-          <div className="flex items-center justify-center pt-3 max-w-md mx-auto">
+          <div className="flex flex-col items-center justify-center pt-3 max-w-md mx-auto space-y-2">
             <button
               onClick={handleGoogleLogin}
               disabled={loading !== null}
@@ -334,6 +334,9 @@ export function LandingPageEn() {
               <span>Start Stashing in 60s — It&apos;s Free</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+              Free to start · Pro is just $5.99/mo (cancel anytime)
+            </p>
           </div>
 
           {/* Trust Guarantees */}
@@ -817,22 +820,6 @@ export function LandingPageEn() {
                     <span className="text-zinc-400">Masks confidential clients, tools, and dollar figures before export.</span>
                   </div>
                 </div>
-
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-white block font-semibold">Zero LLM Model Training</strong>
-                    <span className="text-zinc-400">Your career notes are never used to train public or foundational models.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-white block font-semibold">1-Click Permanent Data Purge</strong>
-                    <span className="text-zinc-400">Export your data anytime or permanently wipe your account and notes in 1 click.</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -933,7 +920,7 @@ export function LandingPageEn() {
             <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
               Join forward-thinking engineers, product managers, and leaders taking command of their professional story in 1 minute a week.
             </p>
-            <div className="pt-2 flex items-center justify-center">
+            <div className="pt-2 flex flex-col items-center justify-center gap-2.5">
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading !== null}
@@ -945,6 +932,9 @@ export function LandingPageEn() {
                 <span>Start Stashing in 60s — It&apos;s Free</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+              <p className="text-xs text-zinc-400 font-medium">
+                Free to start · Pro is just $5.99/mo (cancel anytime)
+              </p>
             </div>
           </div>
         </section>
@@ -990,7 +980,7 @@ export function LandingPageEn() {
           </button>
         </div>
         <p className="text-[11px] text-zinc-400 max-w-md mx-auto leading-relaxed">
-          AES-256 encryption, zero LLM model training, and confidential tenant isolation guaranteed.
+          AES-256 encryption at rest &amp; in transit, and confidential tenant isolation guaranteed.
         </p>
         <p className="text-[10px] text-zinc-400 max-w-xl mx-auto leading-relaxed">
           Disclaimer: WinStash is an independent product and is not affiliated with, endorsed by, or sponsored by Google LLC, Amazon.com, Inc., or any other referenced organizations. All trademarks belong to their respective owners. AI-synthesized outputs should be reviewed and verified by the user before professional use.

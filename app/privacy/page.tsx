@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy - WinStash",
   description:
-    "WinStash Privacy Policy. Learn about our zero LLM model training guarantee, encryption at rest and in transit, and data retention policies.",
+    "WinStash Privacy Policy. Learn about our confidential data isolation, encryption at rest and in transit, and data retention policies.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -223,7 +223,7 @@ export default function PrivacyPolicyPage() {
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-2">
         <p>© 2026 WinStash. All rights reserved.</p>
         <p className="text-[11px] text-zinc-400">
-          AES-256 encryption, zero LLM model training, and confidential data isolation guaranteed.
+          AES-256 encryption at rest &amp; in transit, and confidential data isolation guaranteed.
         </p>
       </footer>
     </div>
