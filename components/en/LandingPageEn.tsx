@@ -285,20 +285,17 @@ export function LandingPageEn() {
             <span>100% Free Public Beta · 1-Click Google Setup</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50 text-balance">
             <span className="block">
-              Stop scrambling <span className="whitespace-nowrap">before reviews &amp; 1:1s.</span>
+              Stop scrambling before reviews &amp; 1:1s.
             </span>
             <span className="block mt-2 sm:mt-3 text-indigo-600 dark:text-indigo-400">
-              Dump 1 min on Friday.{" "}
-              <span className="whitespace-nowrap">
-                AI does the rest.
-              </span>
+              Dump 1 min on Friday. AI does the rest.
             </span>
           </h1>
 
           <div className="max-w-3xl mx-auto space-y-4">
-            <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+            <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal text-pretty max-w-2xl mx-auto">
               Built for engineers, product managers, business planners, and anyone who owes their manager an update. <br className="hidden sm:inline" />
               Write what you shipped, solved, or led—no formatting required. WinStash automatically turns raw Friday notes into 3 ready-to-use career assets:
             </p>
@@ -335,7 +332,7 @@ export function LandingPageEn() {
               <span>Start Stashing in 60s — It&apos;s Free</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold text-pretty text-center px-4">
               Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch
             </p>
           </div>
@@ -364,11 +361,10 @@ export function LandingPageEn() {
               <Cpu className="w-3.5 h-3.5" />
               <span>Live Interactive Transformation Engine</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
-              <span>See How 1 Raw Friday Memo</span>{" "}
-              <span className="whitespace-nowrap">Unlocks 3 Strategic Drawers</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 text-balance">
+              See How 1 Raw Friday Memo Unlocks 3 Strategic Drawers
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-pretty">
               Select your job persona below to witness the real-time AI synthesis in action.
             </p>
 
@@ -719,11 +715,10 @@ export function LandingPageEn() {
         {/* 4. Section 3: The 3 Core Value Drawers */}
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800">
           <div className="text-center space-y-2 mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
-              <span>One Weekly Action.</span>{" "}
-              <span className="whitespace-nowrap">Three Career-Defining Assets.</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 text-balance">
+              One Weekly Action. Three Career-Defining Assets.
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto text-pretty">
               Never start from a blank page again when annual review or unexpected recruiter outreach arrives.
             </p>
           </div>
@@ -742,7 +737,7 @@ export function LandingPageEn() {
                   Weekly Snippets (PPP)
                 </h3>
               </div>
-              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
                 Structured into Progress, Plans, and Problems. Optimized for async Slack check-ins and executive skip-level syncs in 1 click.
               </p>
               <div className="pt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
@@ -764,7 +759,7 @@ export function LandingPageEn() {
                   XYZ Performance Review (Brag Sheet)
                 </h3>
               </div>
-              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
                 Condenses 12 weeks of micro-tasks into 3, 5, or 10 high-leverage bullet points. Built on the proven XYZ impact formula for promo packets.
               </p>
               <div className="pt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -786,7 +781,7 @@ export function LandingPageEn() {
                   STAR Career Portfolio & NDA Shield
                 </h3>
               </div>
-              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
                 Elevates accomplishments into complete Situation-Task-Action-Result case studies with automatic client anonymity masking.
               </p>
               <div className="pt-2 text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
@@ -805,10 +800,10 @@ export function LandingPageEn() {
                 <Lock className="w-3.5 h-3.5" />
                 <span>Privacy & Security Architecture</span>
               </div>
-              <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+              <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-balance">
                 Your career notes stay yours.
               </h3>
-              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed text-pretty max-w-xl">
                 Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash offers client anonymity masking, strict tenant isolation, and encryption at rest &amp; in transit.
               </p>
 
@@ -817,7 +812,7 @@ export function LandingPageEn() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block font-semibold">Encrypted at Rest &amp; in Transit</strong>
-                    <span className="text-zinc-400">AES-256 encryption for stored notes and TLS for everything in transit.</span>
+                    <span className="text-zinc-400 text-pretty block">AES-256 encryption for stored notes and TLS for everything in transit.</span>
                   </div>
                 </div>
 
@@ -825,7 +820,7 @@ export function LandingPageEn() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block font-semibold">NDA De-Identification Engine</strong>
-                    <span className="text-zinc-400">Helps mask confidential clients, tools, and metrics before export. Always review before sharing.</span>
+                    <span className="text-zinc-400 text-pretty block">Helps mask confidential clients, tools, and metrics before export. Always review before sharing.</span>
                   </div>
                 </div>
               </div>
@@ -857,10 +852,10 @@ export function LandingPageEn() {
         {/* 7. Section 6: Frequently Asked Questions (Accordion) */}
         <section className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800 space-y-6">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-balance">
               Frequently Asked Questions
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-pretty">
               Everything you need to know about WinStash free plan, privacy, and export formats.
             </p>
           </div>
@@ -909,7 +904,7 @@ export function LandingPageEn() {
                   />
                 </button>
                 {openFaq === idx && (
-                  <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-t border-zinc-100 dark:border-zinc-800/60 pt-3">
+                  <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed border-t border-zinc-100 dark:border-zinc-800/60 pt-3 text-pretty">
                     {faq.a}
                   </div>
                 )}
@@ -921,11 +916,11 @@ export function LandingPageEn() {
         {/* 8. Section 7: Final High-Conversion CTA & Footer */}
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center space-y-6">
           <div className="p-8 sm:p-14 rounded-3xl bg-zinc-900 border border-zinc-800 text-white shadow-2xl space-y-6">
-            <h3 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
+            <h3 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight text-balance">
               <span className="block">Start building your career vault this Friday.</span>
               <span className="block mt-1 sm:mt-2 text-zinc-300">Never lose another promotion-worthy win.</span>
             </h3>
-            <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed text-pretty">
               Built for engineers, product managers, and anyone who reports to someone. Take command of your career story in 1 minute a week.
             </p>
             <div className="pt-2 flex flex-col items-center justify-center gap-2.5">
@@ -940,7 +935,7 @@ export function LandingPageEn() {
                 <span>Start Stashing in 60s — It&apos;s Free</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-              <p className="text-xs text-zinc-400 font-medium">
+              <p className="text-xs text-zinc-400 font-medium text-pretty text-center px-4">
                 Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch
               </p>
             </div>
