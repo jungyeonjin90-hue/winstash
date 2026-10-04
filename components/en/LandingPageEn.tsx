@@ -809,7 +809,7 @@ export function LandingPageEn() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block font-semibold">Encrypted at Rest &amp; in Transit</strong>
-                    <span className="text-zinc-400">AES-256 encryption at rest and TLS encryption in transit protect your career notes end-to-end.</span>
+                    <span className="text-zinc-400">AES-256 encryption at rest and TLS encryption in transit protect your career notes at rest and in transit.</span>
                   </div>
                 </div>
 
@@ -817,7 +817,7 @@ export function LandingPageEn() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block font-semibold">NDA De-Identification Engine</strong>
-                    <span className="text-zinc-400">Masks confidential clients, tools, and dollar figures before export.</span>
+                    <span className="text-zinc-400">Helps mask confidential clients, tools, and metrics before export. Always review before sharing.</span>
                   </div>
                 </div>
               </div>
@@ -873,7 +873,7 @@ export function LandingPageEn() {
               },
               {
                 q: "How does the NDA Confidentiality Shield protect my company's secrets?",
-                a: "The NDA Shield detects internal proprietary code names, client names, and confidential metrics, replacing them with standardized placeholders (e.g. '[Tier-1 Fintech Gateway]') so you can safely share external portfolio case studies or send resumes to recruiters.",
+                a: "The NDA Shield helps detect internal proprietary code names, client names, and confidential metrics, replacing them with standardized placeholders (e.g. '[Tier-1 Fintech Gateway]') so you can safely prepare external portfolio case studies or resumes. Always review synthesized outputs before external sharing.",
               },
               {
                 q: "How do I export my synthesized career achievements?",
