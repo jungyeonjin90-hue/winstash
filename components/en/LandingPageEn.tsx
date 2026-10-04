@@ -19,6 +19,7 @@ import {
   Cpu,
   Eye,
   CheckCircle2,
+  Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { trackEvent } from "@/lib/analytics";
@@ -630,7 +631,7 @@ export function LandingPageEn() {
                         <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
                           Long-Term · Career Vault & Stories
                         </span>
-                        <span className="text-xs text-zinc-400">Executive STAR Method + NDA Shield</span>
+                        <span className="text-xs text-zinc-400">STAR Story Method + NDA Shield</span>
                       </div>
 
                       {/* NDA Toggle Simulation */}
@@ -709,7 +710,7 @@ export function LandingPageEn() {
           {/* Builder / Creator Note */}
           <div className="pt-4 flex items-center justify-center text-center">
             <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200/70 dark:border-zinc-800 shadow-xs">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <Briefcase className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0" />
               Built by a working professional who writes weekly reports for a living.
             </span>
           </div>
@@ -805,8 +806,7 @@ export function LandingPageEn() {
                 <span>Privacy & Security Architecture</span>
               </div>
               <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-                <span>Your proprietary company data</span>{" "}
-                <span className="whitespace-nowrap">stays confidential. Period.</span>
+                Your career notes stay yours.
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
                 Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash enforces client anonymity masking, strict tenant isolation, and encryption at rest &amp; in transit.
@@ -869,7 +869,7 @@ export function LandingPageEn() {
             {[
               {
                 q: "What is included in the free plan? Do I need a credit card?",
-                a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 5 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 executive STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
+                a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 5 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
               },
               {
                 q: "What happens after the free public beta? Will WinStash stay free?",
