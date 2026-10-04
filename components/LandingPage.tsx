@@ -313,6 +313,10 @@ export function LandingPage() {
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-3">
         <p>© 2026 WinStash. 직장인을 위한 1분 주간 기록 3-Way 커리어 OS.</p>
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+          <Link href="/resources" className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium underline underline-offset-4 text-zinc-700 dark:text-zinc-300">
+            템플릿 리소스 (Resources)
+          </Link>
+          <span>·</span>
           <Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-4">
             이용약관 (Terms)
           </Link>

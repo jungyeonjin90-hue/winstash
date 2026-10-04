@@ -948,6 +948,13 @@ export function LandingPageEn() {
         <p>© 2026 WinStash. AI Career Memory for Everything You Do.</p>
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <Link
+            href="/resources"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors underline-offset-4 hover:underline text-zinc-700 dark:text-zinc-300"
+          >
+            Resources &amp; Templates
+          </Link>
+          <span>·</span>
+          <Link
             href="/terms"
             className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors underline-offset-4 hover:underline"
           >

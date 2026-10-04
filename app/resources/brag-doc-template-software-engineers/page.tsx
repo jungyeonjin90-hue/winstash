@@ -113,7 +113,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can I use it to prepare for job interviews?",
-    a: "Yes. Each project entry (Problem, What I did, Impact) maps directly to an executive Situation, Task, Action, Result (STAR) behavioral interview story.",
+    a: "Yes. Each project entry (Problem, What I did, Impact) maps directly to a Situation, Task, Action, Result (STAR) behavioral interview story.",
     hasLink: false,
   },
 ];
@@ -131,8 +131,9 @@ export default function BragDocTemplatePage() {
         datePublished: "2026-10-01",
         dateModified: "2026-10-05",
         author: {
-          "@type": "Organization",
-          name: "WinStash Team",
+          "@type": "Person",
+          name: "Yeonjin Jung",
+          jobTitle: "Maker of WinStash",
           url: "https://winstash.net",
         },
         publisher: {
@@ -204,7 +205,9 @@ export default function BragDocTemplatePage() {
               Home
             </Link>
             <ChevronRight className="w-3 h-3 text-zinc-400" />
-            <span>Developer Resources</span>
+            <Link href="/resources" className="hover:underline">
+              Developer Resources
+            </Link>
             <ChevronRight className="w-3 h-3 text-zinc-400" />
             <span className="text-zinc-900 dark:text-zinc-100 font-semibold truncate">
               Brag Doc Template
@@ -222,7 +225,7 @@ export default function BragDocTemplatePage() {
 
           <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 pt-1">
             <span>
-              By <strong className="text-zinc-700 dark:text-zinc-300">The WinStash Team</strong>
+              By <strong className="text-zinc-700 dark:text-zinc-300">Yeonjin Jung</strong>, the maker of WinStash and a working professional who writes weekly reports for a living
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
@@ -242,8 +245,8 @@ export default function BragDocTemplatePage() {
             factual record of what you shipped, what it changed, and who you helped.
           </p>
           <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400">
-            Below is a production-tested Markdown template you can copy in one click, a filled-in
-            example using the XYZ formula, and the four habits that make the document actually work.
+            Below is a Markdown template you can copy in one click, a filled-in
+            example using the XYZ formula, and the four habits that make the document worth keeping up.
           </p>
         </div>
 
@@ -335,7 +338,7 @@ export default function BragDocTemplatePage() {
               A filled-in example
             </h2>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-              Illustrative case showing the difference between a vague note and an executive-ready brag item.
+              Illustrative case showing the difference between a vague note and a clear, review-ready brag item.
             </p>
           </div>
 
@@ -502,8 +505,8 @@ export default function BragDocTemplatePage() {
                 Templates are easy to copy and hard to keep up.
               </h2>
               <p className="text-sm sm:text-base text-zinc-300 leading-relaxed">
-                Opening a blank file on Friday afternoon feels like homework, so the habit fades after
-                three weeks. That is the exact problem <strong>WinStash</strong> was built to solve.
+                Opening a blank file on Friday afternoon feels like homework, so the habit tends to fade.
+                That is the exact problem <strong>WinStash</strong> was built to solve.
               </p>
             </div>
 
