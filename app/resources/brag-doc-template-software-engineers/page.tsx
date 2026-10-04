@@ -160,7 +160,7 @@ export default function BragDocTemplatePage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 selection:bg-indigo-500 selection:text-white">
-      {/* Schema.org Structured Data for Google Rich Snippets */}
+      {/* Schema.org Structured Data for Search Rich Snippets */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -283,7 +283,7 @@ export default function BragDocTemplatePage() {
               </h3>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 Copy the template into the tool you already open daily: a Markdown file in your repo,
-                Notion, Obsidian, or Apple Notes.
+                Notion, Obsidian, or your notes app.
               </p>
             </div>
 
@@ -358,7 +358,7 @@ export default function BragDocTemplatePage() {
             <div className="p-5 sm:p-6 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 space-y-3">
               <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-xs sm:text-sm uppercase tracking-wider">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Strong Entry (Google XYZ Formula)</span>
+                <span>Strong Entry (XYZ Formula)</span>
               </div>
 
               <div className="space-y-2 text-xs sm:text-sm font-mono bg-white dark:bg-zinc-900 p-4 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 text-zinc-800 dark:text-zinc-200">
@@ -527,7 +527,7 @@ export default function BragDocTemplatePage() {
               </li>
               <li className="flex items-center gap-2 p-2.5 rounded-lg bg-zinc-900/60 border border-zinc-800/80">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Google XYZ Brag Sheet</span>
+                <span>XYZ Impact Brag Sheet</span>
               </li>
               <li className="flex items-center gap-2 p-2.5 rounded-lg bg-zinc-900/60 border border-zinc-800/80">
                 <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
