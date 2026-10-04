@@ -791,22 +791,22 @@ export function LandingPageEn() {
             <div className="max-w-2xl space-y-4 relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-indigo-300">
                 <Lock className="w-3.5 h-3.5" />
-                <span>Enterprise-Grade Privacy Architecture</span>
+                <span>Privacy & Security Architecture</span>
               </div>
               <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
                 <span>Your proprietary company data</span>{" "}
                 <span className="whitespace-nowrap">stays confidential. Period.</span>
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash enforces zero-knowledge access controls, client anonymity masking, and bank-grade data isolation.
+                Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash enforces client anonymity masking, strict tenant isolation, and encryption at rest &amp; in transit.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-white block font-semibold">Individual Account Isolation & Cloud Encryption</strong>
-                    <span className="text-zinc-400">Bank-level AES-256 encryption at rest and strict tenant isolation prevent unauthorized leakage.</span>
+                    <strong className="text-white block font-semibold">Encrypted at Rest &amp; in Transit</strong>
+                    <span className="text-zinc-400">AES-256 encryption at rest and TLS encryption in transit protect your career notes end-to-end.</span>
                   </div>
                 </div>
 
