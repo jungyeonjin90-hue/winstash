@@ -46,6 +46,15 @@ export default function Home() {
   const [region, setRegion] = useState<RegionCode | undefined>(undefined);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isPersonaLoaded, setIsPersonaLoaded] = useState(false);
+  const [hasPriorSession, setHasPriorSession] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      setHasPriorSession(localStorage.getItem("winstash_has_session") === "true");
+    } catch {
+      setHasPriorSession(false);
+    }
+  }, [user]);
 
   // Modal handlers with browser history support (Back button closes modal instead of leaving site)
   const openSettingsModal = () => {
@@ -427,22 +436,27 @@ export default function Home() {
   };
 
 
-  // 1. Auth loading state
-  if (authLoading) {
+  // 1. New visitors or unauthenticated users: Immediately render landing page (Zero loading delay!)
+  if (!user && (!hasPriorSession || !authLoading)) {
+    return <LandingPageEn />;
+  }
+
+  // 2. Existing logged-in user returning: Smooth vault loading state while restoring session (~0.2s)
+  if (authLoading && hasPriorSession) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 animate-bounce">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 animate-pulse">
           <Sparkles className="w-6 h-6" />
         </div>
-        <div className="flex items-center gap-2 text-sm font-semibold text-zinc-500">
+        <div className="flex items-center gap-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
           <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-          <span>Verifying credentials...</span>
+          <span>Loading your vault...</span>
         </div>
       </div>
     );
   }
 
-  // 2. Unauthenticated user: English landing page
+  // 3. Unauthenticated fallback
   if (!user) {
     return <LandingPageEn />;
   }

@@ -30,6 +30,15 @@ export default function HomeKo() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [hasPriorSession, setHasPriorSession] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      setHasPriorSession(localStorage.getItem("winstash_has_session") === "true");
+    } catch {
+      setHasPriorSession(false);
+    }
+  }, [user]);
 
   // Modal handlers with browser history support (Back button closes modal instead of leaving site)
   const openSettingsModal = () => {
@@ -275,20 +284,27 @@ export default function HomeKo() {
     showToast("백업 데이터를 성공적으로 불러왔습니다.");
   };
 
-  if (authLoading) {
+  // 1. 신규 방문자 및 비로그인 유저: 로딩 화면 없이 즉시 랜딩페이지 렌더링 (0초 딜레이)
+  if (!user && (!hasPriorSession || !authLoading)) {
+    return <LandingPage />;
+  }
+
+  // 2. 기존 로그인 회원: 세션 복원 중 부드러운 로딩 (~0.2초)
+  if (authLoading && hasPriorSession) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 animate-bounce">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 animate-pulse">
           <Sparkles className="w-6 h-6" />
         </div>
-        <div className="flex items-center gap-2 text-sm font-semibold text-zinc-500">
+        <div className="flex items-center gap-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
           <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-          <span>보안 인증 확인 중...</span>
+          <span>워크스페이스 불러오는 중...</span>
         </div>
       </div>
     );
   }
 
+  // 3. 비로그인 폴백
   if (!user) {
     return <LandingPage />;
   }

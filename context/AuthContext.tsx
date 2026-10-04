@@ -39,6 +39,7 @@ const AuthContext = createContext<AuthContextType>({
 const DEMO_USER_STORAGE_KEY = "career_pulse_demo_user";
 const LAST_ACTIVITY_KEY = "winstash_last_activity_timestamp";
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+export const SESSION_FLAG_KEY = "winstash_has_session";
 
 function getStoredDemoUser(): AppUser | null {
   if (typeof window === "undefined") return null;
@@ -98,6 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isFirebaseConfigured && auth) {
       const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
         if (fbUser) {
+          try {
+            localStorage.setItem(SESSION_FLAG_KEY, "true");
+          } catch {}
           setUser({
             uid: fbUser.uid,
             email: fbUser.email,
@@ -111,6 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           trackEvent("user_authenticated", { method: "google" });
         } else {
+          try {
+            localStorage.removeItem(SESSION_FLAG_KEY);
+          } catch {}
           setUser(process.env.NODE_ENV !== "production" ? getStoredDemoUser() : null);
         }
         setLoading(false);
