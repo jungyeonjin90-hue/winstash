@@ -335,7 +335,7 @@ export function LandingPageEn() {
               <ArrowRight className="w-4 h-4" />
             </button>
             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-              Free to start · Pro is just $5.99/mo (cancel anytime)
+              Free during beta · Pro ($5.99/mo) comes after launch
             </p>
           </div>
 
@@ -705,6 +705,14 @@ export function LandingPageEn() {
               </div>
             </div>
           </div>
+
+          {/* Builder / Creator Note */}
+          <div className="pt-4 flex items-center justify-center text-center">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200/70 dark:border-zinc-800 shadow-xs">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Built by a working professional who writes weekly reports for a living.
+            </span>
+          </div>
         </section>
 
         {/* 4. Section 3: The 3 Core Value Drawers */}
@@ -809,7 +817,7 @@ export function LandingPageEn() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block font-semibold">Encrypted at Rest &amp; in Transit</strong>
-                    <span className="text-zinc-400">AES-256 encryption at rest and TLS encryption in transit protect your career notes at rest and in transit.</span>
+                    <span className="text-zinc-400">AES-256 encryption for stored notes and TLS for everything in transit.</span>
                   </div>
                 </div>
 
@@ -828,7 +836,7 @@ export function LandingPageEn() {
         {/* 6. Section 5: Global Tech Frameworks & Standards */}
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800 text-center space-y-6">
           <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-            Built on Battle-Tested Executive Frameworks
+            Built on proven frameworks: XYZ, STAR, PPP
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 opacity-80">
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
@@ -837,7 +845,7 @@ export function LandingPageEn() {
             </div>
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
               <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              <span>Executive STAR Framework</span>
+              <span>STAR Story Framework</span>
             </div>
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
               <Terminal className="w-5 h-5 text-amber-500" />
@@ -864,8 +872,8 @@ export function LandingPageEn() {
                 a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 5 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 executive STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
               },
               {
-                q: "What happens after I use my free AI credits?",
-                a: "You can continue logging and storing your weekly notes for free forever. To unlock unlimited weekly brain dumps, past log edits, and unlimited executive syntheses across all quarters and years, you can upgrade to WinStash Pro for just $5.99/month (cancel anytime).",
+                q: "What happens after the free public beta? Will WinStash stay free?",
+                a: "WinStash is completely free during our public beta. You can log, store, and synthesize your career wins without cost. After launch, logging your raw weekly career notes remains free forever, and unlimited AI syntheses will be available with WinStash Pro for $5.99/mo (cancel anytime).",
               },
               {
                 q: "Can I use WinStash if I am not a Software Engineer?",
@@ -933,7 +941,7 @@ export function LandingPageEn() {
                 <ArrowRight className="w-4 h-4" />
               </button>
               <p className="text-xs text-zinc-400 font-medium">
-                Free to start · Pro is just $5.99/mo (cancel anytime)
+                Free during beta · Pro ($5.99/mo) comes after launch
               </p>
             </div>
           </div>
