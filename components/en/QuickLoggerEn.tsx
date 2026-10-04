@@ -248,6 +248,14 @@ export function QuickLoggerEn({
         </div>
       </div>
 
+      {/* Helper Pro-Tip Banner (Nudge for quantifiable results & user feedback) */}
+      <div className="flex items-start sm:items-center gap-2 px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/60 dark:border-amber-900/40 text-[11px] sm:text-xs text-amber-800 dark:text-amber-300/90">
+        <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5 sm:mt-0" />
+        <p className="leading-snug">
+          <strong className="font-semibold">Pro-tip:</strong> Mention quantifiable results (e.g. <em>+24% CVR, -30% latency, 4h saved</em>) or user feedback if available. It powers significantly stronger STAR bullets! <span className="opacity-75">(Optional: directional impact is fine if metrics aren&apos;t ready)</span>
+        </p>
+      </div>
+
       {/* Sensitive Data Warning Caption */}
       <div className="flex items-center gap-1.5 px-2 text-[11px] text-zinc-400 dark:text-zinc-500">
         <Lock className="w-3 h-3 text-zinc-400 dark:text-zinc-500 shrink-0" />
