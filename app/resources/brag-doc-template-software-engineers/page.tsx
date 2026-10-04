@@ -132,7 +132,7 @@ export default function BragDocTemplatePage() {
         dateModified: "2026-10-05",
         author: {
           "@type": "Person",
-          name: "Yeonjin Jung",
+          name: "YJ",
           jobTitle: "Maker of WinStash",
           url: "https://winstash.net",
         },
@@ -225,7 +225,7 @@ export default function BragDocTemplatePage() {
 
           <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 pt-1">
             <span>
-              By <strong className="text-zinc-700 dark:text-zinc-300">Yeonjin Jung</strong>, the maker of WinStash and a working professional who writes weekly reports for a living
+              By <strong className="text-zinc-700 dark:text-zinc-300">YJ</strong>, the maker of WinStash and a working professional who writes weekly reports for a living
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
