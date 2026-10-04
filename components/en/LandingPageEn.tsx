@@ -336,7 +336,7 @@ export function LandingPageEn() {
               <ArrowRight className="w-4 h-4" />
             </button>
             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-              Free to start · Pro ($5.99/mo) comes after launch
+              Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch
             </p>
           </div>
 
@@ -809,7 +809,7 @@ export function LandingPageEn() {
                 Your career notes stay yours.
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash enforces client anonymity masking, strict tenant isolation, and encryption at rest &amp; in transit.
+                Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash offers client anonymity masking, strict tenant isolation, and encryption at rest &amp; in transit.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
@@ -941,7 +941,7 @@ export function LandingPageEn() {
                 <ArrowRight className="w-4 h-4" />
               </button>
               <p className="text-xs text-zinc-400 font-medium">
-                Free to start · Pro ($5.99/mo) comes after launch
+                Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch
               </p>
             </div>
           </div>
