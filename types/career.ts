@@ -76,6 +76,15 @@ export type TabType = 'weekly' | 'brag' | 'vault' | 'timeline';
 
 export type SynthesisScale = 3 | 5 | 10 | 'ALL';
 
+export interface SourceRecordContext {
+  id: string;
+  weekLabel: string;
+  dateRange?: string; // e.g., "Sep 15 – Sep 21, 2026"
+  raw_memo: string;
+  jobRole?: JobRole;
+  toneManner?: ToneManner;
+}
+
 export interface SynthesizedBragItem {
   id: string;
   rank: number;
@@ -85,6 +94,7 @@ export interface SynthesizedBragItem {
   quarter_span: string;
   key_highlights: string[];
   nda_tags: string[];
+  source_records?: SourceRecordContext[];
 }
 
 export interface SynthesizedStarItem {
@@ -99,6 +109,7 @@ export interface SynthesizedStarItem {
   period_span: string;
   impactCategory?: ImpactCategory;
   impactMagnitude?: ImpactMagnitude;
+  source_records?: SourceRecordContext[];
 }
 
 export type FeedbackType = 'bug' | 'feature' | 'general';

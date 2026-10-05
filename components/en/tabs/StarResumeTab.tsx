@@ -15,6 +15,7 @@ import { maskSynthesizedStarItem } from "@/lib/masking";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { YearRangeFilterEn } from "../YearRangeFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
+import { SourceNotesAccordionEn } from "../SourceNotesAccordionEn";
 import { formatStarPortfolio, formatSingleStarItem } from "@/lib/exportFormatters";
 import { filterRecordsByYearRange, getRecordPeriodInfo } from "@/lib/periodUtils";
 import {
@@ -673,6 +674,16 @@ export function StarResumeTab({
                 </span>
               ))}
             </div>
+
+            {/* Source Friday Notes & Context Accordion */}
+            <SourceNotesAccordionEn
+              sourceRecords={item.source_records}
+              fallbackRecords={filteredRecords}
+              fallbackIndex={idx}
+              appliedRole={jobRole}
+              appliedTone={toneManner}
+              accentColor="amber"
+            />
           </div>
         ))}
 

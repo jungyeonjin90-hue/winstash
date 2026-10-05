@@ -72,6 +72,20 @@ function adaptStarItem(
   return { ...item, title, action, result, nda_tags: tags };
 }
 
+function buildSourceContext(r: CareerRecord, defaultJobRole: JobRole, defaultTone: ToneManner) {
+  const dateRange = r.target_week
+    ? `${r.target_week.startDate} – ${r.target_week.endDate}`
+    : undefined;
+  return {
+    id: r.id,
+    weekLabel: r.target_week?.label || new Date(r.createdAt).toISOString().slice(0, 10),
+    dateRange,
+    raw_memo: r.raw_memo || "",
+    jobRole: r.jobRole || defaultJobRole,
+    toneManner: r.toneManner || defaultTone,
+  };
+}
+
 export function synthesizeBragItems(
   records: CareerRecord[],
   scale: SynthesisScale,
@@ -93,6 +107,7 @@ export function synthesizeBragItems(
           quarter_span: r.brag_sheet_item.quarter,
           key_highlights: r.weekly_report.done,
           nda_tags: r.star_portfolio.nda_tags,
+          source_records: [buildSourceContext(r, jobRole, toneManner)],
         },
         jobRole,
         toneManner
@@ -371,6 +386,7 @@ export function synthesizeStarItems(
           result: r.star_portfolio.result,
           nda_tags: r.star_portfolio.nda_tags,
           period_span: r.brag_sheet_item.quarter,
+          source_records: [buildSourceContext(r, jobRole, toneManner)],
         },
         jobRole,
         toneManner

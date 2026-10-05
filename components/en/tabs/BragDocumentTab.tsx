@@ -14,6 +14,7 @@ import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem } from "@/types/
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
+import { SourceNotesAccordionEn } from "../SourceNotesAccordionEn";
 import { formatBragSheet } from "@/lib/exportFormatters";
 import { filterRecordsByPeriod, getDetailedRecordDateInfo, getRecordPeriodInfo } from "@/lib/periodUtils";
 import {
@@ -599,6 +600,16 @@ export function BragDocumentTab({
                 </ul>
               </div>
             )}
+
+            {/* Source Friday Notes & Context Accordion */}
+            <SourceNotesAccordionEn
+              sourceRecords={item.source_records}
+              fallbackRecords={filteredRecords}
+              fallbackIndex={idx}
+              appliedRole={jobRole}
+              appliedTone={toneManner}
+              accentColor="emerald"
+            />
           </div>
         ))}
 

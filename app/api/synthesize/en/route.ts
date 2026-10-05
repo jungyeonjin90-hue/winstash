@@ -76,10 +76,12 @@ Required JSON Schema:
       "metric_summary": "1-line Google XYZ metric achievement",
       "business_impact": "Strategic organizational value and long-term leverage delivered",
       "key_highlights": ["Key milestone 1", "Key milestone 2"],
+      "source_log_indices": [1, 2],
       "source_record_count": ${records.length}
     }
   ]
-}`;
+}
+Note: "source_log_indices" MUST be an array of 1-based integer indices corresponding to the [Weekly Log #N] entries that contributed to this achievement (e.g. [1] or [1, 2]).`;
     return { systemInstruction, userContent };
   } else {
     // type === "star"
@@ -123,12 +125,73 @@ Required JSON Schema:
       "period_span": "${periodLabel}",
       "impactCategory": "efficiency",
       "impactMagnitude": "medium",
+      "source_log_indices": [1, 2],
       "source_record_count": ${records.length}
     }
   ]
-}`;
+}
+Note: "source_log_indices" MUST be an array of 1-based integer indices corresponding to the [Weekly Log #N] entries that contributed to this case study.`;
     return { systemInstruction, userContent };
   }
+}
+
+/**
+ * Attaches the actual user source records to each synthesized item for 100% transparent auditability
+ */
+function attachSourceRecordsToItems(
+  items: any[],
+  records: CareerRecord[],
+  jobRole: JobRole,
+  toneManner: ToneManner,
+  periodLabel: string
+) {
+  return items.map((item, itemIdx) => {
+    let sourceIndices: number[] = [];
+    if (Array.isArray(item.source_log_indices) && item.source_log_indices.length > 0) {
+      sourceIndices = item.source_log_indices.filter(
+        (idx: any) => typeof idx === "number" && idx >= 1 && idx <= records.length
+      );
+    }
+    // Fallback: If no valid indices were returned by model, map to matching record index or record 1
+    if (sourceIndices.length === 0) {
+      if (records[itemIdx]) sourceIndices = [itemIdx + 1];
+      else sourceIndices = [1];
+    }
+
+    const matchedRecords = sourceIndices
+      .map((idx) => records[idx - 1])
+      .filter(Boolean);
+
+    const source_records = matchedRecords.map((r) => {
+      const dateRange = r.target_week
+        ? `${r.target_week.startDate} – ${r.target_week.endDate}`
+        : undefined;
+      return {
+        id: r.id,
+        weekLabel: r.target_week?.label || new Date(r.createdAt).toISOString().slice(0, 10),
+        dateRange,
+        raw_memo: r.raw_memo || "",
+        jobRole: r.jobRole || jobRole,
+        toneManner: r.toneManner || toneManner,
+      };
+    });
+
+    return {
+      ...item,
+      source_records:
+        source_records.length > 0
+          ? source_records
+          : [
+              {
+                id: records[0]?.id || "rec-default",
+                weekLabel: records[0]?.target_week?.label || periodLabel,
+                raw_memo: records[0]?.raw_memo || "",
+                jobRole,
+                toneManner,
+              },
+            ],
+    };
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -240,7 +303,14 @@ export async function POST(req: NextRequest) {
               const parsed = JSON.parse(text);
               if (Array.isArray(parsed.items) && parsed.items.length > 0) {
                 await quotaCheck.deduct?.();
-                return NextResponse.json({ items: parsed.items });
+                const itemsWithSources = attachSourceRecordsToItems(
+                  parsed.items,
+                  records,
+                  jobRole,
+                  toneManner,
+                  periodLabel
+                );
+                return NextResponse.json({ items: itemsWithSources });
               }
             }
           } else {
@@ -265,8 +335,16 @@ export async function POST(req: NextRequest) {
         quarter_span: r.brag_sheet_item?.quarter || periodLabel,
         key_highlights: r.weekly_report?.done?.length ? r.weekly_report.done : [r.raw_memo ? r.raw_memo.slice(0, 80) : "Delivered"],
         nda_tags: r.star_portfolio?.nda_tags || ["#Execution", "#Impact"],
+        source_log_indices: [idx + 1],
       }));
-      return NextResponse.json({ items: directItems.slice(0, scope) });
+      const itemsWithSources = attachSourceRecordsToItems(
+        directItems.slice(0, scope),
+        records,
+        jobRole,
+        toneManner,
+        periodLabel
+      );
+      return NextResponse.json({ items: itemsWithSources });
     } else {
       const directItems: SynthesizedStarItem[] = records.map((r, idx) => ({
         id: `direct-star-${idx + 1}`,
@@ -280,8 +358,16 @@ export async function POST(req: NextRequest) {
         period_span: periodLabel,
         impactCategory: r.star_portfolio?.impactCategory || "efficiency",
         impactMagnitude: r.star_portfolio?.impactMagnitude || "medium",
+        source_log_indices: [idx + 1],
       }));
-      return NextResponse.json({ items: directItems.slice(0, scope) });
+      const itemsWithSources = attachSourceRecordsToItems(
+        directItems.slice(0, scope),
+        records,
+        jobRole,
+        toneManner,
+        periodLabel
+      );
+      return NextResponse.json({ items: itemsWithSources });
     }
   } catch (error) {
     console.error("Synthesis API error:", error);
