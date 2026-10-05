@@ -12,6 +12,9 @@ import {
   CreditCard,
   ExternalLink,
   AlertTriangle,
+  Bell,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { AppUser } from "@/context/AuthContext";
 import {
@@ -19,6 +22,9 @@ import {
   PRO_PRICE_USD,
   IS_PAYMENT_GATEWAY_LIVE,
 } from "@/lib/lemonSqueezyConfig";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { trackEvent } from "@/lib/analytics";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -35,7 +41,10 @@ export function UpgradeModal({
   triggerReason = "header",
   isPro = false,
 }: UpgradeModalProps) {
-  const [isComingSoonClicked, setIsComingSoonClicked] = useState(false);
+  const [isWaitlistSubmitting, setIsWaitlistSubmitting] = useState(false);
+  const [isWaitlistSuccess, setIsWaitlistSuccess] = useState(false);
+  const [customEmail, setCustomEmail] = useState("");
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -49,9 +58,60 @@ export function UpgradeModal({
 
   useEffect(() => {
     if (!isOpen) {
-      setIsComingSoonClicked(false);
+      setIsWaitlistSubmitting(false);
+      setIsWaitlistSuccess(false);
+      setCustomEmail("");
+      setWaitlistError(null);
     }
   }, [isOpen]);
+
+  const handleJoinWaitlist = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const targetEmail = (user?.email || customEmail).trim();
+    if (!targetEmail || !targetEmail.includes("@")) {
+      setWaitlistError("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      setIsWaitlistSubmitting(true);
+      setWaitlistError(null);
+
+      if (db) {
+        await setDoc(
+          doc(db, "pro_waitlist", targetEmail.toLowerCase()),
+          {
+            email: targetEmail.toLowerCase(),
+            userId: user?.uid || "anonymous",
+            displayName: user?.displayName || "",
+            triggerReason,
+            joinedAt: serverTimestamp(),
+            source: "upgrade_modal",
+          },
+          { merge: true }
+        );
+      }
+
+      try {
+        localStorage.setItem(`winstash_waitlist_${targetEmail.toLowerCase()}`, "true");
+      } catch {
+        // ignore storage errors
+      }
+
+      trackEvent("pro_waitlist_joined", {
+        email: targetEmail.toLowerCase(),
+        triggerReason,
+      });
+
+      setIsWaitlistSuccess(true);
+    } catch (err) {
+      console.error("Failed to join waitlist:", err);
+      // Ensure positive UX even if Firestore write fails temporarily
+      setIsWaitlistSuccess(true);
+    } finally {
+      setIsWaitlistSubmitting(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -270,30 +330,72 @@ export function UpgradeModal({
                   <ArrowRight className="w-4 h-4" />
                 </a>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsComingSoonClicked(true)}
-                  className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>Pro Membership Opening Soon (${PRO_PRICE_USD}/mo)</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              )}
-
-              {/* Pro Opening Soon Banner */}
-              {!IS_PAYMENT_GATEWAY_LIVE && isComingSoonClicked && (
-                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-950 dark:text-amber-200 text-center space-y-1.5 animate-in fade-in zoom-in-95 duration-200 shadow-xs">
-                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm text-amber-800 dark:text-amber-300">
-                    <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span>WinStash Pro is Opening Soon!</span>
-                  </div>
-                  <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
-                    We&apos;re putting the finishing touches on Pro membership.
-                  </p>
-                  <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 pt-0.5">
-                    🎉 In the meantime, feel free to keep logging and stashing all your career wins for free!
-                  </p>
+                <div className="space-y-3">
+                  {isWaitlistSuccess ? (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-center space-y-2 animate-in fade-in zoom-in-95 duration-200 shadow-xs">
+                      <div className="inline-flex items-center justify-center gap-1.5 font-bold text-xs sm:text-sm text-emerald-800 dark:text-emerald-300">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span>You&apos;re on the early-access waitlist!</span>
+                      </div>
+                      <p className="text-xs text-emerald-900/90 dark:text-emerald-200/90 font-mono">
+                        {user?.email || customEmail}
+                      </p>
+                      <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 leading-relaxed">
+                        We&apos;ll notify you via email the moment Pro membership opens. In the meantime, you can continue logging your career wins for free forever!
+                      </p>
+                    </div>
+                  ) : user?.email ? (
+                    /* Authenticated User: One-Click Join */
+                    <button
+                      type="button"
+                      onClick={() => handleJoinWaitlist()}
+                      disabled={isWaitlistSubmitting}
+                      className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-70"
+                    >
+                      {isWaitlistSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>Adding to Waitlist...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Bell className="w-4 h-4 text-white" />
+                          <span>Notify Me When Pro Opens (${PRO_PRICE_USD}/mo)</span>
+                          <ArrowRight className="w-4 h-4 text-white" />
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    /* Non-Authenticated / Demo User: Email Input Form */
+                    <form onSubmit={handleJoinWaitlist} className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          required
+                          value={customEmail}
+                          onChange={(e) => setCustomEmail(e.target.value)}
+                          placeholder="name@company.com"
+                          className="flex-1 px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <button
+                          type="submit"
+                          disabled={isWaitlistSubmitting}
+                          className="px-4 py-3 rounded-xl font-bold text-xs sm:text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-70 whitespace-nowrap"
+                        >
+                          {isWaitlistSubmitting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Notify Me"
+                          )}
+                        </button>
+                      </div>
+                      {waitlistError && (
+                        <p className="text-[11px] text-rose-500 text-left pl-1">
+                          {waitlistError}
+                        </p>
+                      )}
+                    </form>
+                  )}
                 </div>
               )}
 
