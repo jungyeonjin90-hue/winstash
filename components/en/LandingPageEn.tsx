@@ -867,6 +867,10 @@ export function LandingPageEn() {
                 a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 5 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
               },
               {
+                q: "How is WinStash different from just using a general AI chatbot?",
+                a: "Fair question. WinStash uses AI too, and if you're happy to write a good prompt and paste your notes every week, a general chatbot can do a lot of this. WinStash takes care of everything around the AI: (1) A habit, not a blank prompt—write a rough one-minute note on Friday with zero prompt tweaking. (2) Three outputs from one note—a weekly manager sync, an XYZ-style brag sheet, and STAR stories in consistent formats. (3) A record that builds up—your notes stay in one place, so your brag sheet draws on months of entries instead of whatever you remembered to paste in. (4) Confidentiality help—the NDA tool helps mask client names, tools, and metrics before export. If you already have a prompt and routine that works for you, keep using it. WinStash is for people who want the habit to be easy enough to actually stick.",
+              },
+              {
                 q: "What happens after I use my free AI credits?",
                 a: "You can continue logging and storing your weekly notes for free forever. During our public beta, active users who share feedback can get credits topped up anytime. When we launch, WinStash Pro ($5.99/mo) will unlock unlimited syntheses.",
               },
