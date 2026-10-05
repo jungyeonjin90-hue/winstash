@@ -250,7 +250,7 @@ export function UpgradeModal({
                     <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[3]" />
                   </div>
                   <span>
-                    <strong>Unlimited</strong> STAR Portfolio Syntheses for Executive Interviews
+                    <strong>Unlimited</strong> STAR Portfolio Syntheses for Interviews
                   </span>
                 </li>
               </ul>
@@ -300,7 +300,7 @@ export function UpgradeModal({
               <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-500 dark:text-zinc-400">
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  Lemon Squeezy MoR Verified
+                  Payments processed securely by Lemon Squeezy
                 </span>
                 <span>·</span>
                 <span className="flex items-center gap-1">
