@@ -616,7 +616,10 @@ export default function Home() {
         isOpen={isSettingsOpen}
         onClose={closeSettingsModal}
         onOpenFeedback={openFeedbackModal}
-        onOpenUpgrade={() => openUpgradeModal("header")}
+        onOpenUpgrade={() => {
+          setIsSettingsOpen(false);
+          openUpgradeModal("header");
+        }}
         isPro={Boolean(creditStatus?.isPro)}
         jobRole={jobRole}
         onJobRoleChange={handleJobRoleChange}
