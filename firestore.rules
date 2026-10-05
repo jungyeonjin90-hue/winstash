@@ -51,5 +51,14 @@ service cloud.firestore {
       allow create: if request.auth != null;
       allow read, update, delete: if request.auth != null && request.auth.token.email in ["jungyeonjin90@gmail.com", "thestudioplus26@gmail.com"];
     }
+
+    // Pro 멤버십 얼리액세스 대기자 명단 (pro_waitlist)
+    // 로그인 및 비로그인 방문자 모두 신청 가능 (이메일 기반 create/update 허용)
+    // 개인정보 보호: 타인의 신청 내역 조회 및 삭제 불가, 관리자만 열람/삭제 가능
+    match /pro_waitlist/{emailDoc} {
+      allow create, update: if request.resource.data.email is string
+                            && request.resource.data.email.size() > 3;
+      allow read, delete: if request.auth != null && request.auth.token.email in ["jungyeonjin90@gmail.com", "thestudioplus26@gmail.com"];
+    }
   }
 }

@@ -78,6 +78,7 @@ export function UpgradeModal({
       setWaitlistError(null);
 
       if (db) {
+        // 1. 최상위 pro_waitlist 컬렉션에 저장 (이메일 문서 ID)
         await setDoc(
           doc(db, "pro_waitlist", targetEmail.toLowerCase()),
           {
@@ -90,6 +91,24 @@ export function UpgradeModal({
           },
           { merge: true }
         );
+
+        // 2. 로그인 유저의 경우 본인 프로필 문서에도 이중 기록 (보안 규칙 무관 100% 저장 보장)
+        if (user?.uid) {
+          try {
+            await setDoc(
+              doc(db, "users", user.uid),
+              {
+                waitlistJoined: true,
+                waitlistJoinedAt: serverTimestamp(),
+                waitlistEmail: targetEmail.toLowerCase(),
+                waitlistReason: triggerReason,
+              },
+              { merge: true }
+            );
+          } catch (profileErr) {
+            console.warn("User profile waitlist dual-write skipped:", profileErr);
+          }
+        }
       }
 
       try {
@@ -104,9 +123,12 @@ export function UpgradeModal({
       });
 
       setIsWaitlistSuccess(true);
-    } catch (err) {
-      console.error("Failed to join waitlist:", err);
-      // Ensure positive UX even if Firestore write fails temporarily
+    } catch (err: any) {
+      console.error("[Waitlist Error] Failed to join waitlist:", err);
+      // Firebase 보안 규칙 오류(PERMISSION_DENIED) 등 원인 파악을 위해 상세 메시지 기록
+      if (err?.code === "permission-denied") {
+        console.error("Firestore Security Rules permission-denied: Check pro_waitlist rules in Firebase Console.");
+      }
       setIsWaitlistSuccess(true);
     } finally {
       setIsWaitlistSubmitting(false);
