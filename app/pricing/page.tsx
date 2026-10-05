@@ -53,69 +53,6 @@ export const metadata: Metadata = {
   },
 };
 
-const COMPARISON_ROWS = [
-  {
-    feature: "Weekly Raw Notes Logging",
-    free: "Unlimited",
-    pro: "Unlimited",
-    note: "Log your thoughts every Friday with zero limits",
-  },
-  {
-    feature: "Weekly AI Transformations",
-    free: "5 credits",
-    pro: "Unlimited",
-    note: "Turns raw notes into Manager Sync & initial drafts",
-  },
-  {
-    feature: "Past Week Edits & Re-runs",
-    free: "Deducts credit",
-    pro: "Unlimited",
-    note: "Tweak past sprint notes and re-generate anytime",
-  },
-  {
-    feature: "Quarterly Brag Sheet Syntheses",
-    free: "3 credits",
-    pro: "Unlimited",
-    note: "Formats achievements using the XYZ impact formula",
-  },
-  {
-    feature: "STAR Portfolio Syntheses",
-    free: "3 credits",
-    pro: "Unlimited",
-    note: "Generates end-to-end case studies for interviews",
-  },
-  {
-    feature: "Multi-Week Project Clustering",
-    free: "Included",
-    pro: "Unlimited",
-    note: "Combines 4–12 weeks of logs into unified projects",
-  },
-  {
-    feature: "NDA Confidentiality Shield",
-    free: "Included",
-    pro: "Included",
-    note: "Masks client names, systems, and sensitive metrics",
-  },
-  {
-    feature: "1-Click Markdown Export",
-    free: "Included",
-    pro: "Included",
-    note: "Pre-formatted for Slack, Notion, Docs & ATS",
-  },
-  {
-    feature: "Data Ownership & Permanent Deletion",
-    free: "Full control",
-    pro: "Full control",
-    note: "Export JSON or delete your account anytime",
-  },
-  {
-    feature: "Fair-Use Usage Policy",
-    free: "Standard",
-    pro: "Standard",
-    note: "Applied to prevent automated bot scripts",
-  },
-];
-
 const PRICING_FAQS = [
   {
     q: "Is WinStash really free?",
@@ -366,50 +303,7 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* 5. Feature Comparison Table */}
-        <section className="space-y-6 max-w-4xl mx-auto pt-6">
-          <div className="text-center space-y-1">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-              Detailed Plan Comparison
-            </h2>
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-              Compare features across Free and Pro plans side by side.
-            </p>
-          </div>
-
-          <div className="overflow-x-auto rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold">
-                <tr>
-                  <th className="p-4 sm:p-5 w-1/3">Feature</th>
-                  <th className="p-4 sm:p-5 w-1/4">Free</th>
-                  <th className="p-4 sm:p-5 w-1/4 text-indigo-600 dark:text-indigo-400">Pro (${PRO_PRICE_USD}/mo)</th>
-                  <th className="p-4 sm:p-5 hidden lg:table-cell">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-600 dark:text-zinc-300">
-                {COMPARISON_ROWS.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
-                    <td className="p-4 sm:p-5 font-semibold text-zinc-900 dark:text-zinc-100">
-                      {row.feature}
-                    </td>
-                    <td className="p-4 sm:p-5">
-                      {row.free}
-                    </td>
-                    <td className="p-4 sm:p-5 font-semibold text-indigo-600 dark:text-indigo-400">
-                      {row.pro}
-                    </td>
-                    <td className="p-4 sm:p-5 text-xs text-zinc-500 dark:text-zinc-400 hidden lg:table-cell">
-                      {row.note}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* 6. Payment, Guarantee & Security Badges */}
+        {/* 5. Payment, Guarantee & Security Badges */}
         <section className="p-6 sm:p-8 rounded-3xl bg-zinc-100/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
           <div className="space-y-1.5 flex flex-col items-center">
             <div className="w-10 h-10 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-xs mb-1">
@@ -452,7 +346,7 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* 7. Pricing FAQ */}
+        {/* 6. Pricing FAQ */}
         <section className="space-y-6 max-w-3xl mx-auto pt-4">
           <div className="text-center space-y-1">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -477,7 +371,7 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* 8. Bottom CTA Banner */}
+        {/* 7. Bottom CTA Banner */}
         <section className="relative overflow-hidden rounded-3xl bg-zinc-900 border border-zinc-800 p-8 sm:p-12 text-white text-center space-y-6 shadow-2xl max-w-4xl mx-auto">
           <div className="max-w-xl mx-auto space-y-3">
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight">
@@ -503,7 +397,7 @@ export default function PricingPage() {
         </section>
       </main>
 
-      {/* 9. Footer */}
+      {/* 8. Footer */}
       <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-10 mt-16 text-xs text-zinc-500">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">

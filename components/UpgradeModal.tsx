@@ -417,7 +417,7 @@ export function UpgradeModal({
                   target="_blank"
                   className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"
                 >
-                  See plan details &amp; comparison →
+                  See plan details →
                 </Link>
               </div>
 
