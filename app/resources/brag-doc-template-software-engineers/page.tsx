@@ -604,6 +604,9 @@ export default function BragDocTemplatePage() {
           </div>
 
           <div className="flex items-center gap-6">
+            <Link href="/pricing" className="hover:underline text-zinc-600 dark:text-zinc-300">
+              Pricing
+            </Link>
             <Link href="/privacy" className="hover:underline">
               Privacy Policy
             </Link>

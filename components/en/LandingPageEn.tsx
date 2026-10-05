@@ -260,7 +260,19 @@ export function LandingPageEn() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-4">
+            <Link
+              href="/pricing"
+              className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link
+              href="/resources"
+              className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors hidden sm:inline-block"
+            >
+              Resources
+            </Link>
             <button
               onClick={handleGoogleLogin}
               disabled={loading !== null}
@@ -951,6 +963,13 @@ export function LandingPageEn() {
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-10 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-3 px-4">
         <p>© 2026 WinStash. AI Career Memory for Everything You Do.</p>
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <Link
+            href="/pricing"
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 font-semibold transition-colors underline-offset-4 hover:underline text-indigo-600 dark:text-indigo-400"
+          >
+            Pricing
+          </Link>
+          <span>·</span>
           <Link
             href="/resources"
             className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors underline-offset-4 hover:underline text-zinc-700 dark:text-zinc-300"

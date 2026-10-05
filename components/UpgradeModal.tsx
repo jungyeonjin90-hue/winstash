@@ -411,6 +411,16 @@ export function UpgradeModal({
                 </span>
               </div>
 
+              <div className="text-center pt-0.5">
+                <Link
+                  href="/pricing"
+                  target="_blank"
+                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1"
+                >
+                  See plan details &amp; comparison →
+                </Link>
+              </div>
+
               <div className="flex items-center justify-center gap-2.5 text-[11px] text-zinc-400 dark:text-zinc-500 pt-0.5">
                 <Link href="/terms" target="_blank" className="hover:text-indigo-600 dark:hover:text-indigo-400 underline underline-offset-2">
                   Terms
