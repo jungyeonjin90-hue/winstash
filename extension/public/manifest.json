@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "WinStash - Weekly Career & Brag OS",
+  "version": "1.0.0",
+  "description": "1-click weekly memo logger and AI career synthesis for Chrome",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "WinStash - Quick Log"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://winstash.net/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://winstash.net/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

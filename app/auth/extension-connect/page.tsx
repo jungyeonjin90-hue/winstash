@@ -1,124 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
-import { Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import { Sparkles, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { subscribeUserRecords } from "@/lib/firestoreService";
-import { auth, googleProvider, getAuthToken } from "@/lib/firebase";
 import { getCreditStatus } from "@/lib/creditService";
-import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { isAdminEmail } from "@/lib/adminConfig";
 
 export default function ExtensionConnectPage() {
   const { user, signInWithGoogle, loading } = useAuth();
   const [status, setStatus] = useState<"connecting" | "success" | "need_login">("connecting");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const hasAutoTriggered = useRef(false);
 
-  // Catch redirect result if returning from Google OAuth redirect
-  useEffect(() => {
-    if (auth) {
-      getRedirectResult(auth).catch((err) => {
-        console.warn("getRedirectResult warning:", err);
-      });
-    }
-  }, []);
+  const dispatchBridgeData = useCallback(
+    (
+      userData: { uid: string; email: string | null },
+      recordsData: any[],
+      creditsData: any
+    ) => {
+      const bridgePayload = {
+        uid: userData.uid,
+        email: userData.email,
+        records: recordsData || [],
+        credits: creditsData || null,
+        timestamp: Date.now(),
+      };
 
-  useEffect(() => {
-    // Wait until AuthContext finishes checking Firebase session
-    if (loading) return;
-
-    if (!user) {
-      if (typeof window !== "undefined") {
-        const urlParams = new URLSearchParams(window.location.search);
-        const isAuto = urlParams.get("auto") === "true";
-        const hasActiveRedirect = sessionStorage.getItem("winstash_redirect_active");
-
-        // If auto sign-in requested and not already redirected in this session
-        if (isAuto && !hasActiveRedirect && !isLoggingIn && auth) {
-          setIsLoggingIn(true);
-          sessionStorage.setItem("winstash_redirect_active", "true");
-          try {
-            window.history.replaceState({}, "", "/auth/extension-connect");
-          } catch {}
-
-          signInWithRedirect(auth, googleProvider).catch((e) => {
-            console.error("signInWithRedirect error:", e);
-            sessionStorage.removeItem("winstash_redirect_active");
-            setIsLoggingIn(false);
-            setStatus("need_login");
-          });
-          return;
+      try {
+        localStorage.setItem(
+          "winstash_auth_user",
+          JSON.stringify({ uid: userData.uid, email: userData.email })
+        );
+        localStorage.setItem("winstash_auth_bridge", JSON.stringify(bridgePayload));
+        localStorage.setItem("winstash_latest_records_cache", JSON.stringify(recordsData || []));
+        if (creditsData) {
+          localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(creditsData));
         }
+        document.documentElement.setAttribute(
+          "data-winstash-auth",
+          JSON.stringify(bridgePayload)
+        );
+        window.postMessage(
+          { type: "WINSTASH_AUTH_BRIDGE_UPDATED", payload: bridgePayload },
+          "*"
+        );
+        window.dispatchEvent(
+          new CustomEvent("winstash_auth_ready", { detail: bridgePayload })
+        );
+        window.dispatchEvent(
+          new CustomEvent("winstash_auth_changed", {
+            detail: { uid: userData.uid, email: userData.email },
+          })
+        );
+      } catch (e) {
+        console.warn("Storage sync error:", e);
       }
-
-      setStatus("need_login");
-      return;
-    }
-
-    // User is authenticated! Clear redirect tracking flag
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("winstash_redirect_active");
-    }
-
-    let isSubscribed = true;
-
-    // Fetch user's records & credits to send to extension
-    const unsubscribeRecords = subscribeUserRecords(
-      user.uid,
-      Boolean(user.isDemo),
-      async (records) => {
-        if (!isSubscribed) return;
-        try {
-          const token = await getAuthToken();
-          // Fetch real credit status directly (ensures admins get unlimited Pro)
-          const credits = await getCreditStatus(user.uid, Boolean(user.isDemo), user.email);
-
-          const bridgePayload = {
-            uid: user.uid,
-            email: user.email,
-            token,
-            records: records || [],
-            credits,
-            timestamp: Date.now(),
-          };
-
-          // 1. LocalStorage for tab polling
-          localStorage.setItem("winstash_auth_bridge", JSON.stringify(bridgePayload));
-
-          // 2. DOM Attribute for content script & executeScript direct access
-          try {
-            document.documentElement.setAttribute("data-winstash-auth", JSON.stringify(bridgePayload));
-          } catch {}
-
-          // 3. postMessage for isolated world content script
-          try {
-            window.postMessage({ type: "WINSTASH_AUTH_BRIDGE_UPDATED", payload: bridgePayload }, "*");
-          } catch {}
-
-          // 4. CustomEvent for same-page listeners
-          try {
-            window.dispatchEvent(new CustomEvent("winstash_auth_ready", { detail: bridgePayload }));
-          } catch {}
-
-          setStatus("success");
-
-          // Try closing tab automatically after short delay
-          setTimeout(() => {
-            try {
-              window.close();
-            } catch {}
-          }, 1500);
-        } catch (e) {
-          console.error("Failed to build bridge payload:", e);
-        }
-      }
-    );
-
-    return () => {
-      isSubscribed = false;
-      unsubscribeRecords();
-    };
-  }, [user]);
+    },
+    []
+  );
 
   const handleLogin = async () => {
     setIsLoggingIn(true);
@@ -130,6 +71,102 @@ export default function ExtensionConnectPage() {
       setIsLoggingIn(false);
     }
   };
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+      setStatus("need_login");
+      // If auto-connect requested, trigger Google OAuth popup immediately
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("auto") === "true" && !hasAutoTriggered.current) {
+          hasAutoTriggered.current = true;
+          handleLogin();
+        }
+      }
+      return;
+    }
+
+    // 1. User is authenticated! Read cached records immediately (0ms delay)
+    let cachedRecords: any[] = [];
+    try {
+      const rawCache =
+        localStorage.getItem("winstash_latest_records_cache") ||
+        localStorage.getItem(`career_pulse_records_user_${user.uid}`);
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache);
+        if (Array.isArray(parsed)) cachedRecords = parsed;
+      }
+    } catch {}
+
+    const isAdmin = isAdminEmail(user.email);
+    let initialCredits = isAdmin
+      ? {
+          plan: "pro",
+          isPro: true,
+          isAdmin: true,
+          userUsedCount: 0,
+          remainingCredits: 999999,
+          maxUserCredits: 999999,
+          isUserExhausted: false,
+          totalGeneratedCount: 0,
+        }
+      : null;
+
+    if (!initialCredits) {
+      try {
+        const rawCredit = localStorage.getItem("winstash_latest_credit_cache");
+        if (rawCredit) initialCredits = JSON.parse(rawCredit);
+      } catch {}
+    }
+
+    if (!initialCredits) {
+      initialCredits = {
+        plan: "free",
+        isPro: false,
+        isAdmin: false,
+        userUsedCount: 0,
+        remainingCredits: 10,
+        maxUserCredits: 10,
+        isUserExhausted: false,
+        totalGeneratedCount: 0,
+      };
+    }
+
+    // Broadcast bridge data immediately!
+    dispatchBridgeData(user, cachedRecords, initialCredits);
+    setStatus("success");
+
+    // Close window / tab after 1 second
+    const closeTimer = setTimeout(() => {
+      try {
+        window.close();
+      } catch {}
+    }, 1000);
+
+    // Asynchronously fetch fresh records & credits from Firestore in background
+    let isSubscribed = true;
+    const unsub = subscribeUserRecords(
+      user.uid,
+      Boolean(user.isDemo),
+      async (freshRecords) => {
+        if (!isSubscribed) return;
+        try {
+          const freshCredits = await getCreditStatus(user.uid, Boolean(user.isDemo), user.email);
+          dispatchBridgeData(user, freshRecords || cachedRecords, freshCredits || initialCredits);
+        } catch (e) {
+          console.warn("Background bridge update error:", e);
+        }
+      }
+    );
+
+    return () => {
+      isSubscribed = false;
+      clearTimeout(closeTimer);
+      unsub();
+    };
+  }, [user, loading, dispatchBridgeData]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-4">
@@ -149,9 +186,9 @@ export default function ExtensionConnectPage() {
 
         {status === "connecting" && (
           <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 flex flex-col items-center gap-3">
-            <Sparkles className="w-6 h-6 animate-spin text-indigo-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
             <span className="text-xs text-zinc-300 font-medium">
-              Syncing vault records and session...
+              Checking authorization session...
             </span>
           </div>
         )}
@@ -164,7 +201,7 @@ export default function ExtensionConnectPage() {
                 Connected Successfully!
               </p>
               <p className="text-xs text-zinc-400 mt-1">
-                Your extension is now authorized. You can close this tab and return to the extension.
+                Your extension is now authorized. This window will close automatically...
               </p>
             </div>
           </div>
@@ -182,7 +219,10 @@ export default function ExtensionConnectPage() {
               className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-60"
             >
               {isLoggingIn ? (
-                <span>Signing in...</span>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-zinc-900" />
+                  <span>Opening Google Sign-in...</span>
+                </>
               ) : (
                 <>
                   <svg className="w-4 h-4" viewBox="0 0 24 24">

@@ -213,6 +213,7 @@ export default function Home() {
         if (typeof window !== "undefined") {
           try {
             localStorage.setItem("winstash_latest_records_cache", JSON.stringify(cleanRecords));
+            window.dispatchEvent(new CustomEvent("winstash_records_updated", { detail: cleanRecords }));
           } catch {}
         }
       },
@@ -235,9 +236,21 @@ export default function Home() {
       user.email
     );
 
+    const handleExtSave = async (e: any) => {
+      if (e.detail?.record && user) {
+        try {
+          await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), e.detail.record);
+        } catch (err) {
+          console.error("Failed to save record from extension:", err);
+        }
+      }
+    };
+    window.addEventListener("winstash_save_record_request", handleExtSave);
+
     return () => {
       unsubscribeRecords();
       unsubscribeCredit();
+      window.removeEventListener("winstash_save_record_request", handleExtSave);
     };
   }, [user]);
 

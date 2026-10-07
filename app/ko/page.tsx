@@ -14,6 +14,7 @@ import {
   saveUserRecordToFirestore,
   deleteUserRecordFromFirestore,
   saveUserPersonaToFirestore,
+  saveLocalUserRecords,
 } from "@/lib/firestoreService";
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
@@ -107,8 +108,16 @@ export default function HomeKo() {
       user.uid,
       Boolean(user.isDemo),
       (syncedRecords) => {
-        setRecords(syncedRecords || []);
+        const clean = syncedRecords || [];
+        setRecords(clean);
         setIsClientLoaded(true);
+        saveLocalUserRecords(user.uid, clean);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("winstash_latest_records_cache", JSON.stringify(clean));
+            window.dispatchEvent(new CustomEvent("winstash_records_updated", { detail: clean }));
+          } catch {}
+        }
       },
       (error) => {
         console.error("Firestore sync error:", error);
@@ -120,12 +129,29 @@ export default function HomeKo() {
       Boolean(user.isDemo),
       (status) => {
         setCreditStatus(status);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(status));
+          } catch {}
+        }
       }
     );
+
+    const handleExtSave = async (e: any) => {
+      if (e.detail?.record && user) {
+        try {
+          await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), e.detail.record);
+        } catch (err) {
+          console.error("Failed to save record from extension:", err);
+        }
+      }
+    };
+    window.addEventListener("winstash_save_record_request", handleExtSave);
 
     return () => {
       unsubscribeRecords();
       unsubscribeCredit();
+      window.removeEventListener("winstash_save_record_request", handleExtSave);
     };
   }, [user]);
 
