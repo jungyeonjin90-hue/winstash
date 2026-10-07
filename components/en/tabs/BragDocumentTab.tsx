@@ -266,6 +266,10 @@ export function BragDocumentTab({
           toneManner,
           periodLabel,
           records: filteredRecords,
+          cache_key: cacheKey,
+          year: selectedYear,
+          half: selectedHalf,
+          quarter: selectedQuarter,
         }),
       });
 
@@ -281,11 +285,8 @@ export function BragDocumentTab({
       const data = await res.json();
       const items: SynthesizedBragItem[] = data.items || [];
 
-      // Record quota on success
-      await consumeSynthesisQuota(userId, "brag", isDemo, user?.email);
-
-      // Save into cache
-      const newEntry: SummaryCacheEntry = {
+      // Server already atomically persisted entry into Firestore summary_cache!
+      const newEntry: SummaryCacheEntry = data.entry || {
         cacheKey,
         type: "brag",
         year: selectedYear,
@@ -301,7 +302,11 @@ export function BragDocumentTab({
         updatedAt: new Date().toISOString(),
       };
 
-      await saveSummaryCache(userId, isDemo, newEntry);
+      // Only demo mode writes to local storage fallback
+      if (isDemo) {
+        await saveSummaryCache(userId, true, newEntry);
+      }
+
       setCachedEntry(newEntry);
     } catch (err: unknown) {
       console.error("AI Synthesis error:", err);

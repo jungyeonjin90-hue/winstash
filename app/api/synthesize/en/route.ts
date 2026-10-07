@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem, SynthesizedStarItem } from "@/types/career";
 import { checkServerRateLimit, getClientIp } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
+import { adminDb } from "@/lib/firebaseAdmin";
+import { SummaryCacheEntry } from "@/lib/summaryCacheService";
 
 // Allow long-running LLM synthesis (Vercel default of 10s causes empty 500/504 responses)
 export const maxDuration = 60;
@@ -229,6 +231,12 @@ export async function POST(req: NextRequest) {
       toneManner = "impact",
       periodLabel = "Current Period",
       records = [],
+      cache_key,
+      year,
+      half,
+      quarter,
+      start_year,
+      end_year,
     } = body;
 
     if (!Array.isArray(records) || records.length === 0) {
@@ -246,6 +254,68 @@ export async function POST(req: NextRequest) {
         { status: quotaCheck.status || 403 }
       );
     }
+
+    /**
+     * Atomically saves synthesized items into Firestore summary_cache collection server-side.
+     * Ensures completion even if user immediately closes browser tab!
+     */
+    const persistSummaryCacheAndBuildResponse = async (rawItems: any[]) => {
+      const itemsWithSources = attachSourceRecordsToItems(
+        rawItems,
+        records,
+        jobRole,
+        toneManner,
+        periodLabel
+      );
+
+      const nowStr = new Date().toISOString();
+      const sourceRecordIds = (records as CareerRecord[]).map((r) => r.id);
+
+      const newEntry: SummaryCacheEntry = {
+        cacheKey: cache_key || `${type}_${periodLabel}_${scope}`,
+        type: type as "brag" | "star",
+        year: year || end_year || new Date().getFullYear().toString(),
+        half: half || "ALL",
+        quarter: quarter || "ALL",
+        startYear: start_year,
+        endYear: end_year,
+        scope: scope as 3 | 5 | 10,
+        jobRole: jobRole as JobRole,
+        toneManner: toneManner as ToneManner,
+        items: itemsWithSources,
+        sourceRecordIds,
+        sourceRecordCount: sourceRecordIds.length,
+        createdAt: nowStr,
+        updatedAt: nowStr,
+      };
+
+      // Server-side persistence: writes directly to Firestore summary_cache!
+      if (adminDb && quotaCheck.userId && quotaCheck.userId !== "demo-user-1234") {
+        try {
+          const cleanEntry = JSON.parse(JSON.stringify(newEntry));
+          // 1. Save to specific cache key document
+          await adminDb
+            .collection("users")
+            .doc(quotaCheck.userId)
+            .collection("summary_cache")
+            .doc(newEntry.cacheKey)
+            .set(cleanEntry, { merge: true });
+
+          // 2. Save as latest generated summary for this type
+          await adminDb
+            .collection("users")
+            .doc(quotaCheck.userId)
+            .collection("summary_cache")
+            .doc(`latest_${type}`)
+            .set(cleanEntry, { merge: true });
+        } catch (dbErr) {
+          console.error("[Synthesis API] Server-side Firestore persistence error:", dbErr);
+        }
+      }
+
+      await quotaCheck.deduct?.();
+      return NextResponse.json({ items: itemsWithSources, entry: newEntry });
+    };
 
     // Support up to 100 weekly logs for multi-year Portfolio STAR synthesis
     const safeRecords = (records as CareerRecord[]).slice(0, 100);
@@ -302,15 +372,7 @@ export async function POST(req: NextRequest) {
             if (text) {
               const parsed = JSON.parse(text);
               if (Array.isArray(parsed.items) && parsed.items.length > 0) {
-                await quotaCheck.deduct?.();
-                const itemsWithSources = attachSourceRecordsToItems(
-                  parsed.items,
-                  records,
-                  jobRole,
-                  toneManner,
-                  periodLabel
-                );
-                return NextResponse.json({ items: itemsWithSources });
+                return await persistSummaryCacheAndBuildResponse(parsed.items);
               }
             }
           } else {
@@ -324,7 +386,6 @@ export async function POST(req: NextRequest) {
 
     // Pure 100% User-Record Fallback (Zero hardcoded fake projects)
     // If AI generation is temporarily unavailable, directly map the user's actual weekly records
-    await quotaCheck.deduct?.();
     if (type === "brag") {
       const directItems: SynthesizedBragItem[] = records.map((r, idx) => ({
         id: `direct-brag-${idx + 1}`,
@@ -337,14 +398,7 @@ export async function POST(req: NextRequest) {
         nda_tags: r.star_portfolio?.nda_tags || ["#Execution", "#Impact"],
         source_log_indices: [idx + 1],
       }));
-      const itemsWithSources = attachSourceRecordsToItems(
-        directItems.slice(0, scope),
-        records,
-        jobRole,
-        toneManner,
-        periodLabel
-      );
-      return NextResponse.json({ items: itemsWithSources });
+      return await persistSummaryCacheAndBuildResponse(directItems.slice(0, scope));
     } else {
       const directItems: SynthesizedStarItem[] = records.map((r, idx) => ({
         id: `direct-star-${idx + 1}`,
@@ -360,14 +414,7 @@ export async function POST(req: NextRequest) {
         impactMagnitude: r.star_portfolio?.impactMagnitude || "medium",
         source_log_indices: [idx + 1],
       }));
-      const itemsWithSources = attachSourceRecordsToItems(
-        directItems.slice(0, scope),
-        records,
-        jobRole,
-        toneManner,
-        periodLabel
-      );
-      return NextResponse.json({ items: itemsWithSources });
+      return await persistSummaryCacheAndBuildResponse(directItems.slice(0, scope));
     }
   } catch (error) {
     console.error("Synthesis API error:", error);

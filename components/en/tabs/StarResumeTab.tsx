@@ -269,6 +269,9 @@ export function StarResumeTab({
           toneManner,
           periodLabel,
           records: filteredRecords,
+          cache_key: cacheKey,
+          start_year: startYear,
+          end_year: endYear,
         }),
       });
 
@@ -284,11 +287,8 @@ export function StarResumeTab({
       const data = await res.json();
       const items: SynthesizedStarItem[] = data.items || [];
 
-      // Record quota on success
-      await consumeSynthesisQuota(userId, "star", isDemo, user?.email);
-
-      // Save into cache
-      const newEntry: SummaryCacheEntry = {
+      // Server already atomically persisted entry into Firestore summary_cache!
+      const newEntry: SummaryCacheEntry = data.entry || {
         cacheKey,
         type: "star",
         year: endYear,
@@ -306,7 +306,11 @@ export function StarResumeTab({
         updatedAt: new Date().toISOString(),
       };
 
-      await saveSummaryCache(userId, isDemo, newEntry);
+      // Only demo mode writes to local storage fallback
+      if (isDemo) {
+        await saveSummaryCache(userId, true, newEntry);
+      }
+
       setCachedEntry(newEntry);
     } catch (err: unknown) {
       console.error("AI STAR Synthesis error:", err);
