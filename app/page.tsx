@@ -15,6 +15,7 @@ import {
   saveUserRecordToFirestore,
   deleteUserRecordFromFirestore,
   saveUserPersonaToFirestore,
+  saveLocalUserRecords,
 } from "@/lib/firestoreService";
 import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCacheService";
 import { getSettings, saveSettings } from "@/lib/storage";
@@ -205,8 +206,15 @@ export default function Home() {
       user.uid,
       Boolean(user.isDemo),
       (syncedRecords) => {
-        setRecords(syncedRecords || []);
+        const cleanRecords = syncedRecords || [];
+        setRecords(cleanRecords);
         setIsClientLoaded(true);
+        saveLocalUserRecords(user.uid, cleanRecords);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("winstash_latest_records_cache", JSON.stringify(cleanRecords));
+          } catch {}
+        }
       },
       (error) => {
         console.error("Firestore sync error:", error);
@@ -218,6 +226,11 @@ export default function Home() {
       Boolean(user.isDemo),
       (status) => {
         setCreditStatus(status);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(status));
+          } catch {}
+        }
       },
       user.email
     );

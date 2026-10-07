@@ -44,3 +44,8 @@ next-env.d.ts
 # local notes
 *.txt
 
+# chrome extension
+extension/node_modules/
+extension/dist/
+extension/package-lock.json
+

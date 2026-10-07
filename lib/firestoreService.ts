@@ -252,7 +252,7 @@ function getLocalUserRecords(userId: string): CareerRecord[] {
   }
 }
 
-function saveLocalUserRecords(userId: string, records: CareerRecord[]): void {
+export function saveLocalUserRecords(userId: string, records: CareerRecord[]): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(`${LOCAL_STORAGE_KEY_PREFIX}${userId}`, JSON.stringify(records));
