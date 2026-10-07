@@ -5,16 +5,48 @@ import { useAuth } from "@/context/AuthContext";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import { Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 import { subscribeUserRecords } from "@/lib/firestoreService";
-import { getAuthToken } from "@/lib/firebase";
+import { auth, googleProvider, getAuthToken } from "@/lib/firebase";
+import { getCreditStatus } from "@/lib/creditService";
+import { signInWithRedirect, getRedirectResult } from "firebase/auth";
 
 export default function ExtensionConnectPage() {
-  const { user, signInWithGoogle } = useAuth();
+  const { user, signInWithGoogle, loading } = useAuth();
   const [status, setStatus] = useState<"connecting" | "success" | "need_login">("connecting");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // Catch redirect result if returning from Google OAuth redirect
   useEffect(() => {
+    if (auth) {
+      getRedirectResult(auth).catch((err) => {
+        console.warn("getRedirectResult warning:", err);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Wait until AuthContext finishes checking Firebase session
+    if (loading) return;
+
     if (!user) {
       setStatus("need_login");
+      // Auto-trigger Google sign-in immediately without requiring manual click
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("auto") === "true" && !isLoggingIn) {
+          setIsLoggingIn(true);
+          if (auth) {
+            signInWithRedirect(auth, googleProvider).catch((e) => {
+              console.error("signInWithRedirect error:", e);
+              signInWithGoogle().catch((err2) => {
+                console.error("Popup fallback error:", err2);
+                setIsLoggingIn(false);
+              });
+            });
+          } else {
+            signInWithGoogle().catch(() => setIsLoggingIn(false));
+          }
+        }
+      }
       return;
     }
 
@@ -28,8 +60,8 @@ export default function ExtensionConnectPage() {
         if (!isSubscribed) return;
         try {
           const token = await getAuthToken();
-          const cachedCredits = localStorage.getItem("winstash_latest_credit_cache");
-          const credits = cachedCredits ? JSON.parse(cachedCredits) : null;
+          // Fetch real credit status directly (ensures admins get unlimited Pro)
+          const credits = await getCreditStatus(user.uid, Boolean(user.isDemo), user.email);
 
           const bridgePayload = {
             uid: user.uid,
@@ -40,7 +72,24 @@ export default function ExtensionConnectPage() {
             timestamp: Date.now(),
           };
 
+          // 1. LocalStorage for tab polling
           localStorage.setItem("winstash_auth_bridge", JSON.stringify(bridgePayload));
+
+          // 2. DOM Attribute for content script & executeScript direct access
+          try {
+            document.documentElement.setAttribute("data-winstash-auth", JSON.stringify(bridgePayload));
+          } catch {}
+
+          // 3. postMessage for isolated world content script
+          try {
+            window.postMessage({ type: "WINSTASH_AUTH_BRIDGE_UPDATED", payload: bridgePayload }, "*");
+          } catch {}
+
+          // 4. CustomEvent for same-page listeners
+          try {
+            window.dispatchEvent(new CustomEvent("winstash_auth_ready", { detail: bridgePayload }));
+          } catch {}
+
           setStatus("success");
 
           // Try closing tab automatically after short delay
