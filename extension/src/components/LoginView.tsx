@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { WinStashBrandBadge } from "./WinStashLogo";
 import { loginWithGoogle } from "../lib/firebase";
@@ -12,6 +12,29 @@ interface LoginViewProps {
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const authWindowIdRef = useRef<number | null>(null);
+
+  // Helper to close authentication window / tabs 100% reliably
+  const closeAuthWindow = () => {
+    if (authWindowIdRef.current && typeof chrome !== "undefined" && chrome.windows) {
+      try {
+        chrome.windows.remove(authWindowIdRef.current, () => {});
+      } catch {}
+      authWindowIdRef.current = null;
+    }
+
+    if (typeof chrome !== "undefined" && chrome.tabs) {
+      chrome.tabs.query({}, (tabs: any[]) => {
+        tabs?.forEach((t) => {
+          if (t.id && t.url && t.url.includes("/auth/extension-connect")) {
+            try {
+              chrome.tabs.remove(t.id);
+            } catch {}
+          }
+        });
+      });
+    }
+  };
 
   // Listen for storage changes and poll for auth completion
   useEffect(() => {
@@ -25,6 +48,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             if (res?.winstash_ext_user?.uid) {
               if (intervalId) clearInterval(intervalId);
               setIsLoading(false);
+              closeAuthWindow();
               onLoginSuccess({
                 uid: res.winstash_ext_user.uid,
                 email: res.winstash_ext_user.email,
@@ -43,10 +67,19 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       }
     };
 
+    const handleRuntimeMessage = (msg: any) => {
+      if (msg?.type === "CLOSE_EXTENSION_CONNECT_WINDOW") {
+        closeAuthWindow();
+      }
+    };
+
     if (isLoading) {
       intervalId = setInterval(checkStorage, 400);
       if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
         chrome.storage.onChanged.addListener(handleStorageChange);
+      }
+      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+        chrome.runtime.onMessage.addListener(handleRuntimeMessage);
       }
     }
 
@@ -55,6 +88,11 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
         try {
           chrome.storage.onChanged.removeListener(handleStorageChange);
+        } catch {}
+      }
+      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+        try {
+          chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
         } catch {}
       }
     };
@@ -76,7 +114,10 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
               height: 650,
               focused: true,
             },
-            () => {
+            (win: any) => {
+              if (win?.id) {
+                authWindowIdRef.current = win.id;
+              }
               setStatusMsg("Select your Google account...");
             }
           );
@@ -109,6 +150,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             winstash_ext_user: { uid: user.uid, email: user.email || "" },
           });
         }
+        closeAuthWindow();
         onLoginSuccess({
           uid: user.uid,
           email: user.email || "",

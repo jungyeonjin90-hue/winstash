@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
+import { isAdminEmail } from "@/lib/adminConfig";
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, record } = body;
+    const { userId, record, deductCredit, userEmail } = body;
 
     if (!userId || !record || !record.id) {
       return NextResponse.json(
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 1. Save or update record in Firestore
     const cleanRecord = JSON.parse(JSON.stringify(record));
     await adminDb
       .collection("users")
@@ -64,6 +67,26 @@ export async function POST(request: NextRequest) {
       .collection("records")
       .doc(record.id)
       .set(cleanRecord, { merge: true });
+
+    // 2. If credit deduction requested (for free tier modification), atomically increment server-side usage
+    if (deductCredit && !isAdminEmail(userEmail)) {
+      try {
+        await adminDb
+          .collection("users")
+          .doc(userId)
+          .collection("usage")
+          .doc("summary")
+          .set(
+            {
+              freeUsedCount: FieldValue.increment(1),
+              lastUsedAt: new Date().toISOString(),
+            },
+            { merge: true }
+          );
+      } catch (creditErr) {
+        console.warn("[Extension Records API] Credit deduction error:", creditErr);
+      }
+    }
 
     return NextResponse.json({ success: true, record: cleanRecord });
   } catch (err: any) {

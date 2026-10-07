@@ -141,6 +141,9 @@ export default function HomeKo() {
       if (e.detail?.record && user) {
         try {
           await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), e.detail.record);
+          if (e.detail.deductCredit) {
+            await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
+          }
         } catch (err) {
           console.error("Failed to save record from extension:", err);
         }

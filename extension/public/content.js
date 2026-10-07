@@ -28,6 +28,16 @@
     return null;
   }
 
+  function notifyAuthWindowComplete() {
+    if (typeof window !== "undefined" && window.location.pathname.includes("/auth/extension-connect")) {
+      try {
+        if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({ type: "CLOSE_EXTENSION_CONNECT_WINDOW" });
+        }
+      } catch (e) {}
+    }
+  }
+
   function syncEverythingToStorage(user, customRecords, customCredits) {
     if (!user || !user.uid) return;
 
@@ -50,6 +60,7 @@
             "Records count:",
             records.length
           );
+          notifyAuthWindowComplete();
         });
       });
     }
@@ -126,6 +137,7 @@
         event.detail.records,
         event.detail.credits
       );
+      notifyAuthWindowComplete();
     }
   });
 
@@ -136,6 +148,7 @@
         event.data.payload.records,
         event.data.payload.credits
       );
+      notifyAuthWindowComplete();
     }
   });
 
@@ -169,7 +182,7 @@
         if (msg.record) {
           window.dispatchEvent(
             new CustomEvent("winstash_save_record_request", {
-              detail: { record: msg.record },
+              detail: { record: msg.record, deductCredit: Boolean(msg.deductCredit) },
             })
           );
           sendResponse({ success: true });

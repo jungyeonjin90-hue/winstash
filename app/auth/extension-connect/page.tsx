@@ -178,12 +178,13 @@ export default function ExtensionConnectPage() {
     dispatchBridgeData(user, cachedRecords, initialCredits);
     setStatus("success");
 
-    // Close window / tab after 700ms
+    // Close window / tab after 600ms
     const closeTimer = setTimeout(() => {
       try {
+        window.open("", "_self");
         window.close();
       } catch {}
-    }, 700);
+    }, 600);
 
     // Asynchronously fetch fresh records & credits from Firestore in background
     let isSubscribed = true;
@@ -244,6 +245,18 @@ export default function ExtensionConnectPage() {
                 Your extension is now authorized. Closing window...
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  window.open("", "_self");
+                  window.close();
+                } catch {}
+              }}
+              className="mt-1 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer"
+            >
+              Close Window
+            </button>
           </div>
         )}
 

@@ -369,25 +369,49 @@ export default function App() {
         ? records.map((r) => (r.id === existingRecord.id ? updatedRec : r))
         : [updatedRec, ...records];
 
+      const isModifyingExisting = Boolean(existingRecord);
+      const shouldDeduct = !isUserPro && isModifyingExisting;
+
+      // Deduct credit only for free users modifying an existing entry
+      if (shouldDeduct) {
+        const nextRemaining = Math.max(0, creditStatus.remainingCredits - 1);
+        const nextCredits: CreditStatus = {
+          ...creditStatus,
+          remainingCredits: nextRemaining,
+          isUserExhausted: nextRemaining === 0,
+          totalGeneratedCount: creditStatus.totalGeneratedCount + 1,
+        };
+        saveCreditsToStorage(nextCredits);
+      }
+
       // 1. Save locally to extension storage
       saveRecordsToStorage(newRecords);
 
-      // 2. Broadcast to open tabs of winstash.net to save with authenticated client SDK
+      // 2. Broadcast to open tabs of winstash.net to save with authenticated client SDK & deduct credit
       if (typeof chrome !== "undefined" && chrome.tabs) {
         chrome.tabs.query({}, (tabs: any[]) => {
           tabs?.forEach((tab) => {
             if (tab.id && (tab.url?.includes("winstash.net") || tab.url?.includes("localhost:3000"))) {
               try {
-                chrome.tabs.sendMessage(tab.id, { type: "SAVE_RECORD_TO_WEB", record: updatedRec });
+                chrome.tabs.sendMessage(tab.id, {
+                  type: "SAVE_RECORD_TO_WEB",
+                  record: updatedRec,
+                  deductCredit: shouldDeduct,
+                });
               } catch {}
             }
           });
         });
       }
 
-      // 3. Post to server API endpoint for direct DB persistence
+      // 3. Post to server API endpoint for direct DB persistence and server-side credit deduction
       try {
-        const payload = JSON.stringify({ userId: currentUser.uid, record: updatedRec });
+        const payload = JSON.stringify({
+          userId: currentUser.uid,
+          userEmail: currentUser.email,
+          record: updatedRec,
+          deductCredit: shouldDeduct,
+        });
         fetch("https://winstash.net/api/extension/records", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -406,18 +430,6 @@ export default function App() {
         await saveRecordToFirestore(currentUser.uid, updatedRec);
       } catch (err) {
         console.warn("Direct Firestore save fallback:", err);
-      }
-
-      // Deduct credit only for free users
-      if (!isUserPro) {
-        const nextRemaining = Math.max(0, creditStatus.remainingCredits - 1);
-        const nextCredits: CreditStatus = {
-          ...creditStatus,
-          remainingCredits: nextRemaining,
-          isUserExhausted: nextRemaining === 0,
-          totalGeneratedCount: creditStatus.totalGeneratedCount + 1,
-        };
-        saveCreditsToStorage(nextCredits);
       }
 
       setIsModalOpen(false);
