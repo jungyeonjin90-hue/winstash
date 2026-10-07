@@ -22,6 +22,7 @@ import {
   PRO_PRICE_USD,
   IS_PAYMENT_GATEWAY_LIVE,
 } from "@/lib/lemonSqueezyConfig";
+import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { trackEvent } from "@/lib/analytics";
@@ -144,7 +145,7 @@ export function UpgradeModal({
   const getHeadlineSubtitle = () => {
     switch (triggerReason) {
       case "input":
-        return "You have used all 5 free transformations. Upgrade to Pro for unlimited weekly logging.";
+        return `You have used all ${MAX_USER_FREE_CREDITS} free transformations. Upgrade to Pro for unlimited weekly logging.`;
       case "edit":
         return "Free transformation credits are required to re-synthesize edits. Upgrade for unlimited revisions.";
       case "brag":

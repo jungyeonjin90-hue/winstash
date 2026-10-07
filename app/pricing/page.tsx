@@ -56,7 +56,7 @@ export const metadata: Metadata = {
 const PRICING_FAQS = [
   {
     q: "Is WinStash really free?",
-    a: "Yes. You can log and stash your raw weekly wins for free forever. During our public beta, every account receives 5 free weekly AI transformations, 3 Brag Sheet syntheses, and 3 STAR portfolio syntheses with zero credit card required.",
+    a: "Yes. You can log and stash your raw weekly wins for free forever. During our public beta, every account receives 10 free weekly AI transformations, 3 Brag Sheet syntheses, and 3 STAR portfolio syntheses with zero credit card required.",
   },
   {
     q: "What happens when I use up my free AI credits?",
@@ -211,7 +211,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
-                  <span><strong>5 total</strong> weekly AI transformations</span>
+                  <span><strong>10 total</strong> weekly AI transformations</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />

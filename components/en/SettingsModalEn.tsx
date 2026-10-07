@@ -142,7 +142,7 @@ export function SettingsModalEn({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-0.5">
             <div className="space-y-0.5">
               <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                {isPro ? "WinStash Pro Monthly ($5.99 / mo)" : "Free Trial Plan (5 logs, 3 syntheses)"}
+                {isPro ? "WinStash Pro Monthly ($5.99 / mo)" : "Free Trial Plan (10 logs, 3 syntheses)"}
               </div>
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                 {isPro
