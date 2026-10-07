@@ -101,6 +101,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (fbUser) {
           try {
             localStorage.setItem(SESSION_FLAG_KEY, "true");
+            localStorage.setItem("winstash_auth_user", JSON.stringify({ uid: fbUser.uid, email: fbUser.email }));
+            window.dispatchEvent(new CustomEvent("winstash_auth_changed", { detail: { uid: fbUser.uid, email: fbUser.email } }));
           } catch {}
           setUser({
             uid: fbUser.uid,
@@ -117,6 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           try {
             localStorage.removeItem(SESSION_FLAG_KEY);
+            localStorage.removeItem("winstash_auth_user");
+            window.dispatchEvent(new CustomEvent("winstash_auth_changed", { detail: null }));
           } catch {}
           setUser(process.env.NODE_ENV !== "production" ? getStoredDemoUser() : null);
         }

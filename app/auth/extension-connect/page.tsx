@@ -28,26 +28,36 @@ export default function ExtensionConnectPage() {
     if (loading) return;
 
     if (!user) {
-      setStatus("need_login");
-      // Auto-trigger Google sign-in immediately without requiring manual click
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("auto") === "true" && !isLoggingIn) {
+        const isAuto = urlParams.get("auto") === "true";
+        const hasActiveRedirect = sessionStorage.getItem("winstash_redirect_active");
+
+        // If auto sign-in requested and not already redirected in this session
+        if (isAuto && !hasActiveRedirect && !isLoggingIn && auth) {
           setIsLoggingIn(true);
-          if (auth) {
-            signInWithRedirect(auth, googleProvider).catch((e) => {
-              console.error("signInWithRedirect error:", e);
-              signInWithGoogle().catch((err2) => {
-                console.error("Popup fallback error:", err2);
-                setIsLoggingIn(false);
-              });
-            });
-          } else {
-            signInWithGoogle().catch(() => setIsLoggingIn(false));
-          }
+          sessionStorage.setItem("winstash_redirect_active", "true");
+          try {
+            window.history.replaceState({}, "", "/auth/extension-connect");
+          } catch {}
+
+          signInWithRedirect(auth, googleProvider).catch((e) => {
+            console.error("signInWithRedirect error:", e);
+            sessionStorage.removeItem("winstash_redirect_active");
+            setIsLoggingIn(false);
+            setStatus("need_login");
+          });
+          return;
         }
       }
+
+      setStatus("need_login");
       return;
+    }
+
+    // User is authenticated! Clear redirect tracking flag
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("winstash_redirect_active");
     }
 
     let isSubscribed = true;
