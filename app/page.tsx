@@ -25,6 +25,15 @@ import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, Seni
 import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { UpdateConfirmModalEn } from "@/components/en/UpdateConfirmModalEn";
+
+interface PendingUpdateParams {
+  rawMemo: string;
+  targetWeek?: WeekSpan;
+  role: JobRole;
+  tone: ToneManner;
+  existingRecordId: string;
+}
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -36,6 +45,7 @@ export default function Home() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [upgradeTriggerReason, setUpgradeTriggerReason] = useState<"input" | "edit" | "brag" | "star" | "header">("header");
+  const [pendingUpdate, setPendingUpdate] = useState<PendingUpdateParams | null>(null);
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
@@ -100,12 +110,27 @@ export default function Home() {
     }
   };
 
+  const openConfirmUpdateModal = (params: PendingUpdateParams) => {
+    setPendingUpdate(params);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ modal: "updateConfirm" }, "");
+    }
+  };
+
+  const closeConfirmUpdateModal = () => {
+    setPendingUpdate(null);
+    if (typeof window !== "undefined" && window.history.state?.modal === "updateConfirm") {
+      window.history.back();
+    }
+  };
+
   // Close open modals when browser Back button is pressed
   useEffect(() => {
     const handlePopState = () => {
       setIsSettingsOpen(false);
       setIsFeedbackOpen(false);
       setIsUpgradeModalOpen(false);
+      setPendingUpdate(null);
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -118,6 +143,7 @@ export default function Home() {
       // User is logged out: Immediately wipe all state to ensure zero cross-account data retention
       setRecords([]);
       setActiveRecordId(undefined);
+      setPendingUpdate(null);
       setIsClientLoaded(false);
       setIsPersonaLoaded(false);
       setShowOnboarding(false);
@@ -275,7 +301,8 @@ export default function Home() {
     targetWeek?: WeekSpan,
     role: JobRole = jobRole,
     tone: ToneManner = toneManner,
-    existingRecordId?: string
+    existingRecordId?: string,
+    isConfirmedUpdate: boolean = false
   ) => {
     if (!user) {
       alert("Sign-in required to continue.");
@@ -285,13 +312,54 @@ export default function Home() {
     const isAdmin = isAdminEmail(user.email);
     const isPro = isAdmin || Boolean(creditStatus?.isPro);
 
+    // Identify if this operation is an update to an existing record
+    let finalExistingRecordId = existingRecordId;
+    if (!finalExistingRecordId && targetWeek) {
+      const duplicate = records.find(
+        (r) =>
+          r.target_week &&
+          r.target_week.year === targetWeek.year &&
+          r.target_week.month === targetWeek.month &&
+          r.target_week.weekOfMonth === targetWeek.weekOfMonth
+      );
+      if (duplicate) {
+        finalExistingRecordId = duplicate.id;
+      }
+    }
+
+    // Safety & Confirmation checks when updating an existing entry
+    if (finalExistingRecordId) {
+      const existingRecord = records.find((r) => r.id === finalExistingRecordId);
+      // 1. Prevent wasting credit if user didn't make any changes
+      if (existingRecord && existingRecord.raw_memo.trim() === rawMemo.trim()) {
+        showToast("ℹ️ No changes detected in your notes.");
+        return;
+      }
+
+      // 2. For free tier users, ask for confirmation before deducting 1 credit
+      if (!isPro && !isConfirmedUpdate) {
+        if (creditStatus?.isUserExhausted) {
+          openUpgradeModal("edit");
+          return;
+        }
+        openConfirmUpdateModal({
+          rawMemo,
+          targetWeek,
+          role,
+          tone,
+          existingRecordId: finalExistingRecordId,
+        });
+        return;
+      }
+    }
+
     if (!isPro && creditStatus?.isGlobalExhausted) {
       alert("⚠️ The global promotional free quota (10,000 requests) has been reached.");
       return;
     }
 
     if (!isPro && creditStatus?.isUserExhausted) {
-      openUpgradeModal(existingRecordId ? "edit" : "input");
+      openUpgradeModal(finalExistingRecordId ? "edit" : "input");
       return;
     }
 
@@ -329,7 +397,7 @@ export default function Home() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         if (res.status === 403) {
-          openUpgradeModal(existingRecordId ? "edit" : "input");
+          openUpgradeModal(finalExistingRecordId ? "edit" : "input");
           return;
         }
         throw new Error(errorData.error || "Transformation request failed.");
@@ -339,21 +407,6 @@ export default function Home() {
 
       let finalTargetWeek = targetWeek;
       let recordDate = new Date().toISOString();
-
-      let finalExistingRecordId = existingRecordId;
-
-      // Ensure we only have one record per week
-      if (!finalExistingRecordId && targetWeek) {
-        const duplicate = records.find((r) => 
-          r.target_week &&
-          r.target_week.year === targetWeek.year &&
-          r.target_week.month === targetWeek.month &&
-          r.target_week.weekOfMonth === targetWeek.weekOfMonth
-        );
-        if (duplicate) {
-          finalExistingRecordId = duplicate.id;
-        }
-      }
 
       if (finalExistingRecordId) {
         const existingRecord = records.find((r) => r.id === finalExistingRecordId);
@@ -417,6 +470,13 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!pendingUpdate) return;
+    const { rawMemo, targetWeek, role, tone, existingRecordId } = pendingUpdate;
+    closeConfirmUpdateModal();
+    await handleTransform(rawMemo, targetWeek, role, tone, existingRecordId, true);
   };
 
   const handleDeleteRecord = async (id: string) => {
@@ -641,6 +701,24 @@ export default function Home() {
           }}
         />
       )}
+
+      {/* Update Confirmation Modal (Credit deduction notice for free tier) */}
+      <UpdateConfirmModalEn
+        isOpen={Boolean(pendingUpdate)}
+        onClose={closeConfirmUpdateModal}
+        onConfirm={handleConfirmUpdate}
+        remainingCredits={creditStatus?.remainingCredits ?? 0}
+        maxCredits={creditStatus?.maxUserCredits ?? 10}
+        targetWeekLabel={
+          pendingUpdate?.targetWeek?.label ||
+          records.find((r) => r.id === pendingUpdate?.existingRecordId)?.target_week?.label
+        }
+        onUpgradeClick={() => {
+          closeConfirmUpdateModal();
+          openUpgradeModal("edit");
+        }}
+        isLoading={isLoading}
+      />
 
       {/* Toast Notification */}
       {toastMessage && (
