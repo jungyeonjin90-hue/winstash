@@ -130,8 +130,7 @@ export async function verifyServerAuthAndQuota(
       if (usedCount >= MAX_USER_FREE_CREDITS) {
         return {
           allowed: false,
-          error:
-            "You have used all 5 free transformations. Please upgrade to WinStash Pro for unlimited access.",
+          error: `You have used all ${MAX_USER_FREE_CREDITS} free transformations. Please upgrade to WinStash Pro for unlimited access.`,
           status: 403,
         };
       }

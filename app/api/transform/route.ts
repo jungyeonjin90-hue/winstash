@@ -3,6 +3,7 @@ import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode, 
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
@@ -410,7 +411,7 @@ export async function POST(req: NextRequest) {
     }
     if (isCreditExhausted) {
       return NextResponse.json(
-        { error: "You have used all 5 free transformations. Please upgrade to WinStash Pro for unlimited access." },
+        { error: `You have used all ${MAX_USER_FREE_CREDITS} free transformations. Please upgrade to WinStash Pro for unlimited access.` },
         { status: 403 }
       );
     }
