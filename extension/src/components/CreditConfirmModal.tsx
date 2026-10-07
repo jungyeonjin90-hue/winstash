@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Sparkles, AlertCircle, X, ArrowRight } from "lucide-react";
+import { Sparkles, X, ArrowRight } from "lucide-react";
 
 interface CreditConfirmModalProps {
   isOpen: boolean;
@@ -36,75 +36,57 @@ export function CreditConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isLoading) {
           onClose();
         }
       }}
     >
-      <div className="relative w-full max-w-[340px] bg-zinc-900 border border-zinc-700 rounded-3xl shadow-2xl p-5 space-y-4">
+      <div className="relative w-full max-w-[320px] bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl p-4 space-y-3 text-zinc-100">
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
           disabled={isLoading}
-          className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-zinc-200 rounded-full hover:bg-zinc-800 transition-colors disabled:opacity-50 cursor-pointer"
+          aria-label="모달 닫기"
+          className="absolute top-3 right-3 p-1 text-zinc-400 hover:text-zinc-200 rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-50 cursor-pointer"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
         </button>
 
         {/* 헤더 */}
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+        <div className="flex items-center gap-2 pr-6">
+          <div className="p-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-zinc-100">
-              AI 성과 분석 & 서랍 저장
+            <h3 className="text-xs font-bold text-white">
+              기록 수정 (-1 크레딧)?
             </h3>
-            {targetWeekLabel && (
-              <p className="text-[11px] text-zinc-400">{targetWeekLabel}</p>
-            )}
+            <p className="text-[11px] text-zinc-400 leading-tight">
+              {targetWeekLabel ? targetWeekLabel : "선택한 주차"}
+            </p>
           </div>
         </div>
 
-        {/* 안내 문구 */}
-        <p className="text-xs text-zinc-300 leading-relaxed">
-          해당 주차의 업무 메모를 AI로 분석하여 주간보고, Brag Sheet, STAR 포트폴리오를 생성합니다.
-        </p>
-
-        {/* 크레딧 차감 시각화 카드 */}
-        <div className="p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-400">현재 보유 크레딧</span>
-            <span className="font-bold text-zinc-200">{remainingCredits} / {maxCredits}회</span>
-          </div>
-
-          <div className="flex items-center justify-center gap-3 py-1">
-            <div className="text-center px-3 py-1 rounded-xl bg-zinc-800/80 border border-zinc-700">
-              <span className="text-[10px] text-zinc-400 block">이전</span>
-              <span className="text-xs font-bold text-zinc-200">{remainingCredits}회</span>
-            </div>
-            <ArrowRight className="w-3.5 h-3.5 text-indigo-400" />
-            <div className="text-center px-3 py-1 rounded-xl bg-indigo-950/60 border border-indigo-800/60">
-              <span className="text-[10px] text-indigo-300 block">차감 후</span>
-              <span className="text-xs font-bold text-indigo-300">{afterCredits}회</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-[11px] text-amber-400/90 pt-1 border-t border-zinc-800/80">
-            <AlertCircle className="w-3 h-3 shrink-0" />
-            <span>생성 완료 시 무료 크레딧 1회가 차감됩니다.</span>
-          </div>
+        {/* 잔여 크레딧 행 */}
+        <div className="rounded-xl bg-zinc-950/70 border border-zinc-800 px-3 py-2 flex items-center justify-between text-[11px]">
+          <span className="text-zinc-400">잔여 크레딧</span>
+          <span className="font-mono font-semibold flex items-center gap-1.5">
+            <span className="text-zinc-300">{remainingCredits}</span>
+            <ArrowRight className="w-3 h-3 text-zinc-500" />
+            <span className="text-amber-400 font-bold">{afterCredits}회 남음</span>
+            <span className="text-zinc-500 text-[10px]">/ {maxCredits}</span>
+          </span>
         </div>
 
         {/* 버튼 영역 */}
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-0.5">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer"
+            className="flex-1 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer"
           >
             취소
           </button>
@@ -112,14 +94,14 @@ export function CreditConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="flex-1 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             {isLoading ? (
-              <span>생성 요청 중...</span>
+              <span>저장 중...</span>
             ) : (
               <>
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>1 크레딧 사용</span>
+                <Sparkles className="w-3 h-3" />
+                <span>수정 확인</span>
               </>
             )}
           </button>

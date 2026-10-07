@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { WinStashBrandBadge } from "./WinStashLogo";
+import { loginWithGoogle } from "../lib/firebase";
 
 declare const chrome: any;
 
@@ -59,14 +60,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     };
   }, [isLoading, onLoginSuccess]);
 
-  const handleConnect = () => {
-    setIsLoading(true);
-    setStatusMsg("Opening Google account selection...");
-
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.remove(["winstash_ext_logged_out"]);
-    }
-
+  const openConnectWindow = () => {
     if (typeof chrome !== "undefined" && chrome.tabs) {
       chrome.tabs.query({}, (allTabs: any[]) => {
         const isLocalDev = allTabs?.some((t) => t.url && t.url.includes("localhost:3000"));
@@ -78,23 +72,57 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             {
               url: connectUrl,
               type: "popup",
-              width: 480,
-              height: 640,
+              width: 500,
+              height: 650,
               focused: true,
             },
             () => {
-              setStatusMsg("Select your Google account in the popup window...");
+              setStatusMsg("Select your Google account...");
             }
           );
         } else {
           chrome.tabs.create({ url: connectUrl }, () => {
-            setStatusMsg("Select your Google account in the opened tab...");
+            setStatusMsg("Select your Google account...");
           });
         }
       });
     } else {
       window.open("https://winstash.net/auth/extension-connect?auto=true", "_blank");
     }
+  };
+
+  const handleConnect = async () => {
+    setIsLoading(true);
+    setStatusMsg("Opening Google account selection...");
+
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.remove(["winstash_ext_logged_out"]);
+    }
+
+    // Method 1: Try direct Firebase signInWithPopup in extension
+    try {
+      const user = await loginWithGoogle();
+      if (user && user.uid) {
+        setStatusMsg("Connected successfully!");
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({
+            winstash_ext_user: { uid: user.uid, email: user.email || "" },
+          });
+        }
+        onLoginSuccess({
+          uid: user.uid,
+          email: user.email || "",
+          records: [],
+          credits: null,
+        });
+        return;
+      }
+    } catch (popupErr: any) {
+      console.log("[WinStash Extension] Direct popup fallback:", popupErr?.message);
+    }
+
+    // Method 2: Open dedicated connect window (which redirects directly to Google OAuth)
+    openConnectWindow();
   };
 
   return (
@@ -138,7 +166,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
           className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-75"
         >
           {isLoading ? (
-            <span>Connecting with WinStash...</span>
+            <span>Connecting with Google...</span>
           ) : (
             <>
               {/* Google G Logo SVG */}

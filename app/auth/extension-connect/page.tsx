@@ -3,16 +3,39 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
-import { Sparkles, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { subscribeUserRecords } from "@/lib/firestoreService";
 import { getCreditStatus } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
+import { auth, googleProvider } from "@/lib/firebase";
+import { signInWithRedirect, getRedirectResult } from "firebase/auth";
 
 export default function ExtensionConnectPage() {
   const { user, signInWithGoogle, loading } = useAuth();
   const [status, setStatus] = useState<"connecting" | "success" | "need_login">("connecting");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const hasAutoTriggered = useRef(false);
+  const [isResolvingRedirect, setIsResolvingRedirect] = useState(true);
+
+  // 1. Process OAuth redirect result if returning from Google
+  useEffect(() => {
+    if (!auth) {
+      setIsResolvingRedirect(false);
+      return;
+    }
+
+    getRedirectResult(auth)
+      .then((res) => {
+        if (res?.user) {
+          console.log("[ExtensionConnect] Logged in via redirect:", res.user.email);
+        }
+      })
+      .catch((err) => {
+        console.warn("[ExtensionConnect] getRedirectResult notice:", err);
+      })
+      .finally(() => {
+        setIsResolvingRedirect(false);
+      });
+  }, []);
 
   const dispatchBridgeData = useCallback(
     (
@@ -61,7 +84,7 @@ export default function ExtensionConnectPage() {
     []
   );
 
-  const handleLogin = async () => {
+  const handleManualLogin = async () => {
     setIsLoggingIn(true);
     try {
       await signInWithGoogle();
@@ -73,19 +96,36 @@ export default function ExtensionConnectPage() {
   };
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || isResolvingRedirect) return;
 
     if (!user) {
-      setStatus("need_login");
-      // If auto-connect requested, trigger Google OAuth popup immediately
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("auto") === "true" && !hasAutoTriggered.current) {
-          hasAutoTriggered.current = true;
-          handleLogin();
+        const isAuto = urlParams.get("auto") === "true";
+        const hasRedirected = sessionStorage.getItem("winstash_ext_redirected");
+
+        // If auto-connect requested and not yet redirected in this window session
+        // Redirect directly to Google Account Chooser without popup blocking!
+        if (isAuto && !hasRedirected && !isLoggingIn && auth) {
+          sessionStorage.setItem("winstash_ext_redirected", "true");
+          setIsLoggingIn(true);
+          signInWithRedirect(auth, googleProvider).catch((e) => {
+            console.error("signInWithRedirect error:", e);
+            sessionStorage.removeItem("winstash_ext_redirected");
+            setIsLoggingIn(false);
+            setStatus("need_login");
+          });
+          return;
         }
       }
+
+      setStatus("need_login");
       return;
+    }
+
+    // User is authenticated! Clear redirect tracking flag
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("winstash_ext_redirected");
     }
 
     // 1. User is authenticated! Read cached records immediately (0ms delay)
@@ -138,12 +178,12 @@ export default function ExtensionConnectPage() {
     dispatchBridgeData(user, cachedRecords, initialCredits);
     setStatus("success");
 
-    // Close window / tab after 1 second
+    // Close window / tab after 700ms
     const closeTimer = setTimeout(() => {
       try {
         window.close();
       } catch {}
-    }, 1000);
+    }, 700);
 
     // Asynchronously fetch fresh records & credits from Firestore in background
     let isSubscribed = true;
@@ -166,7 +206,7 @@ export default function ExtensionConnectPage() {
       clearTimeout(closeTimer);
       unsub();
     };
-  }, [user, loading, dispatchBridgeData]);
+  }, [user, loading, isResolvingRedirect, isLoggingIn, dispatchBridgeData]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-4">
@@ -188,7 +228,7 @@ export default function ExtensionConnectPage() {
           <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 flex flex-col items-center gap-3">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
             <span className="text-xs text-zinc-300 font-medium">
-              Checking authorization session...
+              {isLoggingIn ? "Redirecting to Google Account Selection..." : "Authorizing session..."}
             </span>
           </div>
         )}
@@ -201,7 +241,7 @@ export default function ExtensionConnectPage() {
                 Connected Successfully!
               </p>
               <p className="text-xs text-zinc-400 mt-1">
-                Your extension is now authorized. This window will close automatically...
+                Your extension is now authorized. Closing window...
               </p>
             </div>
           </div>
@@ -214,14 +254,14 @@ export default function ExtensionConnectPage() {
             </p>
             <button
               type="button"
-              onClick={handleLogin}
+              onClick={handleManualLogin}
               disabled={isLoggingIn}
               className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-60"
             >
               {isLoggingIn ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-zinc-900" />
-                  <span>Opening Google Sign-in...</span>
+                  <span>Signing in...</span>
                 </>
               ) : (
                 <>
