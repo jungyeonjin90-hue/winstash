@@ -1,10 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Sparkles, CornerDownLeft, RotateCcw, ExternalLink, Zap, CheckCircle2, Info, LogOut, Loader2 } from "lucide-react";
-import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
+import { WeekSpan, CareerRecord, CreditStatus, TransformationOutput } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
 import { isWeekMatch } from "./lib/weekMatch";
 import { isAdminEmail } from "./lib/adminConfig";
-import { subscribeToUserRecords, saveRecordToFirestore, deductFreeCreditInFirestore } from "./lib/firebase";
+import {
+  subscribeToUserRecords,
+  saveRecordToFirestore,
+  deductFreeCreditInFirestore,
+  subscribeToUserCredits,
+} from "./lib/firebase";
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
 import { WinStashBrandBadge } from "./components/WinStashLogo";
@@ -191,8 +196,18 @@ export default function App() {
       }
     });
 
+    // D. Stream user credits & plan status directly from Firestore Database
+    const unsubscribeCredits = subscribeToUserCredits(
+      currentUser.uid,
+      currentUser.email,
+      (syncedCredits) => {
+        saveCreditsToStorage(syncedCredits);
+      }
+    );
+
     return () => {
       if (unsubscribe) unsubscribe();
+      if (unsubscribeCredits) unsubscribeCredits();
     };
   }, [currentUser?.uid, currentUser?.email, saveRecordsToStorage, saveCreditsToStorage]);
 
@@ -366,24 +381,110 @@ export default function App() {
   };
 
   const executeTransform = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !memo.trim()) return;
     setIsLoading(true);
 
     try {
+      const isModifyingExisting = Boolean(existingRecord);
+      const shouldDeduct = !isUserPro && isModifyingExisting;
+
+      // 1. Determine API endpoint (Korean or English based on text or user context)
+      const hasKorean = /[\uac00-\ud7af]/.test(memo);
+      const endpoint = hasKorean ? "/api/transform/ko" : "/api/transform";
+
+      // Discover current base URL (local dev or production)
+      let baseUrl = "https://winstash.net";
+      if (typeof chrome !== "undefined" && chrome.tabs) {
+        try {
+          const allTabs: any[] = await new Promise((resolve) => chrome.tabs.query({}, resolve));
+          const localTab = allTabs?.find((t) => t.url?.includes("localhost:3000") || t.url?.includes("127.0.0.1:3000"));
+          if (localTab) {
+            baseUrl = "http://localhost:3000";
+          }
+        } catch {}
+      }
+
+      // 2. Call AI transformation engine
+      let output: TransformationOutput | null = null;
+      try {
+        const res = await fetch(`${baseUrl}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            raw_memo: memo.trim(),
+            job_role: "engineering",
+            tone_manner: "impact",
+          }),
+        });
+
+        if (res.ok) {
+          output = await res.json();
+        } else if (baseUrl !== "https://winstash.net") {
+          const fallbackRes = await fetch(`https://winstash.net${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              raw_memo: memo.trim(),
+              job_role: "engineering",
+              tone_manner: "impact",
+            }),
+          });
+          if (fallbackRes.ok) {
+            output = await fallbackRes.json();
+          }
+        }
+      } catch (fetchErr) {
+        console.warn("AI transform fetch error, trying public endpoint:", fetchErr);
+        try {
+          const fallbackRes = await fetch(`https://winstash.net${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              raw_memo: memo.trim(),
+              job_role: "engineering",
+              tone_manner: "impact",
+            }),
+          });
+          if (fallbackRes.ok) {
+            output = await fallbackRes.json();
+          }
+        } catch {}
+      }
+
+      // Build complete record with weekly_report, brag_sheet_item, star_portfolio
+      const weeklyReport = output?.weekly_report || {
+        done: [memo.trim().slice(0, 100)],
+        in_progress: [],
+        next_week: [],
+      };
+      const bragItem = output?.brag_sheet_item || {
+        metric_summary: memo.trim().slice(0, 80),
+        business_impact: "Updated via WinStash Quick Log",
+        quarter: `${selectedWeek.year}-Q${Math.ceil(selectedWeek.month / 3)}`,
+      };
+      const starItem = output?.star_portfolio || {
+        title: `${selectedWeek.label} 업무 기록`,
+        situation: memo.trim(),
+        task: "주간 업무 완수",
+        action: memo.trim(),
+        result: "주간 목표 달성",
+        nda_tags: ["#업무기록"],
+      };
+
       const updatedRec: CareerRecord = {
         id: existingRecord ? existingRecord.id : `rec_${Date.now()}`,
         createdAt: existingRecord ? existingRecord.createdAt : new Date().toISOString(),
         target_week: selectedWeek,
         raw_memo: memo.trim(),
+        weekly_report: weeklyReport,
+        brag_sheet_item: bragItem,
+        star_portfolio: starItem,
         source: "chrome_extension",
       };
 
       const newRecords = existingRecord
         ? records.map((r) => (r.id === existingRecord.id ? updatedRec : r))
         : [updatedRec, ...records];
-
-      const isModifyingExisting = Boolean(existingRecord);
-      const shouldDeduct = !isUserPro && isModifyingExisting;
 
       // Deduct credit only for free users modifying an existing entry
       if (shouldDeduct) {
@@ -407,11 +508,21 @@ export default function App() {
       // 1. Save locally to extension storage
       saveRecordsToStorage(newRecords);
 
-      // 2. Broadcast to open tabs of winstash.net to save with authenticated client SDK & deduct credit
+      // 2. Direct Firestore save with full weekly_report, brag_sheet_item, star_portfolio
+      try {
+        await saveRecordToFirestore(currentUser.uid, updatedRec);
+      } catch (err) {
+        console.warn("Direct Firestore save fallback:", err);
+      }
+
+      // 3. Broadcast to open tabs of winstash
       if (typeof chrome !== "undefined" && chrome.tabs) {
         chrome.tabs.query({}, (tabs: any[]) => {
           tabs?.forEach((tab) => {
-            if (tab.id && (tab.url?.includes("winstash.net") || tab.url?.includes("localhost:3000"))) {
+            if (
+              tab.id &&
+              (tab.url?.includes("winstash") || tab.url?.includes("localhost:3000"))
+            ) {
               try {
                 chrome.tabs.sendMessage(tab.id, {
                   type: "SAVE_RECORD_TO_WEB",
@@ -424,7 +535,7 @@ export default function App() {
         });
       }
 
-      // 3. Post to server API endpoint for direct DB persistence and server-side credit deduction
+      // 4. Post to server API endpoint for direct DB persistence and server-side credit deduction
       try {
         const payload = JSON.stringify({
           userId: currentUser.uid,
@@ -444,13 +555,6 @@ export default function App() {
           }).catch(() => {});
         });
       } catch {}
-
-      // 4. Also try direct Firestore save if SDK happens to be authorized
-      try {
-        await saveRecordToFirestore(currentUser.uid, updatedRec);
-      } catch (err) {
-        console.warn("Direct Firestore save fallback:", err);
-      }
 
       setIsModalOpen(false);
       const actionVerb = existingRecord ? "updated" : "saved";

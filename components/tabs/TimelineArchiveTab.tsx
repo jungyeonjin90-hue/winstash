@@ -394,9 +394,13 @@ export function TimelineArchiveTab({
                         <span>주간보고 완료 업무</span>
                       </div>
                       <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
-                        {rec.weekly_report.done.slice(0, 2).map((d, i) => (
-                          <li key={i} className="truncate">• {d}</li>
-                        ))}
+                        {rec.weekly_report?.done && rec.weekly_report.done.length > 0 ? (
+                          rec.weekly_report.done.slice(0, 2).map((d, i) => (
+                            <li key={i} className="truncate">• {d}</li>
+                          ))
+                        ) : (
+                          <li className="text-zinc-400 italic">변환된 주간 업무 없음</li>
+                        )}
                       </ul>
                     </div>
 
@@ -407,7 +411,7 @@ export function TimelineArchiveTab({
                         <span>성과평가 지표</span>
                       </div>
                       <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium truncate">
-                        {rec.brag_sheet_item.metric_summary}
+                        {rec.brag_sheet_item?.metric_summary || "성과 지표 없음"}
                       </p>
                     </div>
 
@@ -418,7 +422,7 @@ export function TimelineArchiveTab({
                         <span>STAR 프로젝트</span>
                       </div>
                       <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium truncate">
-                        {rec.star_portfolio.title}
+                        {rec.star_portfolio?.title || "포트폴리오 프로젝트 없음"}
                       </p>
                     </div>
                   </div>

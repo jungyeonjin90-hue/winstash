@@ -1,10 +1,37 @@
+export interface WeeklyReport {
+  done: string[];
+  in_progress: string[];
+  next_week: string[];
+}
+
+export interface BragSheetItem {
+  metric_summary: string;
+  business_impact: string;
+  quarter: string;
+}
+
+export interface StarPortfolio {
+  title: string;
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  nda_tags?: string[];
+}
+
+export interface TransformationOutput {
+  weekly_report: WeeklyReport;
+  brag_sheet_item: BragSheetItem;
+  star_portfolio: StarPortfolio;
+}
+
 export interface WeekSpan {
   year: number;
   month: number;
   weekOfMonth: number;
   startDate: string; // YYYY-MM-DD (Monday)
   endDate: string;   // YYYY-MM-DD (Sunday)
-  label: string;     // 예: "2026년 10월 2주차"
+  label: string;     // e.g. "2026년 10월 2주차"
 }
 
 export interface CareerRecord {
@@ -12,14 +39,9 @@ export interface CareerRecord {
   createdAt: string;
   target_week?: WeekSpan;
   raw_memo: string;
-  weekly_report?: string;
-  brag_sheet_item?: string;
-  star_portfolio?: {
-    situation: string;
-    task: string;
-    action: string;
-    result: string;
-  };
+  weekly_report?: WeeklyReport;
+  brag_sheet_item?: BragSheetItem;
+  star_portfolio?: StarPortfolio;
   jobRole?: string;
   toneManner?: string;
   source?: string;

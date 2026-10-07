@@ -21,6 +21,19 @@ export function WeeklyReportTab({ record }: WeeklyReportTabProps) {
 
   const KO_WATERMARK = "\n\n---\nFormatted with WinStash (https://winstash.net/ko)";
 
+  if (!record.weekly_report) {
+    return (
+      <div className="p-8 text-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl space-y-3">
+        <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          이 주차에는 주간 업무 보고가 아직 생성되지 않았습니다.
+        </p>
+        <p className="text-xs text-zinc-500">
+          메모 입력창에서 업데이트를 진행하면 AI가 주간 보고를 자동으로 생성합니다.
+        </p>
+      </div>
+    );
+  }
+
   const generateSlackMarkdown = () => {
     return `📢 *[주간 업무 보고] ${formattedDate}*
 

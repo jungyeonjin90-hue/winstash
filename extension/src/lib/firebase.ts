@@ -18,7 +18,8 @@ import {
   increment,
   getDocs,
 } from "firebase/firestore";
-import { CareerRecord } from "../types/career";
+import { CareerRecord, CreditStatus } from "../types/career";
+import { isAdminEmail } from "./adminConfig";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBvyjCpGsZ_b1Ovcrj-TWlAlAMxmN2sU_0",
@@ -114,6 +115,89 @@ export async function deductFreeCreditInFirestore(userId: string): Promise<void>
   } catch (err) {
     console.warn("[Extension Firebase] deductFreeCreditInFirestore error:", err);
   }
+}
+
+/**
+ * Firestore에서 사용자의 실시간 크레딧 및 플랜 상태 직접 구독
+ */
+export function subscribeToUserCredits(
+  userId: string,
+  userEmail: string | null | undefined,
+  onCredits: (credits: CreditStatus) => void
+): () => void {
+  if (isAdminEmail(userEmail)) {
+    onCredits({
+      isPro: true,
+      remainingCredits: 999999,
+      maxUserCredits: 999999,
+      isUserExhausted: false,
+      totalGeneratedCount: 0,
+    });
+    return () => {};
+  }
+
+  const userDocRef = doc(db, "users", userId);
+  const userUsageRef = doc(db, "users", userId, "usage", "summary");
+
+  let userData: any = null;
+  let usageData: any = null;
+
+  const calculateAndEmit = () => {
+    const isPro =
+      userData?.plan === "pro" &&
+      (userData?.planStatus === "active" ||
+        userData?.planStatus === "paid" ||
+        userData?.planStatus === "on_trial");
+
+    if (isPro) {
+      onCredits({
+        isPro: true,
+        remainingCredits: 999999,
+        maxUserCredits: 999999,
+        isUserExhausted: false,
+        totalGeneratedCount: 0,
+      });
+      return;
+    }
+
+    const userDocCount = (userData?.freeUsedCount as number) || 0;
+    const usageDocCount = (usageData?.freeUsedCount as number) || 0;
+    const usedCount = Math.max(userDocCount, usageDocCount);
+
+    const maxCredits = 10;
+    const remaining = Math.max(0, maxCredits - usedCount);
+
+    onCredits({
+      isPro: false,
+      remainingCredits: remaining,
+      maxUserCredits: maxCredits,
+      isUserExhausted: remaining === 0,
+      totalGeneratedCount: usedCount,
+    });
+  };
+
+  const unsubUser = onSnapshot(
+    userDocRef,
+    (snap) => {
+      userData = snap.exists() ? snap.data() : null;
+      calculateAndEmit();
+    },
+    (err) => console.warn("[Extension Firebase] userDoc credit sub error:", err)
+  );
+
+  const unsubUsage = onSnapshot(
+    userUsageRef,
+    (snap) => {
+      usageData = snap.exists() ? snap.data() : null;
+      calculateAndEmit();
+    },
+    (err) => console.warn("[Extension Firebase] userUsage credit sub error:", err)
+  );
+
+  return () => {
+    unsubUser();
+    unsubUsage();
+  };
 }
 
 export { onAuthStateChanged };
