@@ -230,6 +230,7 @@ export default function Home() {
         if (typeof window !== "undefined") {
           try {
             localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(status));
+            window.dispatchEvent(new CustomEvent("winstash_credits_updated", { detail: status }));
           } catch {}
         }
       },
@@ -241,7 +242,8 @@ export default function Home() {
         try {
           await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), e.detail.record);
           if (e.detail.deductCredit) {
-            await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
+            const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
+            setCreditStatus(updatedCredit);
           }
         } catch (err) {
           console.error("Failed to save record from extension:", err);

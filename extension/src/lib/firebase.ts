@@ -15,6 +15,7 @@ import {
   onSnapshot,
   doc,
   setDoc,
+  increment,
   getDocs,
 } from "firebase/firestore";
 import { CareerRecord } from "../types/career";
@@ -94,6 +95,25 @@ export async function saveRecordToFirestore(
   const docRef = doc(db, "users", userId, "records", record.id);
   const cleanData = JSON.parse(JSON.stringify(record));
   await setDoc(docRef, cleanData);
+}
+
+/**
+ * Firestore users/{userId} 문서에 freeUsedCount 원자적 1회 차감 (증가)
+ */
+export async function deductFreeCreditInFirestore(userId: string): Promise<void> {
+  try {
+    const userDocRef = doc(db, "users", userId);
+    await setDoc(
+      userDocRef,
+      {
+        freeUsedCount: increment(1),
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn("[Extension Firebase] deductFreeCreditInFirestore error:", err);
+  }
 }
 
 export { onAuthStateChanged };

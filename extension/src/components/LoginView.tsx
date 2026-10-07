@@ -117,6 +117,9 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             (win: any) => {
               if (win?.id) {
                 authWindowIdRef.current = win.id;
+                try {
+                  chrome.storage.local.set({ winstash_auth_window_id: win.id });
+                } catch {}
               }
               setStatusMsg("Select your Google account...");
             }

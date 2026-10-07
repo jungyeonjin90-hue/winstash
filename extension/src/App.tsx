@@ -4,7 +4,7 @@ import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
 import { isWeekMatch } from "./lib/weekMatch";
 import { isAdminEmail } from "./lib/adminConfig";
-import { subscribeToUserRecords, saveRecordToFirestore } from "./lib/firebase";
+import { subscribeToUserRecords, saveRecordToFirestore, deductFreeCreditInFirestore } from "./lib/firebase";
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
 import { WinStashBrandBadge } from "./components/WinStashLogo";
@@ -121,6 +121,19 @@ export default function App() {
         }
       }
       setIsAuthChecking(false);
+    }
+
+    // Auto-close any leftover extension-connect tabs
+    if (typeof chrome !== "undefined" && chrome.tabs) {
+      chrome.tabs.query({}, (tabs: any[]) => {
+        tabs?.forEach((t) => {
+          if (t.id && t.url && t.url.includes("/auth/extension-connect")) {
+            try {
+              chrome.tabs.remove(t.id);
+            } catch {}
+          }
+        });
+      });
     }
   }, []);
 
@@ -382,6 +395,13 @@ export default function App() {
           totalGeneratedCount: creditStatus.totalGeneratedCount + 1,
         };
         saveCreditsToStorage(nextCredits);
+
+        // Directly increment freeUsedCount in Firestore users/{userId}
+        try {
+          await deductFreeCreditInFirestore(currentUser.uid);
+        } catch (creditErr) {
+          console.warn("Direct Firestore credit deduction:", creditErr);
+        }
       }
 
       // 1. Save locally to extension storage

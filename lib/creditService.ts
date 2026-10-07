@@ -121,12 +121,19 @@ export async function getCreditStatus(
           (planStatus === "cancelled" && endsAt > Date.now()));
       const plan: UserPlan = isPro ? "pro" : "free";
 
-      // 1-2. 개인 변환 사용량 조회
-      const userUsageRef = doc(db, "users", userId, "usage", "summary");
-      const userUsageSnap = await getDoc(userUsageRef);
-      const userUsedCount = userUsageSnap.exists()
-        ? (userUsageSnap.data().freeUsedCount as number) || 0
-        : 0;
+      // 1-2. 개인 변환 사용량 조회 (서버 경로 및 클라이언트 직기록 경로 모두 합산/최대치 통합)
+      const userDocFreeCount = (userData?.freeUsedCount as number) || 0;
+      let usageDocCount = 0;
+      try {
+        const userUsageRef = doc(db, "users", userId, "usage", "summary");
+        const userUsageSnap = await getDoc(userUsageRef);
+        usageDocCount = userUsageSnap.exists()
+          ? (userUsageSnap.data().freeUsedCount as number) || 0
+          : 0;
+      } catch {}
+
+      const localCount = getLocalNumber(`${LOCAL_USER_USAGE_KEY}${userId}`);
+      const userUsedCount = Math.max(usageDocCount, userDocFreeCount, localCount);
 
       // 1-3. 종합(Synthesis) 사용량 조회
       const synUsageRef = doc(db, "users", userId, "usage", "synthesis");
@@ -265,21 +272,42 @@ export async function consumeFreeCredit(
     return status;
   }
 
-  // 1. 실제 계정의 크레딧 차감은 서버 API(/api/transform, /api/synthesize/en)에서 Firebase Admin SDK로 안전하게 원자 차감됨 (M-1)
-  // 클라이언트의 중복 increment를 방지하고 실시간 Firestore 최신 상태를 반환함
+  // 1. Firebase Firestore 연동 모드: users/{userId} 문서에 원자적 freeUsedCount: increment(1) 즉각 기록
   if (isFirebaseConfigured && db && !isDemo) {
-    return getCreditStatus(userId, isDemo, userEmail);
+    try {
+      const userDocRef = doc(db, "users", userId);
+      await setDoc(
+        userDocRef,
+        {
+          freeUsedCount: increment(1),
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      console.warn("[CreditService] Direct userDoc increment error:", err);
+    }
   }
 
-  // 2. 데모 또는 로컬 스토리지 카운트 증가
+  // 2. 데모 및 로컬 스토리지 카운트 동기화
   if (typeof window !== "undefined") {
-    const nextUser = getLocalNumber(`${LOCAL_USER_USAGE_KEY}${userId}`) + 1;
+    const currentLocal = getLocalNumber(`${LOCAL_USER_USAGE_KEY}${userId}`);
+    const nextUser = Math.max(status.userUsedCount + 1, currentLocal + 1);
     const nextGlobal = getLocalNumber(LOCAL_GLOBAL_USAGE_KEY) + 1;
     localStorage.setItem(`${LOCAL_USER_USAGE_KEY}${userId}`, String(nextUser));
     localStorage.setItem(LOCAL_GLOBAL_USAGE_KEY, String(nextGlobal));
   }
 
-  return getCreditStatus(userId, isDemo, userEmail);
+  // 3. 최신 크레딧 계산 및 로컬 캐시 / 이벤트 브로드캐스트
+  const nextStatus = await getCreditStatus(userId, isDemo, userEmail);
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(nextStatus));
+      window.dispatchEvent(new CustomEvent("winstash_credits_updated", { detail: nextStatus }));
+    } catch {}
+  }
+
+  return nextStatus;
 }
 
 /**

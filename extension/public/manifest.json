@@ -7,6 +7,9 @@
     "default_popup": "index.html",
     "default_title": "WinStash - Quick Log"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "permissions": [
     "storage",
     "activeTab",

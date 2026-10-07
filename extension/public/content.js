@@ -130,6 +130,18 @@
     }
   });
 
+  window.addEventListener("winstash_credits_updated", (event) => {
+    const userStr = localStorage.getItem("winstash_auth_user");
+    if (userStr && event.detail) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user?.uid) {
+          syncEverythingToStorage(user, null, event.detail);
+        }
+      } catch {}
+    }
+  });
+
   window.addEventListener("winstash_auth_ready", (event) => {
     if (event.detail && event.detail.uid) {
       syncEverythingToStorage(

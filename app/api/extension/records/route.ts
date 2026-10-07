@@ -71,18 +71,21 @@ export async function POST(request: NextRequest) {
     // 2. If credit deduction requested (for free tier modification), atomically increment server-side usage
     if (deductCredit && !isAdminEmail(userEmail)) {
       try {
-        await adminDb
-          .collection("users")
-          .doc(userId)
-          .collection("usage")
-          .doc("summary")
-          .set(
-            {
-              freeUsedCount: FieldValue.increment(1),
-              lastUsedAt: new Date().toISOString(),
-            },
-            { merge: true }
-          );
+        const userRef = adminDb.collection("users").doc(userId);
+        await userRef.set(
+          {
+            freeUsedCount: FieldValue.increment(1),
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+        await userRef.collection("usage").doc("summary").set(
+          {
+            freeUsedCount: FieldValue.increment(1),
+            lastUsedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
       } catch (creditErr) {
         console.warn("[Extension Records API] Credit deduction error:", creditErr);
       }
