@@ -125,3 +125,20 @@ export function formatWeekDateRangeEn(startDate: string, endDate: string): strin
     return `${startDate} - ${endDate}`;
   }
 }
+
+/**
+ * Get all weeks grouped by month for a given year (12 months)
+ */
+export function getAllWeeksForYearEn(year: number): { month: number; monthName: string; weeks: WeekSpan[] }[] {
+  const result: { month: number; monthName: string; weeks: WeekSpan[] }[] = [];
+  for (let m = 1; m <= 12; m++) {
+    const weeks = getWeeksForMonthEn(year, m);
+    result.push({
+      month: m,
+      monthName: MONTH_NAMES_EN[m - 1],
+      weeks,
+    });
+  }
+  return result;
+}
+

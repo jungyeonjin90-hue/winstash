@@ -26,6 +26,7 @@ import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { UpdateConfirmModalEn } from "@/components/en/UpdateConfirmModalEn";
+import { CareerHeatmapEn } from "@/components/en/CareerHeatmapEn";
 
 interface PendingUpdateParams {
   rawMemo: string;
@@ -40,6 +41,7 @@ export default function Home() {
 
   const [records, setRecords] = useState<CareerRecord[]>([]);
   const [activeRecordId, setActiveRecordId] = useState<string | undefined>(undefined);
+  const [selectedWeek, setSelectedWeek] = useState<WeekSpan | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -578,8 +580,21 @@ export default function Home() {
             existingRecords={records}
             creditStatus={creditStatus}
             onUpgradeClick={() => openUpgradeModal("input")}
+            selectedWeek={selectedWeek}
+            onWeekChange={setSelectedWeek}
           />
         </section>
+
+        {/* Screen 1.5: 52-Week Career Heatmap & Streak Tracker */}
+        {isClientLoaded && (
+          <section className="space-y-4">
+            <CareerHeatmapEn
+              records={records}
+              selectedWeek={selectedWeek}
+              onSelectWeek={(w) => setSelectedWeek(w)}
+            />
+          </section>
+        )}
 
         {/* Screen 2: 3-Way Dashboard */}
         <section id="dashboard-section" className="space-y-4 pt-4">

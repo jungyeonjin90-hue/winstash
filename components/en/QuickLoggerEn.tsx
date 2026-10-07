@@ -19,6 +19,8 @@ interface QuickLoggerEnProps {
   existingRecords?: CareerRecord[];
   creditStatus?: CreditStatus | null;
   onUpgradeClick?: () => void;
+  selectedWeek?: WeekSpan;
+  onWeekChange?: (week: WeekSpan) => void;
 }
 
 const PRESET_MEMOS_EN = [
@@ -68,9 +70,20 @@ export function QuickLoggerEn({
   existingRecords = [],
   creditStatus = null,
   onUpgradeClick,
+  selectedWeek: controlledWeek,
+  onWeekChange,
 }: QuickLoggerEnProps) {
   const [memo, setMemo] = useState("");
-  const [selectedWeek, setSelectedWeek] = useState<WeekSpan>(getCurrentWeekSpanEn());
+  const [internalWeek, setInternalWeek] = useState<WeekSpan>(getCurrentWeekSpanEn());
+  const selectedWeek = controlledWeek || internalWeek;
+
+  const handleWeekSelect = (w: WeekSpan) => {
+    if (onWeekChange) {
+      onWeekChange(w);
+    } else {
+      setInternalWeek(w);
+    }
+  };
 
   const existingRecord = existingRecords?.find((record) => {
     if (record.target_week) {
@@ -119,7 +132,7 @@ export function QuickLoggerEn({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 shadow-xs transition-all hover:shadow-md space-y-4">
+    <div id="quick-logger-section" className="w-full bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-3xl p-5 sm:p-7 shadow-xs transition-all hover:shadow-md space-y-4 scroll-mt-20">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -154,7 +167,7 @@ export function QuickLoggerEn({
       {/* Week Selector Bar */}
       <WeekPickerEn
         selectedWeek={selectedWeek}
-        onWeekChange={setSelectedWeek}
+        onWeekChange={handleWeekSelect}
         existingRecords={existingRecords}
       />
 
