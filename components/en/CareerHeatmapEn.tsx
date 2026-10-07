@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Flame, Trophy, CalendarCheck2, ArrowRight, Sparkles, Check, Clock } from "lucide-react";
+import { CalendarCheck2, ArrowRight, Sparkles, Check, Clock } from "lucide-react";
 import { WeekSpan, CareerRecord } from "@/types/career";
 import {
   getAllWeeksForYearEn,
@@ -61,64 +61,18 @@ export function CareerHeatmapEn({
     return map;
   }, [records]);
 
-  // Calculate streaks and consistency metrics
-  const { currentStreak, longestStreak, totalLoggedThisYear, totalPassedWeeksThisYear } = useMemo(() => {
+  // Calculate consistency metrics for target year
+  const { totalLoggedThisYear } = useMemo(() => {
     let totalLogged = 0;
-    let passedWeeks = 0;
-    const todayStr = new Date().toISOString().slice(0, 10);
-
-    // Filter weeks for the target year
     allWeeksThisYear.forEach((w) => {
       const key = `${w.year}-${w.month}-${w.weekOfMonth}`;
       if (recordMap.has(key)) {
         totalLogged++;
       }
-      if (w.startDate <= todayStr) {
-        passedWeeks++;
-      }
-    });
-
-    // Calculate streaks across chronological weeks up to today
-    let curStreak = 0;
-    let maxStreak = 0;
-    let runningStreak = 0;
-
-    // To calculate current streak accurately, we inspect past weeks backwards from the current week
-    const pastAndCurrentWeeks = allWeeksThisYear.filter((w) => w.startDate <= todayStr);
-    
-    // Reverse order (most recent first)
-    for (let i = pastAndCurrentWeeks.length - 1; i >= 0; i--) {
-      const w = pastAndCurrentWeeks[i];
-      const key = `${w.year}-${w.month}-${w.weekOfMonth}`;
-      const hasRecord = recordMap.has(key);
-
-      if (hasRecord) {
-        curStreak++;
-      } else {
-        // If current week is empty but previous week was logged, don't break streak yet if it's currently mid-week
-        if (i === pastAndCurrentWeeks.length - 1) {
-          continue;
-        }
-        break;
-      }
-    }
-
-    // Longest streak calculation
-    pastAndCurrentWeeks.forEach((w) => {
-      const key = `${w.year}-${w.month}-${w.weekOfMonth}`;
-      if (recordMap.has(key)) {
-        runningStreak++;
-        if (runningStreak > maxStreak) maxStreak = runningStreak;
-      } else {
-        runningStreak = 0;
-      }
     });
 
     return {
-      currentStreak: curStreak,
-      longestStreak: Math.max(maxStreak, curStreak),
       totalLoggedThisYear: totalLogged,
-      totalPassedWeeksThisYear: Math.max(1, passedWeeks),
     };
   }, [allWeeksThisYear, recordMap]);
 
@@ -174,26 +128,8 @@ export function CareerHeatmapEn({
           </div>
         </div>
 
-        {/* 3 Metric Badges */}
+        {/* Metric Badges */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Current Streak */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/40 text-amber-800 dark:text-amber-300">
-            <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
-            <div className="text-xs">
-              <span className="font-bold">{currentStreak}</span>{" "}
-              <span className="text-[11px] opacity-80">{currentStreak === 1 ? "Week" : "Weeks"} Streak</span>
-            </div>
-          </div>
-
-          {/* Longest Streak */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-            <Trophy className="w-3.5 h-3.5 text-indigo-500" />
-            <div className="text-xs">
-              <span className="font-bold">{longestStreak}</span>{" "}
-              <span className="text-[11px] opacity-80">Best Streak</span>
-            </div>
-          </div>
-
           {/* Total Logged / Completion */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300">
             <Sparkles className="w-3.5 h-3.5 text-indigo-500" />

@@ -602,7 +602,7 @@ export default function Home() {
           />
         </section>
 
-        {/* Screen 1.5: 52-Week Career Heatmap & Streak Tracker */}
+        {/* Screen 1.5: 52-Week Career Heatmap */}
         {isClientLoaded && (
           <section className="space-y-4">
             <CareerHeatmapEn
