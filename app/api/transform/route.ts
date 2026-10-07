@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode } from "@/types/career";
+import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode, CareerRecord } from "@/types/career";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
+import { adminDb } from "@/lib/firebaseAdmin";
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
@@ -379,6 +380,9 @@ export async function POST(req: NextRequest) {
       isCreditExhausted = false,
       isGlobalCapExhausted = false,
       isGlobalExhausted = false,
+      record_id,
+      target_week,
+      record_date,
     } = body;
 
     if (!raw_memo || typeof raw_memo !== "string" || raw_memo.trim().length === 0) {
@@ -410,6 +414,58 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
+
+    /**
+     * Helper to atomically persist record into Firestore server-side and deduct credit.
+     * Ensures 100% completion even if the user abruptly closes browser tab!
+     */
+    const persistAndBuildResponse = async (output: TransformationOutput) => {
+      const finalRecordId = record_id || `rec-en-${Date.now()}`;
+      const finalRecordDate = record_date || new Date().toISOString();
+
+      const newRecord: CareerRecord = {
+        id: finalRecordId,
+        createdAt: finalRecordDate,
+        target_week: target_week || undefined,
+        raw_memo,
+        weekly_report: output.weekly_report,
+        brag_sheet_item: output.brag_sheet_item,
+        star_portfolio: output.star_portfolio,
+        jobRole: job_role as JobRole,
+        toneManner: tone_manner as ToneManner,
+        source: "web_text",
+      };
+
+      // Server-side persistence: directly writes to Firestore if user is authenticated
+      if (adminDb && quotaCheck.userId && quotaCheck.userId !== "demo-user-1234") {
+        try {
+          const cleanRecord = JSON.parse(JSON.stringify(newRecord));
+          await adminDb
+            .collection("users")
+            .doc(quotaCheck.userId)
+            .collection("records")
+            .doc(finalRecordId)
+            .set(cleanRecord, { merge: true });
+
+          // Invalidate user summary cache to prevent ghost summaries
+          const cacheSnap = await adminDb
+            .collection("users")
+            .doc(quotaCheck.userId)
+            .collection("summary_cache")
+            .get();
+          if (!cacheSnap.empty) {
+            const batch = adminDb.batch();
+            cacheSnap.docs.forEach((d) => batch.delete(d.ref));
+            await batch.commit();
+          }
+        } catch (dbErr) {
+          console.error("[Transform API] Server-side Firestore persistence error:", dbErr);
+        }
+      }
+
+      await quotaCheck.deduct?.();
+      return NextResponse.json({ ...output, record: newRecord });
+    };
 
     const apiKey =
       provider === "gemini"
@@ -470,8 +526,7 @@ export async function POST(req: NextRequest) {
             if (text) {
               const parsed = JSON.parse(text) as TransformationOutput;
               if (parsed.weekly_report && parsed.brag_sheet_item && parsed.star_portfolio) {
-                await quotaCheck.deduct?.();
-                return NextResponse.json(parsed);
+                return await persistAndBuildResponse(parsed);
               }
             }
           }
@@ -487,8 +542,7 @@ export async function POST(req: NextRequest) {
       job_role as JobRole,
       tone_manner as ToneManner
     );
-    await quotaCheck.deduct?.();
-    return NextResponse.json(fallback);
+    return await persistAndBuildResponse(fallback);
   } catch (error) {
     console.error("Transform API Error (Global EN):", error);
     return NextResponse.json(

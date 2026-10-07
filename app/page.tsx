@@ -379,34 +379,6 @@ export default function Home() {
         headers["x-demo-user"] = "true";
       }
 
-      // Pure Global English AI Engine
-      const res = await fetch("/api/transform", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          raw_memo: rawMemo,
-          job_role: role,
-          tone_manner: tone,
-          seniority_level: seniorityLevel,
-          industry,
-          region,
-          provider: settings.provider,
-          isCreditExhausted: isPro ? false : Boolean(creditStatus?.isUserExhausted),
-          isGlobalExhausted: isPro ? false : Boolean(creditStatus?.isGlobalExhausted),
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        if (res.status === 403) {
-          openUpgradeModal(finalExistingRecordId ? "edit" : "input");
-          return;
-        }
-        throw new Error(errorData.error || "Transformation request failed.");
-      }
-
-      const output: TransformationOutput = await res.json();
-
       let finalTargetWeek = targetWeek;
       let recordDate = new Date().toISOString();
 
@@ -420,8 +392,41 @@ export default function Home() {
         recordDate = `${targetWeek.endDate}T09:00:00.000Z`;
       }
 
-      const newRecord: CareerRecord = {
-        id: finalExistingRecordId || `rec-en-${Date.now()}`,
+      const proposedRecordId = finalExistingRecordId || `rec-en-${Date.now()}`;
+
+      // Pure Global English AI Engine with Atomic Server-Side Persistence
+      const res = await fetch("/api/transform", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          raw_memo: rawMemo,
+          job_role: role,
+          tone_manner: tone,
+          seniority_level: seniorityLevel,
+          industry,
+          region,
+          provider: settings.provider,
+          isCreditExhausted: isPro ? false : Boolean(creditStatus?.isUserExhausted),
+          isGlobalExhausted: isPro ? false : Boolean(creditStatus?.isGlobalExhausted),
+          record_id: proposedRecordId,
+          target_week: finalTargetWeek,
+          record_date: recordDate,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        if (res.status === 403) {
+          openUpgradeModal(finalExistingRecordId ? "edit" : "input");
+          return;
+        }
+        throw new Error(errorData.error || "Transformation request failed.");
+      }
+
+      const output: TransformationOutput & { record?: CareerRecord } = await res.json();
+
+      const newRecord: CareerRecord = output.record || {
+        id: proposedRecordId,
         createdAt: recordDate,
         target_week: finalTargetWeek,
         raw_memo: rawMemo,
@@ -433,10 +438,14 @@ export default function Home() {
         source: "web_text",
       };
 
-      // Optimistic local state update for instantaneous reactivity
+      // Instant optimistic local state update
       setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
       setActiveRecordId(newRecord.id);
-      await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
+
+      // Demo users persist to local storage fallback only
+      if (user?.isDemo) {
+        await saveUserRecordToFirestore(user.uid, true, newRecord);
+      }
 
       trackEvent("memo_transformed", {
         isUpdate: Boolean(finalExistingRecordId),
@@ -447,18 +456,13 @@ export default function Home() {
         impactMagnitude: output.star_portfolio?.impactMagnitude,
       });
 
-      // Deduct credit for updates as well (bypassed automatically for admins)
-      const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
-      setCreditStatus(updatedCredit);
-
-      if (finalExistingRecordId) {
-        await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
-      }
+      // Clear local summary cache to ensure next view reflects latest notes
+      await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
 
       showToast(
         finalExistingRecordId
           ? "🎉 Record successfully updated!"
-          : `🎉 ${targetWeek ? targetWeek.label : "Weekly entry"} successfully transformed and synced!`
+          : `🎉 ${finalTargetWeek ? finalTargetWeek.label : "Weekly entry"} successfully transformed and synced!`
       );
 
       const dashElement = document.getElementById("dashboard-section");
