@@ -359,7 +359,6 @@ export async function POST(req: NextRequest) {
                 ],
                 generationConfig: {
                   responseMimeType: "application/json",
-                  temperature: 0.1, // Low temperature for high factual accuracy
                 },
               }),
               signal: AbortSignal.timeout(30000),

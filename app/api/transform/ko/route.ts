@@ -278,7 +278,6 @@ export async function POST(req: NextRequest) {
                 ],
                 generationConfig: {
                   responseMimeType: "application/json",
-                  temperature: 0.2,
                 },
               }),
             }
