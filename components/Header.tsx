@@ -56,7 +56,7 @@ export function Header({ onOpenSettings, recordCount, creditStatus }: HeaderProp
               <span>
                 {creditStatus.remainingCredits > 0
                   ? `무료 ${creditStatus.remainingCredits}회 남음`
-                  : "무료 5회 모두 소진"}
+                  : "무료 한도 모두 소진"}
               </span>
             </div>
           )}

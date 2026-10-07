@@ -256,7 +256,7 @@ export function QuickLogger({
             ) : creditStatus && (
               <span className="hidden md:inline-flex text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
                 {creditStatus.isUserExhausted ? (
-                  <span className="text-rose-500 font-semibold">무료 5회 소진 (0/{creditStatus.maxUserCredits})</span>
+                  <span className="text-rose-500 font-semibold">무료 한도 소진 (0/{creditStatus.maxUserCredits})</span>
                 ) : (
                   <span>무료 잔여 {creditStatus.remainingCredits}/{creditStatus.maxUserCredits}회</span>
                 )}

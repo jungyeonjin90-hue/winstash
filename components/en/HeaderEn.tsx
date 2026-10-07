@@ -187,7 +187,7 @@ export function HeaderEn({
                       ) : (
                         <span className="inline-flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                          Free Plan ({creditStatus?.remainingCredits ?? 5} credits left)
+                          Free Plan ({creditStatus?.remainingCredits ?? 10} credits left)
                         </span>
                       )}
                     </div>

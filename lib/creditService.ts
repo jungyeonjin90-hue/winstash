@@ -26,7 +26,7 @@ export interface CreditStatus {
   plan: UserPlan;
   isPro: boolean;
   isAdmin?: boolean;
-  // 주간 메모 입력 및 수정 (기본 5회)
+  // 주간 메모 입력 및 수정 (기본 10회)
   userUsedCount: number;
   maxUserCredits: number;
   remainingCredits: number;

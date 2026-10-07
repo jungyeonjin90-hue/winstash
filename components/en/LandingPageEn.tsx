@@ -876,7 +876,7 @@ export function LandingPageEn() {
             {[
               {
                 q: "What is included in the free plan? Do I need a credit card?",
-                a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 5 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
+                a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 10 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
               },
               {
                 q: "How is WinStash different from just using a general AI chatbot?",

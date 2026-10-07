@@ -1,7 +1,7 @@
 /**
  * WinStash AI 무료/유료 변환 및 비용 한도 설정
  * 1. 무료(Free):
- *    - 주간 메모 입력 및 기존 기록 수정: 총 5회 무료 제공 (MAX_USER_FREE_CREDITS = 5)
+ *    - 주간 메모 입력 및 기존 기록 수정: 총 10회 무료 제공 (MAX_USER_FREE_CREDITS = 10)
  *    - 성과평가 종합 (Brag Synthesis): 총 3회 무료 제공 (MAX_FREE_BRAG_SYNTHESIS = 3)
  *    - 포트폴리오 종합 (STAR Synthesis): 총 3회 무료 제공 (MAX_FREE_STAR_SYNTHESIS = 3)
  * 2. 유료(Pro - $5.99/월):
@@ -9,8 +9,8 @@
  *    - 성과평가 & 포트폴리오 종합 무제한
  */
 
-// 1. 개인별 기본 제공 무료 변환 횟수 (주간 입력 및 수정 공용 5회)
-export const MAX_USER_FREE_CREDITS = 5;
+// 1. 개인별 기본 제공 무료 변환 횟수 (주간 입력 및 수정 공용 10회)
+export const MAX_USER_FREE_CREDITS = 10;
 
 // 2. 성과평가(Brag Sheet) 무료 종합 한도 (총 3회)
 export const MAX_FREE_BRAG_SYNTHESIS = 3;
