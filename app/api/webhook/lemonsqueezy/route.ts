@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { adminDb } from "@/lib/firebaseAdmin";
 
 /**
@@ -103,21 +101,17 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    if (adminDb) {
-      await adminDb.collection("users").doc(userId).set(updateData, { merge: true });
-      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status}) via Admin SDK`);
-    } else if (db) {
-      console.warn("[LemonSqueezy Webhook] Admin SDK not configured, falling back to client SDK write.");
-      const userRef = doc(db, "users", userId);
-      await setDoc(userRef, updateData, { merge: true });
-      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status}) via client SDK fallback`);
-    } else {
-      console.error("[LemonSqueezy Webhook] Neither Admin SDK nor client DB is available!");
+    // Plan fields are server-only under firestore.rules, so only the Admin SDK can persist them.
+    // Return 503 so Lemon Squeezy retries once the server is configured (audit M-1).
+    if (!adminDb) {
+      console.error("[LemonSqueezy Webhook] Firebase Admin is not configured; cannot persist subscription.");
       return NextResponse.json(
         { error: "Database service unavailable to persist subscription" },
         { status: 503 }
       );
     }
+    await adminDb.collection("users").doc(userId).set(updateData, { merge: true });
+    console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status})`);
 
     return NextResponse.json({
       received: true,

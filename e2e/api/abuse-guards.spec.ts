@@ -27,8 +27,7 @@ test.describe("IP rate limiter (/api/transform: 12 req/min)", () => {
     expect(statuses[12]).toBe(429);
   });
 
-  test("[H-3] rotating a client-controlled IP header must not reset the limit", async ({ request }) => {
-    knownGap("H-3");
+  test("[H-3] a spoofed cf-connecting-ip header does not reset the limit", async ({ request }) => {
     const realIp = uniqueIp();
     for (let i = 0; i < 12; i++) {
       await request.post("/api/transform", { headers: { "x-forwarded-for": realIp }, data: { raw_memo: "x" } });

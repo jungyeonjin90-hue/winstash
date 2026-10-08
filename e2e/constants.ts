@@ -5,3 +5,6 @@ export const E2E_WEBHOOK_SECRET = "e2e-test-webhook-secret";
 export const E2E_PROJECT_ID = "demo-winstash-e2e";
 export const E2E_FIRESTORE_EMULATOR_HOST = "127.0.0.1:8085";
 export const E2E_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+
+/** Admin allow-list used by the E2E server (overrides the production admin emails). */
+export const E2E_ADMIN_EMAIL = "e2e-admin@example.com";

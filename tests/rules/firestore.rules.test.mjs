@@ -212,7 +212,13 @@ describe("feedbacks", () => {
 
   test("admin can read feedback", async () => {
     await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "feedbacks", "f1"), { message: "hi" }));
-    await assertSucceeds(getDoc(doc(as("admin", { email: ADMIN_EMAIL }), "feedbacks", "f1")));
+    await assertSucceeds(getDoc(doc(as("admin", { email: ADMIN_EMAIL, email_verified: true }), "feedbacks", "f1")));
+  });
+
+  test("[H-4] admin email WITHOUT email_verified cannot read feedback", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "feedbacks", "f1"), { message: "hi" }));
+    await assertFails(getDoc(doc(as("impostor", { email: ADMIN_EMAIL, email_verified: false }), "feedbacks", "f1")));
+    await assertFails(getDoc(doc(as("impostor2", { email: ADMIN_EMAIL }), "feedbacks", "f1")));
   });
 });
 

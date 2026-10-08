@@ -1,5 +1,5 @@
-import { initializeApp, getApps, cert, App } from "firebase-admin/app";
-import { getFirestore, Firestore } from "firebase-admin/firestore";
+import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
+import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import type { Auth } from "firebase-admin/auth";
 
 /**
@@ -35,23 +35,32 @@ function initializeFirebaseAdmin(): App | null {
       });
     } catch (error) {
       console.error("[FirebaseAdmin] Initialization error with cert:", error);
+      return null;
     }
   }
 
-  // Fallback: Default initialization if projectId exists
-  if (projectId) {
+  // A credential-less app only works against the local emulators or where Application Default
+  // Credentials exist (GCP runtimes / GOOGLE_APPLICATION_CREDENTIALS). Anywhere else (e.g. Vercel) it
+  // looks configured but every call fails with "Could not load the default credentials", so callers
+  // silently lose writes (audit M-1). Leave adminDb null instead so the failure is explicit.
+  const usesEmulator = Boolean(process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST);
+  const hasAmbientCredentials = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.K_SERVICE);
+  if (projectId && (usesEmulator || hasAmbientCredentials)) {
     try {
-      return initializeApp({
-        projectId,
-      });
+      return initializeApp({ projectId });
     } catch (error) {
-      console.warn("[FirebaseAdmin] Default app initialization error:", error);
+      console.error("[FirebaseAdmin] Default app initialization error:", error);
+      return null;
     }
   }
 
-  console.warn(
-    "[FirebaseAdmin] Service account credentials not configured. Server-side admin writes will be unavailable until FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY are set."
-  );
+  const message =
+    "[FirebaseAdmin] Service account credentials are not configured (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY). Server-side quota, persistence and webhooks are unavailable.";
+  if (process.env.NODE_ENV === "production") {
+    console.error(message);
+  } else {
+    console.warn(message);
+  }
   return null;
 }
 

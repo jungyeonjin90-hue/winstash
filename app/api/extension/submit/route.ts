@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Omitted when unknown so the extension keeps its last known balance instead of a wrong one.
-    const credits = isDemo ? null : await getServerCreditStatus(userId, quotaCheck.userEmail);
+    const credits = isDemo ? null : await getServerCreditStatus(userId, Boolean(quotaCheck.isAdmin));
 
     return NextResponse.json(
       { success: true, record: cleanRecord, credits: credits ? toExtensionCredits(credits) : undefined },

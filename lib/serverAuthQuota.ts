@@ -3,6 +3,7 @@ import { FieldValue, type DocumentData, type Firestore } from "firebase-admin/fi
 import { adminAuth, adminDb } from "./firebaseAdmin";
 import { isAdminEmail } from "./adminConfig";
 import { verifyFirebaseIdTokenLightweight } from "./lightweightAuth";
+import { checkServerRateLimit } from "./serverRateLimit";
 import {
   MAX_USER_FREE_CREDITS,
   MAX_FREE_BRAG_SYNTHESIS,
@@ -67,6 +68,49 @@ function quotaRule(action: QuotaAction) {
     countsGlobally: false,
     error: `You have reached your ${max} free ${featureName} syntheses. Please upgrade to WinStash Pro for unlimited reviews.`,
   };
+}
+
+// Per-account limits (requests / minute), applied on top of the per-IP limits so rotating IPs
+// does not help a single account (audit H-3). Admins are exempt.
+const PER_USER_RATE_LIMIT: Record<QuotaAction, number> = { transform: 12, brag: 8, star: 8 };
+
+export interface VerifiedRequestUser {
+  uid: string;
+  email: string | null;
+  emailVerified: boolean;
+  /** Admin rights require a *verified* email on the allow-list (audit H-4). */
+  isAdmin: boolean;
+}
+
+/**
+ * Verifies the `Authorization: Bearer <Firebase ID token>` header.
+ * Returns null when the header is missing or the token is invalid/expired.
+ */
+export async function verifyRequestToken(req: NextRequest): Promise<VerifiedRequestUser | null> {
+  const authHeader = req.headers.get("authorization") || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+  if (!token) return null;
+
+  let decoded: { uid: string; email?: string | null; email_verified?: unknown };
+  try {
+    if (adminAuth) {
+      decoded = await adminAuth.verifyIdToken(token);
+    } else {
+      decoded = await verifyFirebaseIdTokenLightweight(token);
+    }
+  } catch {
+    try {
+      // If adminAuth threw or wasn't loaded, verify directly via Google x509 public certificates
+      decoded = await verifyFirebaseIdTokenLightweight(token);
+    } catch (err) {
+      console.warn("[AuthQuota] Invalid ID token received:", err);
+      return null;
+    }
+  }
+
+  const email = decoded.email || null;
+  const emailVerified = decoded.email_verified === true;
+  return { uid: decoded.uid, email, emailVerified, isAdmin: emailVerified && isAdminEmail(email) };
 }
 
 class QuotaExceededError extends Error {}
@@ -139,11 +183,6 @@ export async function verifyServerAuthAndQuota(
   req: NextRequest,
   action: QuotaAction
 ): Promise<QuotaVerificationResult> {
-  const authHeader = req.headers.get("authorization") || "";
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice(7).trim()
-    : null;
-
   const isDemoRequest = req.headers.get("x-demo-user") === "true";
 
   // 1. Demo User request handling (Strictly prohibited in production to prevent unauthenticated LLM abuse)
@@ -152,43 +191,34 @@ export async function verifyServerAuthAndQuota(
     return { allowed: true, userId: "demo-user-1234", isPro: false, reserve: unlimitedReserve };
   }
 
-  // 2. Reject unauthenticated requests in production
-  if (!token) {
+  // 2. Verify the Firebase ID token
+  const hasToken = (req.headers.get("authorization") || "").startsWith("Bearer ");
+  const verified = await verifyRequestToken(req);
+  if (!verified) {
     return {
       allowed: false,
-      error: "Authentication required. Please sign in with your Google account.",
+      error: hasToken
+        ? "Authentication session expired or invalid. Please refresh and try again."
+        : "Authentication required. Please sign in with your Google account.",
       status: 401,
     };
   }
+  const userId = verified.uid;
+  const userEmail = verified.email;
 
-  // 3. Verify ID Token (Robust dual-check: adminAuth if ready, lightweight crypto verifier as rock-solid primary)
-  let decoded: { uid: string; email?: string | null };
-  try {
-    if (adminAuth) {
-      decoded = await adminAuth.verifyIdToken(token);
-    } else {
-      decoded = await verifyFirebaseIdTokenLightweight(token);
-    }
-  } catch {
-    try {
-      // If adminAuth threw or wasn't loaded, verify directly via Google x509 public certificates
-      decoded = await verifyFirebaseIdTokenLightweight(token);
-    } catch (err) {
-      console.warn("[AuthQuota] Invalid ID token received:", err);
-      return {
-        allowed: false,
-        error: "Authentication session expired or invalid. Please refresh and try again.",
-        status: 401,
-      };
-    }
+  // 3. Admin Bypass (verified email only)
+  if (verified.isAdmin) {
+    return { allowed: true, userId, userEmail, isPro: true, isAdmin: true, reserve: unlimitedReserve };
   }
 
-  const userId = decoded.uid;
-  const userEmail = decoded.email || null;
-
-  // 4. Admin Bypass
-  if (isAdminEmail(userEmail)) {
-    return { allowed: true, userId, userEmail, isPro: true, isAdmin: true, reserve: unlimitedReserve };
+  // 4. Per-account rate limit (applies to Pro users too: unlimited quota is not unlimited throughput)
+  const userLimit = checkServerRateLimit(`uid:${userId}`, PER_USER_RATE_LIMIT[action], 60 * 1000);
+  if (!userLimit.success) {
+    return {
+      allowed: false,
+      error: `Too many requests for this account. Please wait ${userLimit.resetSeconds} seconds and try again.`,
+      status: 429,
+    };
   }
 
   // 5. Quota store unavailable (no Admin SDK)
@@ -270,9 +300,9 @@ const UNLIMITED = 999999;
  */
 export async function getServerCreditStatus(
   userId: string,
-  userEmail?: string | null
+  isAdmin: boolean
 ): Promise<ServerCreditStatus | null> {
-  if (isAdminEmail(userEmail)) {
+  if (isAdmin) {
     return {
       isPro: true,
       isAdmin: true,

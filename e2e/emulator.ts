@@ -38,17 +38,46 @@ export interface TestUser {
   idToken: string;
 }
 
-/** Creates a fresh email/password user in the Auth emulator and returns its ID token. */
-export async function createTestUser(): Promise<TestUser> {
-  const email = `e2e-${crypto.randomUUID()}@example.com`;
+const TEST_PASSWORD = "e2e-password-123";
+
+/**
+ * Creates a fresh email/password user in the Auth emulator and returns its ID token.
+ * Emulator users start with email_verified = false; pass `emailVerified: true` to flip it.
+ */
+export async function createTestUser(
+  opts: { email?: string; emailVerified?: boolean } = {}
+): Promise<TestUser> {
+  const email = opts.email ?? `e2e-${crypto.randomUUID()}@example.com`;
   const res = await fetch(`${AUTH}/accounts:signUp?key=e2e-fake-api-key`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password: "e2e-password-123", returnSecureToken: true }),
+    body: JSON.stringify({ email, password: TEST_PASSWORD, returnSecureToken: true }),
   });
   if (!res.ok) throw new Error(`Auth emulator signUp failed: ${res.status} ${await res.text()}`);
   const json = await res.json();
-  return { uid: json.localId, email, idToken: json.idToken };
+  if (!opts.emailVerified) return { uid: json.localId, email, idToken: json.idToken };
+
+  const update = await fetch(`${AUTH}/accounts:update`, {
+    method: "POST",
+    headers: ADMIN_HEADERS,
+    body: JSON.stringify({ localId: json.localId, emailVerified: true }),
+  });
+  if (!update.ok) throw new Error(`Auth emulator update failed: ${update.status} ${await update.text()}`);
+  // Sign in again so the new ID token carries email_verified = true.
+  const signIn = await fetch(`${AUTH}/accounts:signInWithPassword?key=e2e-fake-api-key`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password: TEST_PASSWORD, returnSecureToken: true }),
+  });
+  if (!signIn.ok) throw new Error(`Auth emulator signIn failed: ${signIn.status} ${await signIn.text()}`);
+  return { uid: json.localId, email, idToken: (await signIn.json()).idToken };
+}
+
+/** Deletes every user in the Auth emulator (lets tests reuse fixed emails such as the admin address). */
+export async function clearAuthUsers() {
+  await fetch(`http://${E2E_AUTH_EMULATOR_HOST}/emulator/v1/projects/${E2E_PROJECT_ID}/accounts`, {
+    method: "DELETE",
+  });
 }
 
 type FirestoreValue = string | number | boolean;

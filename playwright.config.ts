@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { E2E_AUTH_EMULATOR_HOST, E2E_FIRESTORE_EMULATOR_HOST, E2E_PROJECT_ID, E2E_WEBHOOK_SECRET } from "./e2e/constants";
+import { E2E_ADMIN_EMAIL, E2E_AUTH_EMULATOR_HOST, E2E_FIRESTORE_EMULATOR_HOST, E2E_PROJECT_ID, E2E_WEBHOOK_SECRET } from "./e2e/constants";
 
 /**
  * WinStash E2E test configuration.
@@ -52,6 +52,8 @@ export default defineConfig({
           FIREBASE_PROJECT_ID: E2E_PROJECT_ID,
           FIRESTORE_EMULATOR_HOST: E2E_FIRESTORE_EMULATOR_HOST,
           FIREBASE_AUTH_EMULATOR_HOST: E2E_AUTH_EMULATOR_HOST,
+          // Test-only admin allow-list (lib/adminConfig.ts), so admin paths never involve real accounts.
+          NEXT_PUBLIC_ADMIN_EMAILS: E2E_ADMIN_EMAIL,
         },
       },
 });
