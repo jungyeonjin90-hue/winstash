@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { adminDb } from "@/lib/firebaseAdmin";
+
+// Subscription lifecycle events: payload `data` is the subscription object.
+const SUBSCRIPTION_EVENTS = new Set([
+  "subscription_created",
+  "subscription_updated",
+  "subscription_cancelled",
+  "subscription_resumed",
+  "subscription_expired",
+  "subscription_paused",
+  "subscription_unpaused",
+]);
+
+// Refund events revoke Pro: payload `data` is an order or subscription invoice.
+const REFUND_EVENTS = new Set(["order_refunded", "subscription_payment_refunded"]);
+
+// Firebase Auth uids are 1-128 chars; reject anything that could form a different Firestore path.
+const FIREBASE_UID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
 /**
  * Lemon Squeezy Webhook Handler
@@ -62,63 +77,93 @@ export async function POST(req: NextRequest) {
 
     console.log(`[LemonSqueezy Webhook] Received event: ${eventName}, user: ${userId}, status: ${status}`);
 
+    const isSubscriptionEvent = SUBSCRIPTION_EVENTS.has(eventName);
+    const isRefundEvent = REFUND_EVENTS.has(eventName);
+
+    // Plans are driven by subscription objects only. Other events (e.g. order_created, which carries an
+    // *order* id) are acknowledged without touching the profile (audit M-6).
+    if (!isSubscriptionEvent && !isRefundEvent) {
+      return NextResponse.json({ received: true, ignored: true, note: `Event ${eventName} does not change plans` });
+    }
+
     if (!userId) {
       console.warn("[LemonSqueezy Webhook] No userId found in custom_data. Payload attributes email:", attributes.user_email);
       // Return 200 OK so Lemon Squeezy does not indefinitely retry
       return NextResponse.json({ received: true, note: "No user_id found in custom_data" });
     }
+    if (typeof userId !== "string" || !FIREBASE_UID_PATTERN.test(userId)) {
+      console.warn("[LemonSqueezy Webhook] Ignoring malformed custom_data.user_id");
+      return NextResponse.json({ received: true, ignored: true, note: "Malformed user_id" });
+    }
 
-    // Determine Pro membership status
-    // Active states: active, on_trial, paid (orders or recurring)
-    // Inactive states: expired, past_due, unpaid, paused, refunded
-    const isRefunded =
-      eventName === "order_refunded" ||
-      eventName === "subscription_payment_refunded";
+    // When this state change happened at Lemon Squeezy. Used to drop stale / re-delivered events.
+    const parsedEventTime = Date.parse(attributes.updated_at || attributes.created_at || "");
+    const eventAt = new Date(Number.isNaN(parsedEventTime) ? Date.now() : parsedEventTime).toISOString();
 
-    const isExplicitlyExpired =
-      eventName === "subscription_expired" ||
-      status === "expired" ||
-      status === "unpaid";
+    let updateData: Record<string, unknown>;
+    let finalPlan: "pro" | "free";
 
-    const isCurrentlyActive =
-      (status === "active" || status === "on_trial" || status === "paid") &&
-      !isRefunded &&
-      !isExplicitlyExpired;
+    if (isRefundEvent) {
+      // A refunded payment revokes Pro. Keep the subscription/customer ids (the payload is an
+      // order or invoice, not the subscription).
+      finalPlan = "free";
+      updateData = { plan: finalPlan, planStatus: "refunded" };
+    } else {
+      // Active states: active, on_trial. Cancelled keeps Pro until ends_at (grace period).
+      // Inactive states: expired, past_due, unpaid, paused
+      const isExplicitlyExpired =
+        eventName === "subscription_expired" || status === "expired" || status === "unpaid";
+      const isCurrentlyActive = (status === "active" || status === "on_trial") && !isExplicitlyExpired;
+      const endsAtTime = attributes.ends_at ? new Date(attributes.ends_at).getTime() : 0;
+      const hasRemainingPeriod = status === "cancelled" && endsAtTime > Date.now();
 
-    // Grace period for cancelled subscription before ends_at
-    const endsAtTime = attributes.ends_at ? new Date(attributes.ends_at).getTime() : 0;
-    const hasRemainingPeriod =
-      status === "cancelled" && endsAtTime > Date.now() && !isRefunded;
-
-    const isPro = (isCurrentlyActive || hasRemainingPeriod) && !isRefunded && !isExplicitlyExpired;
-    const finalPlan = isPro ? "pro" : "free";
-
-    const updateData = {
-      plan: finalPlan,
-      planStatus: status,
-      lemonSqueezyCustomerId: String(attributes.customer_id || ""),
-      lemonSqueezySubscriptionId: String(data.id || ""),
-      renewsAt: attributes.renews_at || null,
-      endsAt: attributes.ends_at || null,
+      finalPlan = isCurrentlyActive || hasRemainingPeriod ? "pro" : "free";
+      updateData = {
+        plan: finalPlan,
+        planStatus: status,
+        lemonSqueezyCustomerId: String(attributes.customer_id || ""),
+        lemonSqueezySubscriptionId: String(data.id || ""),
+        renewsAt: attributes.renews_at || null,
+        endsAt: attributes.ends_at || null,
+      };
+    }
+    updateData = {
+      ...updateData,
+      lemonSqueezyEventAt: eventAt,
+      lemonSqueezyLastEvent: eventName,
       updatedAt: new Date().toISOString(),
     };
 
-    if (adminDb) {
-      await adminDb.collection("users").doc(userId).set(updateData, { merge: true });
-      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status}) via Admin SDK`);
-    } else if (db) {
-      console.warn("[LemonSqueezy Webhook] Admin SDK not configured, falling back to client SDK write.");
-      const userRef = doc(db, "users", userId);
-      await setDoc(userRef, updateData, { merge: true });
-      console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status}) via client SDK fallback`);
-    } else {
-      console.error("[LemonSqueezy Webhook] Neither Admin SDK nor client DB is available!");
+    // Plan fields are server-only under firestore.rules, so only the Admin SDK can persist them.
+    // Return 503 so Lemon Squeezy retries once the server is configured (audit M-1).
+    if (!adminDb) {
+      console.error("[LemonSqueezy Webhook] Firebase Admin is not configured; cannot persist subscription.");
       return NextResponse.json(
         { error: "Database service unavailable to persist subscription" },
         { status: 503 }
       );
     }
 
+    // Apply only if this event is not older than the last one applied. Lemon Squeezy retries and does
+    // not guarantee ordering; re-delivering the same event rewrites identical data (idempotent).
+    const db = adminDb;
+    const userRef = db.collection("users").doc(userId);
+    const outcome = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(userRef);
+      const lastAppliedAt = snap.get("lemonSqueezyEventAt") as string | undefined;
+      if (lastAppliedAt && Date.parse(lastAppliedAt) > Date.parse(eventAt)) {
+        return "stale" as const;
+      }
+      tx.set(userRef, updateData, { merge: true });
+      return "applied" as const;
+    });
+
+    if (outcome === "stale") {
+      console.log(`[LemonSqueezy Webhook] Ignored stale ${eventName} for user ${userId} (event at ${eventAt})`);
+      return NextResponse.json({ received: true, ignored: true, note: "Stale event" });
+    }
+
+    console.log(`[LemonSqueezy Webhook] Updated user ${userId} plan to ${finalPlan} (status: ${status})`);
     return NextResponse.json({
       received: true,
       event: eventName,

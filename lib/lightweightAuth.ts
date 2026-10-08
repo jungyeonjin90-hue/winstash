@@ -6,6 +6,8 @@ export interface DecodedFirebaseToken {
   [key: string]: unknown;
 }
 
+const CLOCK_SKEW_SEC = 60;
+
 // In-memory cache for Google x509 public certificates
 let cachedCertificates: Record<string, string> | null = null;
 let certsExpiryTime = 0;
@@ -80,6 +82,7 @@ export async function verifyFirebaseIdTokenLightweight(
     sub?: string;
     exp?: number;
     iat?: number;
+    auth_time?: number;
     email?: string;
     [key: string]: unknown;
   };
@@ -91,14 +94,15 @@ export async function verifyFirebaseIdTokenLightweight(
 
   const nowSec = Math.floor(Date.now() / 1000);
 
-  // Check expiration (allow 5 min clock skew)
-  if (!payload.exp || payload.exp < nowSec - 300) {
+  // Check expiration / issued-at with a small clock-skew allowance (audit H-4: was 5 minutes)
+  if (typeof payload.exp !== "number" || payload.exp < nowSec - CLOCK_SKEW_SEC) {
     throw new Error("Firebase ID token has expired");
   }
-
-  // Check issued at (allow 5 min future clock skew)
-  if (!payload.iat || payload.iat > nowSec + 300) {
+  if (typeof payload.iat !== "number" || payload.iat > nowSec + CLOCK_SKEW_SEC) {
     throw new Error("Firebase ID token issued in the future");
+  }
+  if (typeof payload.auth_time === "number" && payload.auth_time > nowSec + CLOCK_SKEW_SEC) {
+    throw new Error("Firebase ID token has an auth_time in the future");
   }
 
   // Check sub (UID)
@@ -106,20 +110,22 @@ export async function verifyFirebaseIdTokenLightweight(
     throw new Error("Firebase ID token has no subject (uid)");
   }
 
-  // Check Project ID / Audience
+  // Check Project ID / Audience. Without a project ID we cannot tell our tokens from tokens minted by
+  // ANY other Firebase project, so refuse instead of skipping the check (audit H-4).
   const targetProject =
     expectedProjectId ||
     process.env.FIREBASE_PROJECT_ID ||
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  if (targetProject) {
-    if (payload.aud !== targetProject) {
-      throw new Error(`Firebase ID token audience mismatch: expected ${targetProject}, got ${payload.aud}`);
-    }
-    const expectedIssuer = `https://securetoken.google.com/${targetProject}`;
-    if (payload.iss !== expectedIssuer) {
-      throw new Error(`Firebase ID token issuer mismatch: expected ${expectedIssuer}, got ${payload.iss}`);
-    }
+  if (!targetProject) {
+    throw new Error("Firebase project ID is not configured; refusing to verify ID tokens");
+  }
+  if (payload.aud !== targetProject) {
+    throw new Error(`Firebase ID token audience mismatch: expected ${targetProject}, got ${payload.aud}`);
+  }
+  const expectedIssuer = `https://securetoken.google.com/${targetProject}`;
+  if (payload.iss !== expectedIssuer) {
+    throw new Error(`Firebase ID token issuer mismatch: expected ${expectedIssuer}, got ${payload.iss}`);
   }
 
   // 3. Fetch Google public certificate and verify RS256 signature

@@ -3,7 +3,6 @@ import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode, 
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { adminDb } from "@/lib/firebaseAdmin";
-import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
@@ -334,6 +333,8 @@ function generateFallbackOutputEn(
 }
 
 export async function POST(req: NextRequest) {
+  // Set once a quota unit is reserved; returned if the request fails without delivering a result.
+  let refundQuota: (() => Promise<void>) | undefined;
   try {
     // 1. IP Rate Limiting Guardrail (Max 12 requests per minute per IP)
     const clientIp = getClientIp(req);
@@ -378,9 +379,6 @@ export async function POST(req: NextRequest) {
       industry,
       region,
       provider = "gemini",
-      isCreditExhausted = false,
-      isGlobalCapExhausted = false,
-      isGlobalExhausted = false,
       record_id,
       target_week,
       record_date,
@@ -403,21 +401,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (isGlobalCapExhausted || isGlobalExhausted) {
-      return NextResponse.json(
-        { error: "The global promotional free quota (10,000 requests) has been exhausted." },
-        { status: 403 }
-      );
+    // 3. Atomically reserve one credit (per-user + global kill switch) before the paid AI call
+    const reservation = await quotaCheck.reserve!();
+    if (!reservation.ok) {
+      return NextResponse.json({ error: reservation.error }, { status: reservation.status });
     }
-    if (isCreditExhausted) {
-      return NextResponse.json(
-        { error: `You have used all ${MAX_USER_FREE_CREDITS} free transformations. Please upgrade to WinStash Pro for unlimited access.` },
-        { status: 403 }
-      );
-    }
+    refundQuota = reservation.refund;
 
     /**
-     * Helper to atomically persist record into Firestore server-side and deduct credit.
+     * Helper to atomically persist record into Firestore server-side (credit was reserved above).
      * Ensures 100% completion even if the user abruptly closes browser tab!
      */
     const persistAndBuildResponse = async (output: TransformationOutput) => {
@@ -464,7 +456,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      await quotaCheck.deduct?.();
       return NextResponse.json({ ...output, record: newRecord });
     };
 
@@ -544,6 +535,7 @@ export async function POST(req: NextRequest) {
     );
     return await persistAndBuildResponse(fallback);
   } catch (error) {
+    await refundQuota?.();
     console.error("Transform API Error (Global EN):", error);
     return NextResponse.json(
       { error: "An unexpected error occurred during transformation." },

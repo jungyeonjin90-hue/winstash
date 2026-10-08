@@ -9,7 +9,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "firebase emulators:exec --only firestore,auth --project demo-winstash-e2e \"playwright test\"",
+    "test:e2e:api": "firebase emulators:exec --only firestore,auth --project demo-winstash-e2e \"playwright test --project=api\"",
+    "test:e2e:ui": "playwright test --project=ui",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-winstash-rules \"node --test --test-reporter=spec tests/rules/firestore.rules.test.mjs\"",
+    "test": "npm run test:unit && npm run test:rules && npm run test:e2e",
+    "test:unit": "node --experimental-strip-types --no-warnings --test --test-reporter=spec tests/unit/server-auth.test.mjs"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
@@ -22,12 +28,15 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "firebase-tools": "^13.35.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

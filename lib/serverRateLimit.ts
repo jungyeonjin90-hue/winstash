@@ -40,6 +40,7 @@ export function checkServerRateLimit(
   limit: number = 10,
   windowMs: number = 60 * 1000
 ): RateLimitResult {
+  // `ip` is an opaque bucket key: a client IP, or "uid:<firebase uid>" for per-account limits.
   const effectiveIp = ip && ip.trim().length > 0 ? ip.trim() : "unknown-ip";
 
   const now = Date.now();
@@ -76,11 +77,20 @@ export function checkServerRateLimit(
 }
 
 /**
- * Extracts client IP securely from standard HTTP headers (Cloudflare, Vercel, Standard Proxies)
+ * Extracts the client IP from proxy headers.
+ *
+ * On Vercel, `x-real-ip` / `x-forwarded-for` are set by the platform edge and cannot be forged by the
+ * client. `cf-connecting-ip` is only trustworthy when every request really passes through Cloudflare;
+ * otherwise any client can send it and get a fresh rate-limit bucket per request (audit H-3).
+ * Opt in with TRUST_CF_CONNECTING_IP=true only behind Cloudflare.
+ *
+ * Note: without a trusted proxy in front (e.g. `next dev`), all of these headers are client-controlled.
  */
 export function getClientIp(req: Request): string {
-  const cfIp = req.headers.get("cf-connecting-ip");
-  if (cfIp) return cfIp.trim();
+  if (process.env.TRUST_CF_CONNECTING_IP === "true") {
+    const cfIp = req.headers.get("cf-connecting-ip");
+    if (cfIp) return cfIp.trim();
+  }
 
   const realIp = req.headers.get("x-real-ip");
   if (realIp) return realIp.trim();

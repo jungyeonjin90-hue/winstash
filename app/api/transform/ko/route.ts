@@ -177,6 +177,8 @@ function generateFallbackOutputKo(
 }
 
 export async function POST(req: NextRequest) {
+  // Set once a quota unit is reserved; returned if the request fails without delivering a result.
+  let refundQuota: (() => Promise<void>) | undefined;
   try {
     // 1. IP Rate Limiting Guardrail (Max 12 requests per minute per IP)
     const clientIp = getClientIp(req);
@@ -237,6 +239,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 3. AI 호출 전에 크레딧 1회를 원자적으로 예약 (개인 한도 + 전체 킬스위치)
+    const reservation = await quotaCheck.reserve!();
+    if (!reservation.ok) {
+      return NextResponse.json({ error: reservation.error }, { status: reservation.status });
+    }
+    refundQuota = reservation.refund;
+
     const apiKey =
       provider === "gemini"
         ? process.env.GEMINI_API_KEY
@@ -289,7 +298,6 @@ export async function POST(req: NextRequest) {
             if (text) {
               const parsed = JSON.parse(text) as TransformationOutput;
               if (parsed.weekly_report && parsed.brag_sheet_item && parsed.star_portfolio) {
-                await quotaCheck.deduct?.();
                 return NextResponse.json(parsed);
               }
             }
@@ -306,9 +314,9 @@ export async function POST(req: NextRequest) {
       job_role as JobRole,
       tone_manner as ToneManner
     );
-    await quotaCheck.deduct?.();
     return NextResponse.json(fallback);
   } catch (error) {
+    await refundQuota?.();
     console.error("Transform API Error (KO):", error);
     return NextResponse.json(
       { error: "변환 처리 중 예기치 못한 오류가 발생했습니다." },
