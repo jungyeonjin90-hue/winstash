@@ -25,9 +25,11 @@ export async function OPTIONS() {
  * Chrome extension memo submit.
  * Same guardrails as /api/transform: IP rate limit, verified Firebase token, server-side free quota
  * (new entries and edits share the 10 free credits, see lib/creditConfig.ts), and the memo length cap.
- * The credit is deducted only after the record is persisted.
+ * The credit is reserved atomically before the AI call and refunded if the record cannot be saved.
  */
 export async function POST(req: NextRequest) {
+  // Set once a quota unit is reserved; returned if the request fails without delivering a result.
+  let refundQuota: (() => Promise<void>) | undefined;
   try {
     // 1. IP rate limit (same budget as the web transform route)
     const rateLimit = checkServerRateLimit(getClientIp(req), 12, 60 * 1000);
@@ -73,7 +75,14 @@ export async function POST(req: NextRequest) {
     const jobRole = (typeof body.job_role === "string" ? body.job_role : "engineering") as JobRole;
     const toneManner = (typeof body.tone_manner === "string" ? body.tone_manner : "impact") as ToneManner;
 
-    // 4. AI 3-way transformation (weekly report, brag sheet, STAR portfolio)
+    // 4. Atomically reserve one credit (per-user + global kill switch) before the paid AI call
+    const reservation = await quotaCheck.reserve!();
+    if (!reservation.ok) {
+      return errorResponse(reservation.error, reservation.status);
+    }
+    refundQuota = reservation.refund;
+
+    // 5. AI 3-way transformation (weekly report, brag sheet, STAR portfolio)
     const transformation = await executeAiTransformation(memoText, jobRole, toneManner);
 
     const recordId = existingRecordId || `rec-${Date.now()}`;
@@ -91,9 +100,10 @@ export async function POST(req: NextRequest) {
       source: "chrome_extension",
     } as unknown as CareerRecord;
 
-    // 5. Persist (Admin SDK). Demo users are never written to Firestore.
+    // 6. Persist (Admin SDK). Demo users are never written to Firestore.
     if (!isDemo) {
       if (!adminDb) {
+        await refundQuota();
         return errorResponse("Server database is unavailable. Please try again later.", 503);
       }
       try {
@@ -105,12 +115,10 @@ export async function POST(req: NextRequest) {
           .set(JSON.parse(JSON.stringify(cleanRecord)), { merge: true });
       } catch (saveErr) {
         console.error("[Extension Submit API] Failed to save record:", saveErr);
+        await refundQuota();
         return errorResponse("Failed to save your record. No credit was used.", 503);
       }
     }
-
-    // 6. Deduct one free credit (no-op for Pro / admin / demo)
-    await quotaCheck.deduct?.();
 
     // Omitted when unknown so the extension keeps its last known balance instead of a wrong one.
     const credits = isDemo ? null : await getServerCreditStatus(userId, quotaCheck.userEmail);
@@ -120,6 +128,7 @@ export async function POST(req: NextRequest) {
       { headers: CORS_HEADERS }
     );
   } catch (err) {
+    await refundQuota?.();
     console.error("[Extension Submit API] Fatal error:", err);
     return errorResponse("Failed to process record", 500);
   }

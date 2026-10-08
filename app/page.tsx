@@ -437,8 +437,6 @@ export default function Home() {
           industry,
           region,
           provider: settings.provider,
-          isCreditExhausted: isPro ? false : Boolean(creditStatus?.isUserExhausted),
-          isGlobalExhausted: isPro ? false : Boolean(creditStatus?.isGlobalExhausted),
           record_id: proposedRecordId,
           target_week: finalTargetWeek,
           record_date: recordDate,

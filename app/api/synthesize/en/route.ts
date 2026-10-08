@@ -197,6 +197,8 @@ function attachSourceRecordsToItems(
 }
 
 export async function POST(req: NextRequest) {
+  // Set once a quota unit is reserved; returned if the request fails without delivering a result.
+  let refundQuota: (() => Promise<void>) | undefined;
   try {
     // 1. IP Rate Limiting Guardrail (Max 8 synthesis calls per minute per IP)
     const clientIp = getClientIp(req);
@@ -254,6 +256,13 @@ export async function POST(req: NextRequest) {
         { status: quotaCheck.status || 403 }
       );
     }
+
+    // 3. Atomically reserve one synthesis credit before the paid AI call
+    const reservation = await quotaCheck.reserve!();
+    if (!reservation.ok) {
+      return NextResponse.json({ error: reservation.error }, { status: reservation.status });
+    }
+    refundQuota = reservation.refund;
 
     /**
      * Atomically saves synthesized items into Firestore summary_cache collection server-side.
@@ -313,7 +322,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      await quotaCheck.deduct?.();
       return NextResponse.json({ items: itemsWithSources, entry: newEntry });
     };
 
@@ -416,6 +424,7 @@ export async function POST(req: NextRequest) {
       return await persistSummaryCacheAndBuildResponse(directItems.slice(0, scope));
     }
   } catch (error) {
+    await refundQuota?.();
     console.error("Synthesis API error:", error);
     return NextResponse.json(
       { error: "Failed to synthesize accomplishments" },
