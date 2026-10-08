@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Sparkles, CornerDownLeft, RotateCcw, ExternalLink, Zap, CheckCircle2, Info, LogOut, Loader2 } from "lucide-react";
+import { Sparkles, CornerDownLeft, RotateCcw, ExternalLink, Zap, CheckCircle2, Info, LogOut, Loader2, AlertCircle } from "lucide-react";
 import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
 import { isWeekMatch } from "./lib/weekMatch";
@@ -9,12 +9,6 @@ import {
   onAuthStateChanged,
   logoutUser,
   getAuthToken,
-  deductFreeCreditInFirestore,
-  subscribeToUserRecords,
-  fetchUserRecordsFromFirestore,
-  saveRecordToFirestore,
-  subscribeToUserCredits,
-  fetchUserCreditsFromFirestore,
 } from "./lib/firebase";
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
@@ -49,15 +43,17 @@ async function getApiBaseUrl(): Promise<string> {
 export default function App() {
   const [currentUser, setCurrentUser] = useState<{ uid: string; email: string } | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [dataFetchError, setDataFetchError] = useState<string | null>(null);
 
   const [selectedWeek, setSelectedWeek] = useState<WeekSpan>(getCurrentWeekSpanEn());
   const [records, setRecords] = useState<CareerRecord[]>([]);
   const [memo, setMemo] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState<{ type: "success" | "info"; message: string } | null>(null);
 
-  // Credit status (Admins are always Pro Unlimited; null during initial Firestore load)
+  // Credit status from backend API (null while loading)
   const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
 
   // Determine whether current user is Pro (Admin is always Pro Unlimited)
@@ -66,137 +62,118 @@ export default function App() {
     return Boolean(creditStatus?.isPro);
   }, [currentUser, creditStatus]);
 
-  // Helper: Find existing record for current selected week
+  // Find existing record for current selected week
   const existingRecord = useMemo(() => {
     return records.find((r) => isWeekMatch(r, selectedWeek));
   }, [records, selectedWeek]);
 
-  // Real Backend Data Loader (GET /api/extension/status) - only for syncing records
-  const fetchBackendData = useCallback(async (user?: { uid: string; email: string } | null) => {
-    const targetUser = user || currentUser;
-    if (!targetUser?.uid) return;
+  // 1. Single Unified Backend API Loader (GET /api/extension/status with 2s timeout)
+  const fetchStatusAndRecords = useCallback(async (user: { uid: string; email: string }) => {
+    setIsLoadingData(true);
+    setDataFetchError(null);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 2000); // 2-second strict timeout to eliminate infinite spinning!
 
     try {
       const token = await getAuthToken();
-      if (!token) return;
+      if (!token) {
+        clearTimeout(timeoutId);
+        setIsLoadingData(false);
+        return;
+      }
 
       const baseUrl = await getApiBaseUrl();
       const res = await fetch(`${baseUrl}/api/extension/status`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
-          // IMPORTANT: Credits are strictly managed via Firestore onSnapshot (Source of Truth).
-          // Do NOT overwrite creditStatus here to eliminate race condition flickering!
-          if (Array.isArray(json.records) && json.records.length > 0) {
-            setRecords(json.records);
+          // 1. Bind Credits immediately
+          if (json.credits) {
+            setCreditStatus(json.credits);
           }
-        }
-      }
-    } catch (e) {
-      console.warn("[WinStash Extension] Backend status fetch error:", e);
-    }
-  }, [currentUser]);
 
-  // 1. Initial Authentication & Firestore Direct Subscription (Source of Truth)
+          // 2. Bind Records and populate current week rawNote
+          if (Array.isArray(json.records)) {
+            setRecords(json.records);
+            const currentMatch = json.records.find((r: any) => isWeekMatch(r, selectedWeek));
+            if (currentMatch) {
+              const note = currentMatch.rawNote || currentMatch.raw_memo || "";
+              setMemo(note);
+            } else {
+              const draft = localStorage.getItem(STORAGE_KEY_DRAFT);
+              if (draft) setMemo(draft);
+            }
+          }
+        } else {
+          setDataFetchError(json.error || "Failed to load latest vault data.");
+        }
+      } else {
+        setDataFetchError("Server busy. You can still type notes offline.");
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        console.warn("[WinStash Extension] API timeout after 2000ms. Released loading.");
+        setDataFetchError("Sync timed out (2s). You can still write and save notes.");
+      } else {
+        console.warn("[WinStash Extension] API fetch notice:", err);
+        setDataFetchError("Network notice. You can still write and save notes.");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setIsLoadingData(false);
+      setIsAuthChecking(false);
+    }
+  }, [selectedWeek]);
+
+  // 2. Initial Auth Setup & Single API Call
   useEffect(() => {
     let isMounted = true;
-    let unsubFirestoreRecords: (() => void) | null = null;
-    let unsubFirestoreCredits: (() => void) | null = null;
 
-    // 0. Immediate local storage cache restore (0ms instant UI display for records only)
+    // Check chrome.storage.local bridge session first
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(
-        [
-          STORAGE_KEY_LOGGED_OUT,
-          STORAGE_KEY_USER,
-          "winstash_ext_records",
-        ],
-        (res: any) => {
-          if (!isMounted) return;
-          if (Array.isArray(res?.winstash_ext_records) && res.winstash_ext_records.length > 0) {
-            setRecords(res.winstash_ext_records);
-          }
-          if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
-            const bridgedUser = res[STORAGE_KEY_USER];
-            setCurrentUser(bridgedUser);
-            setIsAuthChecking(false);
-            attachFirestore(bridgedUser.uid, bridgedUser.email);
-          }
+      chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: any) => {
+        if (!isMounted) return;
+        if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
+          const bridgedUser = res[STORAGE_KEY_USER];
+          setCurrentUser(bridgedUser);
+          setIsAuthChecking(false);
+          fetchStatusAndRecords(bridgedUser);
         }
-      );
+      });
     }
 
-    const attachFirestore = (userId: string, userEmail?: string | null) => {
-      if (unsubFirestoreRecords) {
-        unsubFirestoreRecords();
-        unsubFirestoreRecords = null;
-      }
-      if (unsubFirestoreCredits) {
-        unsubFirestoreCredits();
-        unsubFirestoreCredits = null;
-      }
-
-      // 1. Live Firestore Subscription (Direct DB connection to users/{uid}/records)
-      unsubFirestoreRecords = subscribeToUserRecords(userId, (freshRecords) => {
-        if (!isMounted) return;
-        setRecords(freshRecords);
-        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.set({ winstash_ext_records: freshRecords });
-        }
-      });
-
-      // 2. Direct Firestore Fetch (Immediate query)
-      fetchUserRecordsFromFirestore(userId).then((freshRecords) => {
-        if (!isMounted) return;
-        if (freshRecords.length > 0) {
-          setRecords(freshRecords);
-          if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.set({ winstash_ext_records: freshRecords });
-          }
-        }
-      });
-
-      // 3. Live Firestore Credits Subscription - SOLE SOURCE OF TRUTH
-      unsubFirestoreCredits = subscribeToUserCredits(userId, userEmail, (freshCredits) => {
-        if (!isMounted) return;
-        setCreditStatus(freshCredits);
-      });
-
-      // 4. Direct Firestore Credit Fetch (Immediate 1-time fetch on mount)
-      fetchUserCreditsFromFirestore(userId, userEmail).then((freshCredits) => {
-        if (!isMounted) return;
-        setCreditStatus(freshCredits);
-      });
-    };
-
-    // Listen to Firebase Auth state directly
+    // Listen to Firebase Auth state
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       if (!isMounted) return;
       if (fbUser) {
         const userData = { uid: fbUser.uid, email: fbUser.email || "" };
         setCurrentUser(userData);
         setIsAuthChecking(false);
-        attachFirestore(userData.uid, userData.email);
-        fetchBackendData(userData);
+        fetchStatusAndRecords(userData);
       } else {
-        // Fallback: check chrome.storage.local bridge session
         if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
           chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: any) => {
             if (!isMounted) return;
             if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
               const bridgedUser = res[STORAGE_KEY_USER];
               setCurrentUser(bridgedUser);
-              attachFirestore(bridgedUser.uid, bridgedUser.email);
-              fetchBackendData(bridgedUser);
+              setIsAuthChecking(false);
+              fetchStatusAndRecords(bridgedUser);
             } else {
               setCurrentUser(null);
+              setIsAuthChecking(false);
             }
-            setIsAuthChecking(false);
           });
         } else {
           setIsAuthChecking(false);
@@ -220,12 +197,10 @@ export default function App() {
     return () => {
       isMounted = false;
       unsubAuth();
-      if (unsubFirestoreRecords) unsubFirestoreRecords();
-      if (unsubFirestoreCredits) unsubFirestoreCredits();
     };
-  }, [fetchBackendData]);
+  }, [fetchStatusAndRecords]);
 
-  // 2. Handle successful login callback
+  // 3. Login callback
   const handleLoginSuccess = useCallback((authData: any) => {
     if (authData?.uid) {
       const user = { uid: authData.uid, email: authData.email || "" };
@@ -234,16 +209,16 @@ export default function App() {
         chrome.storage.local.remove([STORAGE_KEY_LOGGED_OUT]);
         chrome.storage.local.set({ [STORAGE_KEY_USER]: user });
       }
-      fetchBackendData(user);
+      fetchStatusAndRecords(user);
       setStatusFeedback({
         type: "success",
         message: `Connected as ${user.email}!`,
       });
       setTimeout(() => setStatusFeedback(null), 3000);
     }
-  }, [fetchBackendData]);
+  }, [fetchStatusAndRecords]);
 
-  // 3. Update textarea content when selectedWeek or records from Firestore change
+  // 4. Update textarea content when selectedWeek or records change
   useEffect(() => {
     const match = records.find((r) => isWeekMatch(r, selectedWeek));
     if (match) {
@@ -254,7 +229,8 @@ export default function App() {
       setMemo(savedDraft || "");
     }
   }, [selectedWeek, records]);
-  // 4. Draft memo change handler
+
+  // 5. Draft memo change handler
   const handleMemoChange = (newText: string) => {
     setMemo(newText);
     try {
@@ -285,6 +261,7 @@ export default function App() {
     setMemo("");
     setCreditStatus(null);
     setStatusFeedback(null);
+    setDataFetchError(null);
     try {
       localStorage.removeItem(STORAGE_KEY_DRAFT);
     } catch {}
@@ -328,10 +305,10 @@ export default function App() {
     executeTransform();
   };
 
-  // Real Backend API Submitter (POST /api/extension/submit)
+  // Single Backend API Submitter (POST /api/extension/submit)
   const executeTransform = async () => {
     if (!memo.trim() || !currentUser) return;
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       const token = await getAuthToken();
@@ -341,44 +318,6 @@ export default function App() {
         return;
       }
 
-      const recordId = existingRecord ? existingRecord.id : `rec-${Date.now()}`;
-      const preliminaryRecord: CareerRecord = {
-        id: recordId,
-        createdAt: existingRecord?.createdAt || new Date().toISOString(),
-        target_week: selectedWeek,
-        raw_memo: memo.trim(),
-        rawNote: memo.trim(),
-        weekly_report: existingRecord?.weekly_report || {
-          done: [memo.trim()],
-          in_progress: [],
-          next_week: [],
-        },
-        brag_sheet_item: existingRecord?.brag_sheet_item || {
-          metric_summary: memo.trim().slice(0, 80),
-          business_impact: "Updated via WinStash Quick Log",
-          quarter: `${selectedWeek.year}-Q${Math.ceil(selectedWeek.month / 3)}`,
-        },
-        star_portfolio: existingRecord?.star_portfolio || {
-          title: `${selectedWeek.label} Record`,
-          situation: memo.trim(),
-          task: "Execution",
-          action: memo.trim(),
-          result: "Completed",
-          nda_tags: ["#CareerRecord"],
-        },
-        jobRole: "engineering",
-        toneManner: "impact",
-        source: "chrome_extension",
-      };
-
-      // 1. Direct Firestore save (Immediate persistence in cloud DB)
-      try {
-        await saveRecordToFirestore(currentUser.uid, preliminaryRecord);
-      } catch (fsErr) {
-        console.warn("[Extension] Direct Firestore save notice:", fsErr);
-      }
-
-      // 2. Call backend for server-side AI 3-Way synthesis
       const baseUrl = await getApiBaseUrl();
       const res = await fetch(`${baseUrl}/api/extension/submit`, {
         method: "POST",
@@ -407,23 +346,12 @@ export default function App() {
         // 1. Update records in state with full AI-synthesized record
         setRecords((prev) => [json.record, ...prev.filter((r) => r.id !== json.record.id)]);
 
-        // 2. Direct Firestore save of the full AI-synthesized record
-        try {
-          await saveRecordToFirestore(currentUser.uid, json.record);
-        } catch {}
-
-        // 3. Deduct credit in Firestore if updating existing record as free user
-        // The live Firestore subscription (subscribeToUserCredits) will automatically update the credit state!
-        const shouldDeduct = Boolean(existingRecord && !isUserPro);
-        if (shouldDeduct && currentUser?.uid) {
-          try {
-            await deductFreeCreditInFirestore(currentUser.uid);
-          } catch (deductErr) {
-            console.warn("[Extension] Credit deduct in Firestore error:", deductErr);
-          }
+        // 2. Update credits strictly from server canonical response
+        if (json.credits) {
+          setCreditStatus(json.credits);
         }
 
-        // 4. Clear draft memo
+        // 3. Clear draft memo
         try {
           localStorage.removeItem(STORAGE_KEY_DRAFT);
         } catch {}
@@ -432,7 +360,7 @@ export default function App() {
         const actionVerb = existingRecord ? "updated" : "saved";
         setStatusFeedback({
           type: "success",
-          message: `Successfully ${actionVerb} & synced to Firestore!`,
+          message: `Successfully ${actionVerb} & synced with AI!`,
         });
         setTimeout(() => setStatusFeedback(null), 3000);
       }
@@ -444,11 +372,11 @@ export default function App() {
       });
       setTimeout(() => setStatusFeedback(null), 3500);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  // 1. Initial Storage Check (resolves in ~1ms)
+  // Initial Auth Loading Screen (under 100ms)
   if (isAuthChecking) {
     return (
       <div className="w-full bg-zinc-900 text-zinc-100 p-8 flex flex-col items-center justify-center space-y-3 min-h-[360px]">
@@ -458,12 +386,12 @@ export default function App() {
     );
   }
 
-  // 2. Not logged in: Show clean Google Sign-in screen
+  // Not logged in: Show Google Sign-in screen
   if (!currentUser) {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // 3. Logged in: Main Full Vault Logger
+  // Main UI
   return (
     <div className="w-full bg-zinc-900 text-zinc-100 p-4 space-y-3 select-none">
       {/* 1. Header Row */}
@@ -485,22 +413,19 @@ export default function App() {
           {memo.length > 0 && (
             <button
               type="button"
-              onClick={() => setMemo("")}
-              className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1 transition-colors px-1 py-0.5 cursor-pointer mr-1"
+              onClick={() => handleMemoChange("")}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Clear text"
             >
-              <RotateCcw className="w-3 h-3" />
-              Clear
+              <RotateCcw className="w-3.5 h-3.5" />
             </button>
           )}
-          <span className={`text-xs font-mono mr-1 ${memo.length > 4500 ? "text-amber-400 font-semibold" : "text-zinc-400"}`}>
-            {memo.length.toLocaleString()} / 5,000 chars
-          </span>
 
           <button
             type="button"
             onClick={() => handleOpenWebApp("/")}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-400 hover:bg-zinc-800 transition-colors cursor-pointer"
             title="Open Web Dashboard"
-            className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
@@ -508,42 +433,58 @@ export default function App() {
           <button
             type="button"
             onClick={handleLogout}
-            title="Sign out of WinStash"
-            className="p-1.5 text-zinc-400 hover:text-rose-400 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors cursor-pointer"
+            title="Log out"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* 2. Target Week Selector Bar */}
-      <WeekPickerEn
-        selectedWeek={selectedWeek}
-        onWeekChange={setSelectedWeek}
-        existingRecords={records}
-      />
+      {/* 2. Week Picker Row */}
+      <div className="flex items-center justify-between gap-2">
+        <WeekPickerEn
+          selectedWeek={selectedWeek}
+          onWeekSelect={(w) => setSelectedWeek(w)}
+          existingRecords={records}
+        />
+        {existingRecord && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/80 text-[11px] font-semibold shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Logged</span>
+          </span>
+        )}
+      </div>
 
-      {/* 3. Textarea Container */}
-      <div className="relative border border-zinc-700/80 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all bg-zinc-950/70">
+      {/* Connection Notice banner (if timeout or network notice) */}
+      {dataFetchError && (
+        <div className="flex items-center gap-1.5 p-2 rounded-xl bg-amber-950/50 border border-amber-800/50 text-[11px] text-amber-300">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">{dataFetchError}</span>
+        </div>
+      )}
+
+      {/* 3. Textarea Input Card */}
+      <div className="relative rounded-2xl bg-zinc-950/90 border border-zinc-800/80 focus-within:border-indigo-500/80 transition-colors shadow-inner">
         <textarea
           value={memo}
           onChange={(e) => handleMemoChange(e.target.value)}
-          maxLength={5000}
-          autoFocus
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
               handleSubmitClick();
             }
           }}
-          placeholder="e.g. Hotfixed payment gateway timeouts by tuning HikariCP connection pool and deploying Redis caching. Cut p99 latency from 1.2s to 85ms (-93%). Zero dropped transactions during peak sale. Next week: Grafana alerts."
-          className="w-full h-32 p-3.5 text-xs bg-transparent placeholder:text-zinc-500 focus:outline-none resize-none leading-relaxed text-zinc-100"
+          placeholder="Brain-dump what you shipped, fixed, or unblocked this week. AI will synthesize it into 3 drawers automatically..."
+          rows={7}
+          className="w-full p-3.5 bg-transparent text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none resize-none leading-relaxed"
         />
 
-        {/* Bottom Toolbar inside input */}
-        <div className="flex items-center justify-between px-3 py-2 border-t border-zinc-800 bg-zinc-900/90 backdrop-blur-xs rounded-b-2xl">
+        {/* Bottom Bar: Character count, Credits info & Action Button */}
+        <div className="flex items-center justify-between px-3 py-2 border-t border-zinc-800/60 bg-zinc-900/60 rounded-b-2xl">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-zinc-400 font-mono">
-              Press ⌘/Ctrl+Enter to submit
+            <span className="text-[10px] text-zinc-500 font-mono">
+              {memo.length} chars
             </span>
           </div>
 
@@ -552,6 +493,11 @@ export default function App() {
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-800/80 text-[11px] font-bold">
                 <Sparkles className="w-3 h-3 animate-spin-slow" />
                 <span>Pro Unlimited</span>
+              </span>
+            ) : isLoadingData && !creditStatus ? (
+              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 font-medium">
+                <Loader2 className="w-3 h-3 animate-spin text-zinc-500" />
+                <span>Syncing...</span>
               </span>
             ) : creditStatus ? (
               <span className="text-[11px] text-zinc-400 font-medium">
@@ -562,9 +508,7 @@ export default function App() {
                 )}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 font-medium">
-                <Loader2 className="w-3 h-3 animate-spin text-zinc-500" />
-              </span>
+              <span className="text-[11px] text-zinc-500 font-medium">10/10 free left</span>
             )}
 
             {!isUserPro && creditStatus && creditStatus.isUserExhausted ? (
@@ -580,10 +524,10 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleSubmitClick}
-                disabled={!memo.trim() || isLoading}
+                disabled={!memo.trim() || isSubmitting}
                 className="flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white shadow-md shadow-indigo-600/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <span>Processing...</span>
                 ) : (
                   <>
@@ -628,7 +572,7 @@ export default function App() {
           setIsModalOpen(false);
           handleOpenWebApp("/pricing");
         }}
-        isLoading={isLoading}
+        isLoading={isSubmitting}
       />
     </div>
   );

@@ -112,10 +112,16 @@ export async function GET(req: NextRequest) {
           .limit(30)
           .get();
 
-        records = snap.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        })) as CareerRecord[];
+        records = (snap.docs.map((docSnap) => {
+          const d = docSnap.data();
+          const note = d.rawNote || d.raw_memo || "";
+          return {
+            id: docSnap.id,
+            ...d,
+            rawNote: note,
+            raw_memo: note,
+          };
+        }) as unknown) as CareerRecord[];
       } catch (dbErr) {
         console.warn("[Extension Status API] adminDb fetch error:", dbErr);
       }
@@ -127,12 +133,61 @@ export async function GET(req: NextRequest) {
         const recordsRef = collection(db, "users", userId, "records");
         const q = query(recordsRef, orderBy("createdAt", "desc"), limit(30));
         const snap = await getDocs(q);
-        records = snap.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        })) as CareerRecord[];
+        records = (snap.docs.map((docSnap) => {
+          const d = docSnap.data();
+          const note = d.rawNote || d.raw_memo || "";
+          return {
+            id: docSnap.id,
+            ...d,
+            rawNote: note,
+            raw_memo: note,
+          };
+        }) as unknown) as CareerRecord[];
       } catch (clientErr) {
         console.warn("[Extension Status API] clientDb fetch error:", clientErr);
+      }
+    }
+
+    // Secondary fallback using Firestore REST API with Bearer token
+    if (records.length === 0) {
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "careerpulse-c2213";
+      try {
+        const recordsRestRes = await fetch(
+          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}/records?pageSize=30`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (recordsRestRes.ok) {
+          const rJson = await recordsRestRes.json();
+          if (Array.isArray(rJson.documents)) {
+            records = rJson.documents.map((doc: any) => {
+              const id = doc.name.split("/").pop();
+              const fields = doc.fields || {};
+              const rawMemo = fields.raw_memo?.stringValue || fields.rawNote?.stringValue || "";
+              const createdAt = fields.createdAt?.stringValue || "";
+              let target_week = undefined;
+              if (fields.target_week?.mapValue?.fields) {
+                const tw = fields.target_week.mapValue.fields;
+                target_week = {
+                  year: parseInt(tw.year?.integerValue || "0", 10),
+                  month: parseInt(tw.month?.integerValue || "0", 10),
+                  weekOfMonth: parseInt(tw.weekOfMonth?.integerValue || "0", 10),
+                  label: tw.label?.stringValue || "",
+                  startDate: tw.startDate?.stringValue || "",
+                  endDate: tw.endDate?.stringValue || "",
+                };
+              }
+              return ({
+                id,
+                createdAt,
+                target_week,
+                raw_memo: rawMemo,
+                rawNote: rawMemo,
+              } as unknown) as CareerRecord;
+            });
+          }
+        }
+      } catch (restErr) {
+        console.warn("[Extension Status API] REST records fallback notice:", restErr);
       }
     }
 
