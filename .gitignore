@@ -49,3 +49,10 @@ extension/node_modules/
 extension/dist/
 extension/package-lock.json
 
+
+# e2e / emulator artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+firestore-debug.log
+firebase-debug.log
