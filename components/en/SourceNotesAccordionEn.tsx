@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Calendar, Briefcase, Sparkles, Clock, ArrowDown } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar, ArrowDown } from "lucide-react";
 import { SourceRecordContext, CareerRecord, JobRole, ToneManner } from "@/types/career";
 
 const ROLE_LABELS: Record<string, { label: string; icon: string }> = {

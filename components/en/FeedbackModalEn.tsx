@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Bug, Lightbulb, MessageSquare, Send, CheckCircle2, Loader2, Laptop, ShieldCheck } from "lucide-react";
+import { X, Bug, Lightbulb, MessageSquare, Send, CheckCircle2, Loader2, Laptop } from "lucide-react";
 import { FeedbackType } from "@/types/career";
 import { FEEDBACK_LIMITS, submitFeedbackToFirestore } from "@/lib/firestoreService";
 import { useAuth } from "@/context/AuthContext";
@@ -28,9 +28,12 @@ export function FeedbackModalEn({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // 모달이 열릴 때 초기화 및 Escape 키 리스너 등록
-  useEffect(() => {
-    if (isOpen) {
+  // 모달이 열릴 때(또는 열린 상태에서 initialType/이메일이 바뀔 때) 렌더 중 초기화
+  const resetKey = isOpen ? `${initialType}|${user?.email ?? ""}` : null;
+  const [appliedResetKey, setAppliedResetKey] = useState<string | null>(null);
+  if (appliedResetKey !== resetKey) {
+    setAppliedResetKey(resetKey);
+    if (resetKey !== null) {
       setType(initialType);
       setTitle("");
       setMessage("");
@@ -38,7 +41,7 @@ export function FeedbackModalEn({
       setIsSubmitting(false);
       setIsSuccess(false);
     }
-  }, [isOpen, initialType, user?.email]);
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

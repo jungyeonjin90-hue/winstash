@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Mic, MicOff, Sparkles, CornerDownLeft, RotateCcw, Lightbulb, Zap } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { WeekSpan, CareerRecord } from "@/types/career";
+import { WeekSpan, CareerRecord, JobRole, ToneManner } from "@/types/career";
 import { getCurrentWeekSpan } from "@/lib/weekUtils";
 import { WeekPicker } from "./WeekPicker";
 import { CreditStatus } from "@/lib/creditService";
@@ -12,8 +12,8 @@ interface QuickLoggerProps {
   onTransform: (
     rawMemo: string,
     targetWeek?: WeekSpan,
-    role?: any,
-    tone?: any,
+    role?: JobRole,
+    tone?: ToneManner,
     existingRecordId?: string
   ) => Promise<void>;
   isLoading: boolean;
@@ -104,13 +104,14 @@ export function QuickLogger({
     return false;
   });
 
-  useEffect(() => {
-    if (existingRecord) {
-      setMemo(existingRecord.raw_memo);
-    } else {
-      setMemo("");
-    }
-  }, [selectedWeek.year, selectedWeek.month, selectedWeek.weekOfMonth, existingRecord?.id, existingRecord?.raw_memo]);
+  // Adjusted during render (React's "reset state when a prop changes" pattern); the initial null
+  // makes the first render load the current week's memo, like the former mount effect did.
+  const memoSourceKey = `${selectedWeek.year}-${selectedWeek.month}-${selectedWeek.weekOfMonth}|${existingRecord?.id ?? ""}|${existingRecord?.raw_memo ?? ""}`;
+  const [loadedMemoKey, setLoadedMemoKey] = useState<string | null>(null);
+  if (loadedMemoKey !== memoSourceKey) {
+    setLoadedMemoKey(memoSourceKey);
+    setMemo(existingRecord ? existingRecord.raw_memo : "");
+  }
 
   // 작성 중인 메모가 있을 때 브라우저 뒤로가기나 탭 종료 방지
   useEffect(() => {

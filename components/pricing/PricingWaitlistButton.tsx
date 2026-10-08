@@ -73,9 +73,9 @@ export function PricingWaitlistButton() {
       });
 
       setIsSuccess(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error("[Waitlist Error] Failed to join waitlist:", err);
-      if (err?.code === "permission-denied") {
+      if ((err as { code?: string } | null)?.code === "permission-denied") {
         console.error("Firestore Security Rules permission-denied: Check pro_waitlist rules in Firebase Console.");
       }
       setIsSuccess(true);

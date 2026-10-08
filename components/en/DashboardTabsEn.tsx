@@ -25,6 +25,14 @@ interface DashboardTabsEnProps {
 
 export type TabType = "weekly" | "brag" | "vault" | "archive";
 
+const VALID_TABS: TabType[] = ["weekly", "brag", "vault", "archive"];
+
+function readTabFromUrl(): TabType {
+  if (typeof window === "undefined") return "weekly";
+  const tabParam = new URLSearchParams(window.location.search).get("tab") as TabType | null;
+  return tabParam && VALID_TABS.includes(tabParam) ? tabParam : "weekly";
+}
+
 export function DashboardTabsEn({
   records,
   activeRecordId,
@@ -37,36 +45,20 @@ export function DashboardTabsEn({
   onJobRoleChange,
   onToneMannerChange,
 }: DashboardTabsEnProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("weekly");
+  // 1. Initial tab from the URL. The dashboard only mounts on the client (after sign-in), so reading
+  //    window.location in the initializer cannot cause a hydration mismatch.
+  const [activeTab, setActiveTab] = useState<TabType>(readTabFromUrl);
 
   // Automatically switch tab to weekly snippets when user creates or updates a record
+  // (adjusted during render when activeRecordId changes).
+  const [seenActiveRecordId, setSeenActiveRecordId] = useState(activeRecordId);
+  if (seenActiveRecordId !== activeRecordId) {
+    setSeenActiveRecordId(activeRecordId);
+    if (activeRecordId) setActiveTab("weekly");
+  }
+
+  // 2. Synchronize activeTab with browser history (Back / Forward navigation)
   useEffect(() => {
-    if (activeRecordId) {
-      setActiveTab("weekly");
-    }
-  }, [activeRecordId]);
-
-  // Synchronize activeTab with URL search params and browser history (Back/Forward navigation)
-  useEffect(() => {
-    const validTabs: TabType[] = ["weekly", "brag", "vault", "archive"];
-
-    const readTabFromUrl = (): TabType => {
-      if (typeof window === "undefined") return "weekly";
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get("tab") as TabType | null;
-      if (tabParam && validTabs.includes(tabParam)) {
-        return tabParam;
-      }
-      return "weekly";
-    };
-
-    // 1. Initial sync on mount
-    const initialTab = readTabFromUrl();
-    if (initialTab !== "weekly") {
-      setActiveTab(initialTab);
-    }
-
-    // 2. Handle browser Back / Forward buttons
     const handlePopState = (e: PopStateEvent) => {
       // If the popped state was a modal, let modal listener handle it
       if (e.state?.modal) return;
@@ -94,9 +86,6 @@ export function DashboardTabsEn({
       window.history.pushState({ tab }, "", url.toString());
     }
   };
-
-  // Most recent record
-  const latestRecord = records[0];
 
   return (
     <div className="space-y-6">

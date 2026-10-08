@@ -57,14 +57,17 @@ export function UpgradeModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
+  // Reset the waitlist form whenever the modal closes (adjusted during render)
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
     if (!isOpen) {
       setIsWaitlistSubmitting(false);
       setIsWaitlistSuccess(false);
       setCustomEmail("");
       setWaitlistError(null);
     }
-  }, [isOpen]);
+  }
 
   const handleJoinWaitlist = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -124,10 +127,10 @@ export function UpgradeModal({
       });
 
       setIsWaitlistSuccess(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error("[Waitlist Error] Failed to join waitlist:", err);
       // Firebase 보안 규칙 오류(PERMISSION_DENIED) 등 원인 파악을 위해 상세 메시지 기록
-      if (err?.code === "permission-denied") {
+      if ((err as { code?: string } | null)?.code === "permission-denied") {
         console.error("Firestore Security Rules permission-denied: Check pro_waitlist rules in Firebase Console.");
       }
       setIsWaitlistSuccess(true);

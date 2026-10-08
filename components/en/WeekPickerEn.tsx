@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
 import { WeekSpan, CareerRecord } from "@/types/career";
 import { getWeeksForMonthEn, formatWeekDateRangeEn } from "@/lib/weekUtilsEn";

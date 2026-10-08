@@ -39,6 +39,8 @@ export interface CareerRecord {
   createdAt: string;
   target_week?: WeekSpan;
   raw_memo: string;
+  /** Same text as raw_memo; the extension API returns both field names. */
+  rawNote?: string;
   weekly_report?: WeeklyReport;
   brag_sheet_item?: BragSheetItem;
   star_portfolio?: StarPortfolio;

@@ -118,7 +118,6 @@ export async function getCreditStatus(
           planStatus === "on_trial" ||
           planStatus === "paid" ||
           (planStatus === "cancelled" && endsAt > Date.now()));
-      const plan: UserPlan = isPro ? "pro" : "free";
 
       // 1-2. 개인 변환 사용량 조회 (서버 경로 및 클라이언트 직기록 경로 모두 합산/최대치 통합)
       const userDocFreeCount = (userData?.freeUsedCount as number) || 0;

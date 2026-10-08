@@ -9,8 +9,7 @@ import {
   ShieldCheck,
   CreditCard,
   RotateCcw,
-  Zap,
-} from "lucide-react";
+  } from "lucide-react";
 import { PRO_PRICE_USD } from "@/lib/lemonSqueezyConfig";
 
 export const metadata: Metadata = {

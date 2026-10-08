@@ -16,7 +16,7 @@
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         }
       }
-    } catch (e) {}
+    } catch {}
     return [];
   }
 
@@ -24,7 +24,7 @@
     try {
       const cache = localStorage.getItem("winstash_latest_credit_cache");
       if (cache) return JSON.parse(cache);
-    } catch (e) {}
+    } catch {}
     return null;
   }
 
@@ -34,7 +34,7 @@
         if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
           chrome.runtime.sendMessage({ type: "CLOSE_EXTENSION_CONNECT_WINDOW" });
         }
-      } catch (e) {}
+      } catch {}
     }
   }
 
@@ -107,7 +107,7 @@
           return;
         }
       }
-    } catch (e) {}
+    } catch {}
   }
 
   // Initial check on load

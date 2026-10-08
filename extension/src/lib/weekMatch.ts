@@ -7,11 +7,14 @@ import { WeekSpan, CareerRecord } from "../types/career";
  * 2. Exact startDate & endDate
  * 3. Overlapping date range via record createdAt or startDate
  */
-export function isWeekMatch(recOrWeek: any, week: WeekSpan): boolean {
+/** A CareerRecord (with target_week / createdAt) or a bare WeekSpan. */
+type WeekMatchInput = Partial<CareerRecord> & Partial<WeekSpan>;
+
+export function isWeekMatch(recOrWeek: WeekMatchInput | null | undefined, week: WeekSpan): boolean {
   if (!recOrWeek || !week) return false;
 
   // Normalize: if passed CareerRecord with target_week, or a WeekSpan directly
-  const target: WeekSpan | null = recOrWeek.target_week || (recOrWeek.year && recOrWeek.weekOfMonth ? recOrWeek : null);
+  const target: Partial<WeekSpan> | null = recOrWeek.target_week || (recOrWeek.year && recOrWeek.weekOfMonth ? recOrWeek : null);
 
   if (target) {
     const rY = Number(target.year);
