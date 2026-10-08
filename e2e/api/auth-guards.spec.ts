@@ -96,6 +96,43 @@ test.describe("Chrome extension API", () => {
     expect(res.status()).toBe(204);
   });
 
+  // M-10: no more `Access-Control-Allow-Origin: *`
+  for (const route of ["/api/extension/status", "/api/extension/submit"]) {
+    test(`[M-10] ${route}: arbitrary websites get no CORS grant`, async ({ request }) => {
+      const preflight = await request.fetch(route, {
+        method: "OPTIONS",
+        headers: { Origin: "https://evil.example", "Access-Control-Request-Method": "POST" },
+      });
+      expect(preflight.headers()["access-control-allow-origin"]).toBeUndefined();
+
+      const res = await request.fetch(route, {
+        method: route.endsWith("status") ? "GET" : "POST",
+        headers: { Origin: "https://evil.example", Authorization: `Bearer ${forgedFirebaseToken()}` },
+      });
+      expect(res.headers()["access-control-allow-origin"]).toBeUndefined();
+      expect(res.headers()["vary"]).toMatch(/Origin/);
+    });
+  }
+
+  test("[M-10] extension origins are reflected (dev server allows unpacked extension ids)", async ({ request }) => {
+    const origin = "chrome-extension://abcdefghijklmnopabcdefghijklmnop";
+    const res = await request.fetch("/api/extension/status", {
+      method: "OPTIONS",
+      headers: { Origin: origin, "Access-Control-Request-Method": "GET" },
+    });
+    expect(res.status()).toBe(204);
+    expect(res.headers()["access-control-allow-origin"]).toBe(origin);
+    expect(res.headers()["access-control-allow-headers"]).toMatch(/Authorization/);
+  });
+
+  test("[M-9] error responses do not echo internal exception messages", async ({ request }) => {
+    // Unauthenticated / invalid-token paths return fixed messages; nothing from the exception leaks.
+    const res = await request.get("/api/extension/status", { headers: { Authorization: "Bearer not-a-jwt" } });
+    expect(res.status()).toBe(401);
+    const body = JSON.stringify(await res.json());
+    expect(body).not.toMatch(/Error:|at \w+ \(|JWT|kid|stack/i);
+  });
+
   // C-2 regression: the unauthenticated records route (IDOR) was removed. It must stay gone
   // (or, if ever re-added, must reject callers without a verified token).
   test("[C-2] GET /api/extension/records is not reachable without authentication", async ({ request }) => {

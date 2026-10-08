@@ -261,6 +261,9 @@ export function saveLocalUserRecords(userId: string, records: CareerRecord[]): v
   }
 }
 
+/** 피드백 필드 길이 상한. firestore.rules 의 feedbacks 생성 규칙과 반드시 동일하게 유지 */
+export const FEEDBACK_LIMITS = { title: 200, message: 5000, email: 254, metadataValue: 500 } as const;
+
 /**
  * 기능 이상 및 건의사항(피드백)을 Firestore 'feedbacks' 컬렉션에 저장
  */
@@ -270,8 +273,19 @@ export async function submitFeedbackToFirestore(
   const timestamp = new Date().toISOString();
   const feedbackId = `fb-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
+  // Clamp to the limits enforced by firestore.rules so a long user agent etc. never gets the write rejected.
+  const metadata = feedbackData.metadata
+    ? Object.fromEntries(
+        Object.entries(feedbackData.metadata).map(([k, v]) => [k, String(v ?? "").slice(0, FEEDBACK_LIMITS.metadataValue)])
+      )
+    : undefined;
+
   const feedbackReport: FeedbackReport = {
     ...feedbackData,
+    title: feedbackData.title.slice(0, FEEDBACK_LIMITS.title),
+    message: feedbackData.message.slice(0, FEEDBACK_LIMITS.message),
+    userEmail: feedbackData.userEmail.slice(0, FEEDBACK_LIMITS.email),
+    ...(metadata ? { metadata } : {}),
     id: feedbackId,
     status: "new",
     createdAt: timestamp,

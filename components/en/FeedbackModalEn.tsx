@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Bug, Lightbulb, MessageSquare, Send, CheckCircle2, Loader2, Laptop, ShieldCheck } from "lucide-react";
 import { FeedbackType } from "@/types/career";
-import { submitFeedbackToFirestore } from "@/lib/firestoreService";
+import { FEEDBACK_LIMITS, submitFeedbackToFirestore } from "@/lib/firestoreService";
 import { useAuth } from "@/context/AuthContext";
 
 interface FeedbackModalEnProps {
@@ -208,6 +208,7 @@ export function FeedbackModalEn({
                 type="text"
                 required
                 value={title}
+                maxLength={FEEDBACK_LIMITS.title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={
                   type === "bug"
@@ -234,6 +235,7 @@ export function FeedbackModalEn({
                 required
                 rows={4}
                 value={message}
+                maxLength={FEEDBACK_LIMITS.message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={
                   type === "bug"
@@ -255,6 +257,7 @@ export function FeedbackModalEn({
               <input
                 type="email"
                 value={email}
+                maxLength={FEEDBACK_LIMITS.email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your.email@example.com"
                 className="w-full bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 placeholder:text-zinc-400"

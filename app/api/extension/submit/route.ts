@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { extensionCorsHeaders } from "@/lib/extensionCors";
 import { getServerCreditStatus, toExtensionCredits, verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { CareerRecord, JobRole, ToneManner } from "@/types/career";
 import { executeAiTransformation } from "@/lib/transformService";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
 
 const DEMO_USER_ID = "demo-user-1234";
 
 // Allow the Gemini budget (TRANSFORM_TIMEOUTS) plus Firestore persistence.
 export const maxDuration = 60;
 
-function errorResponse(error: string, status: number, extraHeaders: Record<string, string> = {}) {
-  return NextResponse.json({ success: false, error }, { status, headers: { ...CORS_HEADERS, ...extraHeaders } });
+function errorResponse(
+  cors: Record<string, string>,
+  error: string,
+  status: number,
+  extraHeaders: Record<string, string> = {}
+) {
+  return NextResponse.json({ success: false, error }, { status, headers: { ...cors, ...extraHeaders } });
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: extensionCorsHeaders(req) });
 }
 
 /**
@@ -31,6 +32,7 @@ export async function OPTIONS() {
  * The credit is reserved atomically before the AI call and refunded if the record cannot be saved.
  */
 export async function POST(req: NextRequest) {
+  const cors = extensionCorsHeaders(req);
   // Set once a quota unit is reserved; returned if the request fails without delivering a result.
   let refundQuota: (() => Promise<void>) | undefined;
   try {
@@ -38,6 +40,7 @@ export async function POST(req: NextRequest) {
     const rateLimit = checkServerRateLimit(getClientIp(req), 12, 60 * 1000);
     if (!rateLimit.success) {
       return errorResponse(
+        cors,
         `Rate limit exceeded. Please wait ${rateLimit.resetSeconds} seconds before submitting again.`,
         429,
         { "Retry-After": String(rateLimit.resetSeconds) }
@@ -47,7 +50,7 @@ export async function POST(req: NextRequest) {
     // 2. Token verification + server-side quota (usage/summary)
     const quotaCheck = await verifyServerAuthAndQuota(req, "transform");
     if (!quotaCheck.allowed || !quotaCheck.userId) {
-      return errorResponse(quotaCheck.error || "Free transformation credit limit reached", quotaCheck.status || 403);
+      return errorResponse(cors, quotaCheck.error || "Free transformation credit limit reached", quotaCheck.status || 403);
     }
     const userId = quotaCheck.userId;
     const isDemo = userId === DEMO_USER_ID;
@@ -57,17 +60,18 @@ export async function POST(req: NextRequest) {
     try {
       body = await req.json();
     } catch {
-      return errorResponse("Invalid JSON request body.", 400);
+      return errorResponse(cors, "Invalid JSON request body.", 400);
     }
 
     const rawMemo =
       typeof body.rawNote === "string" && body.rawNote.trim() ? body.rawNote : body.raw_memo;
     if (typeof rawMemo !== "string" || rawMemo.trim().length === 0) {
-      return errorResponse("Memo content is required", 400);
+      return errorResponse(cors, "Memo content is required", 400);
     }
     const memoText = rawMemo.trim();
     if (memoText.length > MAX_MEMO_CHAR_LIMIT) {
       return errorResponse(
+        cors,
         `Your memo is too long (${memoText.length.toLocaleString()} characters). Please shorten it under ${MAX_MEMO_CHAR_LIMIT.toLocaleString()} characters.`,
         400
       );
@@ -81,7 +85,7 @@ export async function POST(req: NextRequest) {
     // 4. Atomically reserve one credit (per-user + global kill switch) before the paid AI call
     const reservation = await quotaCheck.reserve!();
     if (!reservation.ok) {
-      return errorResponse(reservation.error, reservation.status);
+      return errorResponse(cors, reservation.error, reservation.status);
     }
     refundQuota = reservation.refund;
 
@@ -107,7 +111,7 @@ export async function POST(req: NextRequest) {
     if (!isDemo) {
       if (!adminDb) {
         await refundQuota();
-        return errorResponse("Server database is unavailable. Please try again later.", 503);
+        return errorResponse(cors, "Server database is unavailable. Please try again later.", 503);
       }
       try {
         await adminDb
@@ -119,7 +123,7 @@ export async function POST(req: NextRequest) {
       } catch (saveErr) {
         console.error("[Extension Submit API] Failed to save record:", saveErr);
         await refundQuota();
-        return errorResponse("Failed to save your record. No credit was used.", 503);
+        return errorResponse(cors, "Failed to save your record. No credit was used.", 503);
       }
     }
 
@@ -131,11 +135,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       { success: true, record: cleanRecord, aiFallback, credits: credits ? toExtensionCredits(credits) : undefined },
-      { headers: CORS_HEADERS }
+      { headers: cors }
     );
   } catch (err) {
     await refundQuota?.();
     console.error("[Extension Submit API] Fatal error:", err);
-    return errorResponse("Failed to process record", 500);
+    return errorResponse(cors, "Failed to process record", 500);
   }
 }
