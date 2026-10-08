@@ -302,10 +302,12 @@ export async function clearUserSummaryCache(
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
+        // Only this user's v2 entries, plus unkeyed legacy entries. Note the legacy prefix is also a
+        // prefix of the v2 one, so it must exclude v2 keys or it would wipe every account's cache.
         if (
           key &&
-          (key.startsWith(LOCAL_STORAGE_CACHE_PREFIX) ||
-            key.startsWith(LEGACY_STORAGE_CACHE_PREFIX))
+          (key.startsWith(userPrefix) ||
+            (key.startsWith(LEGACY_STORAGE_CACHE_PREFIX) && !key.startsWith(LOCAL_STORAGE_CACHE_PREFIX)))
         ) {
           keysToRemove.push(key);
         }

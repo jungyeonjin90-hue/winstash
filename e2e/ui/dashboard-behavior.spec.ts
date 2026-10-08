@@ -182,3 +182,23 @@ test.describe("Korean app (/ko)", () => {
     await expect(koMemo(page)).toHaveValue("");
   });
 });
+
+test("saving a memo clears only this user's local summary cache (and legacy keys)", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("__e2e_cache_seeded")) return;
+    localStorage.setItem("career_pulse_summary_cache_v2_demo-user-1234_brag_x", "{}");
+    localStorage.setItem("career_pulse_summary_cache_v2_other-user_brag_x", "{}");
+    localStorage.setItem("career_pulse_summary_cache_brag_legacy", "{}");
+    sessionStorage.setItem("__e2e_cache_seeded", "1");
+  });
+  await open(page);
+  await pickLoggerWeek(page, "2026", "9", "1");
+  await memoBox(page).fill("Cache purge check");
+  await page.getByRole("button", { name: /Save to Week 1/ }).click();
+  await expect(page.getByText(/successfully transformed and synced/)).toBeVisible();
+
+  const keys = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("career_pulse_summary_cache")));
+  expect(keys).not.toContain("career_pulse_summary_cache_v2_demo-user-1234_brag_x");
+  expect(keys).not.toContain("career_pulse_summary_cache_brag_legacy");
+  expect(keys).toContain("career_pulse_summary_cache_v2_other-user_brag_x");
+});
