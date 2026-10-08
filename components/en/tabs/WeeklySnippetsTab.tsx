@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -79,9 +79,14 @@ export function WeeklySnippetsTab({
       .sort((a, b) => Number(b.monthNum) - Number(a.monthNum)); // reverse chronological
   }, [recordsWithDateInfo, selectedYear]);
 
-  // Whenever activeRecordId changes (user just logged or updated a raw note),
-  // immediately snap year, month, and selectedRecordId to that exact period!
-  useEffect(() => {
+  // The selection rules below run during render (React's "adjusting state when props change"
+  // pattern) in the same order the former effects ran, so the resulting selection is unchanged.
+
+  // Whenever activeRecordId changes (user just logged or updated a raw note) or the records
+  // change, immediately snap year, month, and selectedRecordId to that exact period!
+  const [snapSource, setSnapSource] = useState<{ id?: string; records: CareerRecord[] } | null>(null);
+  if (!snapSource || snapSource.id !== activeRecordId || snapSource.records !== records) {
+    setSnapSource({ id: activeRecordId, records });
     if (activeRecordId && records.length > 0) {
       const target = records.find((r) => r.id === activeRecordId);
       if (target) {
@@ -91,22 +96,17 @@ export function WeeklySnippetsTab({
         setSelectedMonth(targetInfo.month);
       }
     }
-  }, [activeRecordId, records]);
+  }
 
   // Automatically select the most recent record when records load asynchronously or change
-  useEffect(() => {
-    if (records.length > 0) {
-      const latest = records[0];
-      const isCurrentValid = records.some((r) => r.id === selectedRecordId);
-      // If no valid selection or uninitialized, snap to the latest created record
-      if (!selectedRecordId || !isCurrentValid) {
-        setSelectedRecordId(latest.id);
-        const latestInfo = getDetailedRecordDateInfo(latest);
-        setSelectedYear(latestInfo.year);
-        setSelectedMonth(latestInfo.month);
-      }
-    }
-  }, [records, selectedRecordId]);
+  if (records.length > 0 && (!selectedRecordId || !records.some((r) => r.id === selectedRecordId))) {
+    // If no valid selection or uninitialized, snap to the latest created record
+    const latest = records[0];
+    setSelectedRecordId(latest.id);
+    const latestInfo = getDetailedRecordDateInfo(latest);
+    setSelectedYear(latestInfo.year);
+    setSelectedMonth(latestInfo.month);
+  }
 
   // 3. Weeks available matching selected Year and Month
   // Sorted reverse-chronologically (latest week first: Week 4, Week 3, ...)
@@ -122,16 +122,9 @@ export function WeeklySnippetsTab({
   }, [recordsWithDateInfo, selectedYear, selectedMonth]);
 
   // If currently selected record is not in matching weeks, select the newest matching one
-  useEffect(() => {
-    if (matchingRecords.length > 0) {
-      const isCurrentInMatching = matchingRecords.some(
-        (m) => m.record.id === selectedRecordId
-      );
-      if (!isCurrentInMatching) {
-        setSelectedRecordId(matchingRecords[0].record.id);
-      }
-    }
-  }, [matchingRecords, selectedRecordId]);
+  if (matchingRecords.length > 0 && !matchingRecords.some((m) => m.record.id === selectedRecordId)) {
+    setSelectedRecordId(matchingRecords[0].record.id);
+  }
 
   // Active selected record
   const activeRecord = useMemo(() => {

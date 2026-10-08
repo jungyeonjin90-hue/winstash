@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Trash2, ChevronDown, ChevronUp, Archive, Calendar, Pencil, Loader2 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
 import { getDetailedRecordDateInfo } from "@/lib/periodUtils";
@@ -14,12 +14,10 @@ interface TimelineArchiveTabEnProps {
 export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: TimelineArchiveTabEnProps) {
   const [expandedId, setExpandedId] = useState<string | null>(records[0]?.id || null);
 
-  // Automatically expand the latest record when records arrive or change
-  useEffect(() => {
-    if (records.length > 0 && !expandedId) {
-      setExpandedId(records[0].id);
-    }
-  }, [records, expandedId]);
+  // Automatically expand the latest record when records arrive or change (adjusted during render)
+  if (records.length > 0 && !expandedId) {
+    setExpandedId(records[0].id);
+  }
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMemo, setEditMemo] = useState("");
   const [isSaving, setIsSaving] = useState(false);

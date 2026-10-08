@@ -19,6 +19,15 @@ interface DashboardTabsProps {
   onToneMannerChange?: (tone: ToneManner) => void;
 }
 
+const VALID_TABS: TabType[] = ["weekly", "brag", "vault", "timeline"];
+
+function readTabFromUrl(): TabType {
+  if (typeof window === "undefined") return "weekly";
+  const tabParam = new URLSearchParams(window.location.search).get("tab");
+  if (tabParam === "archive" || tabParam === "timeline") return "timeline";
+  return tabParam && VALID_TABS.includes(tabParam as TabType) ? (tabParam as TabType) : "weekly";
+}
+
 export function DashboardTabs({
   records,
   activeRecordId,
@@ -29,38 +38,26 @@ export function DashboardTabs({
   onJobRoleChange,
   onToneMannerChange,
 }: DashboardTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("weekly");
+  // 대시보드는 로그인 후 클라이언트에서만 마운트되므로 초기값에서 URL을 읽어도 hydration 불일치가 없음
+  const [activeTab, setActiveTab] = useState<TabType>(readTabFromUrl);
 
-  // Automatically switch tab and focus on newly recorded week
-  useEffect(() => {
+  // activeRecordId first: same result as the former mount effect that focused it
+  const [selectedRecordId, setSelectedRecordId] = useState<string>(
+    activeRecordId || records[0]?.id || ""
+  );
+
+  // Automatically switch tab and focus on newly recorded week (activeRecordId 변경 시 렌더 중 조정)
+  const [seenActiveRecordId, setSeenActiveRecordId] = useState(activeRecordId);
+  if (seenActiveRecordId !== activeRecordId) {
+    setSeenActiveRecordId(activeRecordId);
     if (activeRecordId) {
       setSelectedRecordId(activeRecordId);
       setActiveTab("weekly");
     }
-  }, [activeRecordId]);
+  }
 
-  // Synchronize activeTab with URL search params and browser history
+  // Synchronize activeTab with browser history (Back / Forward)
   useEffect(() => {
-    const validTabs: TabType[] = ["weekly", "brag", "vault", "timeline"];
-
-    const readTabFromUrl = (): TabType => {
-      if (typeof window === "undefined") return "weekly";
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get("tab");
-      if (tabParam === "archive" || tabParam === "timeline") {
-        return "timeline";
-      }
-      if (tabParam && validTabs.includes(tabParam as TabType)) {
-        return tabParam as TabType;
-      }
-      return "weekly";
-    };
-
-    const initialTab = readTabFromUrl();
-    if (initialTab !== "weekly") {
-      setActiveTab(initialTab);
-    }
-
     const handlePopState = (e: PopStateEvent) => {
       if (e.state?.modal) return;
       const currentTab = readTabFromUrl();
@@ -85,10 +82,6 @@ export function DashboardTabs({
       window.history.pushState({ tab }, "", url.toString());
     }
   };
-
-  const [selectedRecordId, setSelectedRecordId] = useState<string>(
-    records[0]?.id || ""
-  );
 
   // If selectedRecordId not found in records, pick first
   const currentRecord =

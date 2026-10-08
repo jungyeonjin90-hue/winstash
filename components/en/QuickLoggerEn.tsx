@@ -98,13 +98,14 @@ export function QuickLoggerEn({
 
   // When selectedWeek changes, if there's an existing record, populate the textarea.
   // If there's no existing record, clear the textarea to start fresh.
-  useEffect(() => {
-    if (existingRecord) {
-      setMemo(existingRecord.raw_memo);
-    } else {
-      setMemo("");
-    }
-  }, [selectedWeek.year, selectedWeek.month, selectedWeek.weekOfMonth, existingRecord?.id, existingRecord?.raw_memo]);
+  // Adjusted during render (React's "reset state when a prop changes" pattern); the initial null
+  // makes the first render load the current week's memo, like the former mount effect did.
+  const memoSourceKey = `${selectedWeek.year}-${selectedWeek.month}-${selectedWeek.weekOfMonth}|${existingRecord?.id ?? ""}|${existingRecord?.raw_memo ?? ""}`;
+  const [loadedMemoKey, setLoadedMemoKey] = useState<string | null>(null);
+  if (loadedMemoKey !== memoSourceKey) {
+    setLoadedMemoKey(memoSourceKey);
+    setMemo(existingRecord ? existingRecord.raw_memo : "");
+  }
 
   // Prevent accidental tab closure or browser back exit when user has typed an unsaved draft
   useEffect(() => {
