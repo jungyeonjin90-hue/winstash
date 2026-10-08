@@ -1,4 +1,5 @@
 import { TransformationOutput, JobRole, ToneManner } from "@/types/career";
+import { generateGeminiJson, isTransformationOutput, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
 
 function getCurrentQuarter(): string {
   const now = new Date();
@@ -158,58 +159,36 @@ export function generateFallbackOutput(
   };
 }
 
+const TRANSFORM_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-flash-lite-latest",
+  "gemini-2.5-flash",
+  "gemini-flash-latest",
+];
+
+/**
+ * Runs the 3-way transformation. `aiFallback` is true when Gemini was unavailable and the
+ * heuristic generator produced the output (callers must not charge for it, audit M-3).
+ */
 export async function executeAiTransformation(
   rawMemo: string,
   jobRole: JobRole = "engineering",
   toneManner: ToneManner = "impact"
-): Promise<TransformationOutput> {
-  const geminiApiKey = process.env.GEMINI_API_KEY;
-  const prompt = buildSystemPromptKo(jobRole, toneManner);
-  const userContent = `<user_raw_notes>\n${rawMemo}\n</user_raw_notes>`;
-
-  if (geminiApiKey) {
-    const modelsToTry = [
-      "gemini-3.1-flash-lite",
-      "gemini-3.1-flash-lite-preview",
-      "gemini-flash-lite-latest",
-      "gemini-2.5-flash",
-      "gemini-flash-latest",
-    ];
-
-    for (const model of modelsToTry) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: userContent }] }],
-              systemInstruction: { parts: [{ text: prompt }] },
-              generationConfig: {
-                temperature: 0.2,
-                responseMimeType: "application/json",
-              },
-            }),
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
-            const parsed = JSON.parse(text);
-            if (parsed.weekly_report && parsed.brag_sheet_item && parsed.star_portfolio) {
-              return parsed as TransformationOutput;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn(`[executeAiTransformation] Gemini model ${model} failed:`, err);
-      }
-    }
+): Promise<{ output: TransformationOutput; aiFallback: boolean }> {
+  const aiOutput = await generateGeminiJson({
+    label: "executeAiTransformation",
+    models: TRANSFORM_MODELS,
+    systemInstruction: buildSystemPromptKo(jobRole, toneManner),
+    userText: `<user_raw_notes>\n${rawMemo}\n</user_raw_notes>`,
+    temperature: 0.2,
+    validate: isTransformationOutput,
+    ...TRANSFORM_TIMEOUTS,
+  });
+  if (aiOutput) {
+    return { output: aiOutput as TransformationOutput, aiFallback: false };
   }
 
   // Fallback if AI call failed or key absent
-  return generateFallbackOutput(rawMemo, jobRole, toneManner);
+  return { output: generateFallbackOutput(rawMemo, jobRole, toneManner), aiFallback: true };
 }

@@ -15,7 +15,7 @@
     "test:e2e:ui": "playwright test --project=ui",
     "test:rules": "firebase emulators:exec --only firestore --project demo-winstash-rules \"node --test --test-reporter=spec tests/rules/firestore.rules.test.mjs\"",
     "test": "npm run test:unit && npm run test:rules && npm run test:e2e",
-    "test:unit": "node --experimental-strip-types --no-warnings --test --test-reporter=spec tests/unit/server-auth.test.mjs"
+    "test:unit": "node --experimental-strip-types --no-warnings --test --test-reporter=spec \"tests/unit/*.test.mjs\""
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",

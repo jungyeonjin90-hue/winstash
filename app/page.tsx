@@ -398,7 +398,6 @@ export default function Home() {
 
     setIsLoading(true);
     try {
-      const settings = getSettings();
       const token = await getAuthToken();
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -436,7 +435,6 @@ export default function Home() {
           seniority_level: seniorityLevel,
           industry,
           region,
-          provider: settings.provider,
           record_id: proposedRecordId,
           target_week: finalTargetWeek,
           record_date: recordDate,

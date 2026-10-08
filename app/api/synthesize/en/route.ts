@@ -1,16 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem, SynthesizedStarItem } from "@/types/career";
-import { checkServerRateLimit, getClientIp } from "@/lib/serverRateLimit";
+import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
+import { generateGeminiJson, SYNTHESIS_TIMEOUTS } from "@/lib/gemini";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { SummaryCacheEntry } from "@/lib/summaryCacheService";
 
-// Allow long-running LLM synthesis (Vercel default of 10s causes empty 500/504 responses)
+// Allow long-running LLM synthesis (Vercel default of 10s causes empty 500/504 responses).
+// Gemini calls are bounded by SYNTHESIS_TIMEOUTS so the handler always finishes within this.
 export const maxDuration = 60;
 
 /**
  * Builds the AI Synthesis prompt with strict factual grounding & dynamic scope rules
  */
+const SYNTHESIS_MODELS = ["gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+
+// Payload bounds (audit M-4). 100 logs x a few KB each stays far below MAX_BODY_CHARS.
+const MAX_BODY_CHARS = 2_000_000;
+const MAX_RECORDS = 100;
+const MAX_DONE_CHARS = 2_000;
+const MAX_METRIC_CHARS = 500;
+const MAX_PERIOD_LABEL_CHARS = 100;
+
+/**
+ * Cache keys become Firestore document ids. Client keys (lib/summaryCacheService.ts) look like
+ * `brag_2026_ALL_ALL_5_engineering_impact_records:[...]`, so keep them verbatim when valid; reject
+ * anything Firestore cannot store as an id or that would hit the server-managed `latest_*` docs.
+ */
+function sanitizeCacheKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const key = value.trim();
+  if (
+    !key ||
+    key.length > 500 ||
+    key.includes("/") ||
+    key === "." ||
+    key === ".." ||
+    /^__.*__$/.test(key) ||
+    key.startsWith("latest_")
+  ) {
+    return null;
+  }
+  return key;
+}
+
 function buildSynthesisPrompt(
   type: "brag" | "star",
   scope: 3 | 5 | 10,
@@ -29,9 +62,13 @@ function buildSynthesisPrompt(
   const recordsContext = records
     .map((r, i) => {
       const weekLabel = r.target_week?.label || new Date(r.createdAt).toISOString().slice(0, 10);
-      const raw = r.raw_memo ? r.raw_memo.trim() : "No raw text";
-      const done = r.weekly_report?.done ? r.weekly_report.done.join("; ") : "";
-      const metric = r.brag_sheet_item?.metric_summary || "";
+      const raw = typeof r.raw_memo === "string" && r.raw_memo.trim()
+        ? r.raw_memo.trim().slice(0, MAX_MEMO_CHAR_LIMIT)
+        : "No raw text";
+      const done = Array.isArray(r.weekly_report?.done)
+        ? r.weekly_report.done.map(String).join("; ").slice(0, MAX_DONE_CHARS)
+        : "";
+      const metric = String(r.brag_sheet_item?.metric_summary || "").slice(0, MAX_METRIC_CHARS);
 
       return `[Weekly Log #${i + 1} (${weekLabel})]
 - User's Actual Raw Notes: "${raw}"
@@ -217,33 +254,53 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let body: any;
+    // 2. Bounded body parsing (audit M-4): reject oversized payloads before parsing them
+    const declaredLength = Number(req.headers.get("content-length") || 0);
+    if (declaredLength > MAX_BODY_CHARS) {
+      return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+    }
+    const rawBody = await req.text();
+    if (rawBody.length > MAX_BODY_CHARS) {
+      return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+    }
+    let body: Record<string, unknown>;
     try {
-      body = await req.json();
+      body = JSON.parse(rawBody);
     } catch {
       return NextResponse.json(
         { error: "Invalid JSON request body." },
         { status: 400 }
       );
     }
-    const {
-      type = "brag",
-      scope = 5,
-      jobRole = "engineering",
-      toneManner = "impact",
-      periodLabel = "Current Period",
-      records = [],
-      cache_key,
-      year,
-      half,
-      quarter,
-      start_year,
-      end_year,
-    } = body;
 
-    if (!Array.isArray(records) || records.length === 0) {
+    const type = body.type === undefined ? "brag" : body.type;
+    if (type !== "brag" && type !== "star") {
+      return NextResponse.json({ error: "Invalid synthesis type." }, { status: 400 });
+    }
+    const scope = body.scope === undefined ? 5 : body.scope;
+    if (scope !== 3 && scope !== 5 && scope !== 10) {
+      return NextResponse.json({ error: "Invalid synthesis scope." }, { status: 400 });
+    }
+    const jobRole = (typeof body.jobRole === "string" ? body.jobRole : "engineering") as JobRole;
+    const toneManner = (typeof body.toneManner === "string" ? body.toneManner : "impact") as ToneManner;
+    const periodLabel = (typeof body.periodLabel === "string" && body.periodLabel.trim()
+      ? body.periodLabel
+      : "Current Period"
+    ).slice(0, MAX_PERIOD_LABEL_CHARS);
+    const { year, half, quarter, start_year, end_year } = body as Record<string, string | undefined>;
+
+    if (!Array.isArray(body.records) || body.records.length === 0) {
       return NextResponse.json({ items: [] });
     }
+    // Only the most recent MAX_RECORDS logs are used for the prompt, source mapping and fallback.
+    const records = (body.records as CareerRecord[])
+      .filter((r) => r && typeof r === "object")
+      .slice(0, MAX_RECORDS);
+    if (records.length === 0) {
+      return NextResponse.json({ items: [] });
+    }
+    const cacheKey =
+      sanitizeCacheKey(body.cache_key) ?? `${type}_${periodLabel.replace(/\//g, "_")}_${scope}`;
 
     // 2. Server-Side Authentication & Quota Enforcement (M-1)
     const quotaCheck = await verifyServerAuthAndQuota(
@@ -268,7 +325,7 @@ export async function POST(req: NextRequest) {
      * Atomically saves synthesized items into Firestore summary_cache collection server-side.
      * Ensures completion even if user immediately closes browser tab!
      */
-    const persistSummaryCacheAndBuildResponse = async (rawItems: any[]) => {
+    const persistSummaryCacheAndBuildResponse = async (rawItems: any[], aiFallback: boolean) => {
       const itemsWithSources = attachSourceRecordsToItems(
         rawItems,
         records,
@@ -281,7 +338,7 @@ export async function POST(req: NextRequest) {
       const sourceRecordIds = (records as CareerRecord[]).map((r) => r.id);
 
       const newEntry: SummaryCacheEntry = {
-        cacheKey: cache_key || `${type}_${periodLabel}_${scope}`,
+        cacheKey,
         type: type as "brag" | "star",
         year: year || end_year || new Date().getFullYear().toString(),
         half: half || "ALL",
@@ -322,73 +379,32 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      return NextResponse.json({ items: itemsWithSources, entry: newEntry });
+      // Mapping the user's own records is not an AI synthesis: return the reserved credit (audit M-3).
+      if (aiFallback) await refundQuota?.();
+      return NextResponse.json({ items: itemsWithSources, entry: newEntry, aiFallback });
     };
 
-    // Support up to 100 weekly logs for multi-year Portfolio STAR synthesis
-    const safeRecords = (records as CareerRecord[]).slice(0, 100);
-
-    const apiKey = process.env.GEMINI_API_KEY;
     const prompt = buildSynthesisPrompt(
-      type as "brag" | "star",
-      scope as 3 | 5 | 10,
-      jobRole as JobRole,
-      toneManner as ToneManner,
+      type,
+      scope,
+      jobRole,
+      toneManner,
       periodLabel,
-      safeRecords
+      records
     );
 
-    // Call official Google Gemini models:
-    // Priority 1: gemini-3.8-flash for high-caliber executive phrasing in Brag & STAR synthesis (~$0.001/req)
-    // Fallbacks: gemini-3.1-flash-lite, gemini-flash-latest for instant resilience
-    if (apiKey) {
-      const modelsToTry = [
-        "gemini-3.8-flash",
-        "gemini-3.1-flash-lite",
-        "gemini-flash-latest",
-      ];
-
-      for (const model of modelsToTry) {
-        try {
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                systemInstruction: {
-                  parts: [{ text: prompt.systemInstruction }],
-                },
-                contents: [
-                  {
-                    role: "user",
-                    parts: [{ text: prompt.userContent }],
-                  },
-                ],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                },
-              }),
-              signal: AbortSignal.timeout(30000),
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
-              const parsed = JSON.parse(text);
-              if (Array.isArray(parsed.items) && parsed.items.length > 0) {
-                return await persistSummaryCacheAndBuildResponse(parsed.items);
-              }
-            }
-          } else {
-            console.warn(`Gemini synthesis model ${model} returned HTTP ${response.status}`);
-          }
-        } catch (err) {
-          console.warn(`Gemini synthesis error with model ${model}, trying next:`, err);
-        }
-      }
+    // Gemini: gemini-3.8-flash first for executive phrasing, lite models as fallbacks (SYNTHESIS_TIMEOUTS)
+    const aiResult = await generateGeminiJson({
+      label: "Synthesis",
+      models: SYNTHESIS_MODELS,
+      systemInstruction: prompt.systemInstruction,
+      userText: prompt.userContent,
+      validate: (v: unknown): v is { items: unknown[] } =>
+        Array.isArray((v as { items?: unknown })?.items) && (v as { items: unknown[] }).items.length > 0,
+      ...SYNTHESIS_TIMEOUTS,
+    });
+    if (aiResult) {
+      return await persistSummaryCacheAndBuildResponse(aiResult.items, false);
     }
 
     // Pure 100% User-Record Fallback (Zero hardcoded fake projects)
@@ -405,7 +421,7 @@ export async function POST(req: NextRequest) {
         nda_tags: r.star_portfolio?.nda_tags || ["#Execution", "#Impact"],
         source_log_indices: [idx + 1],
       }));
-      return await persistSummaryCacheAndBuildResponse(directItems.slice(0, scope));
+      return await persistSummaryCacheAndBuildResponse(directItems.slice(0, scope), true);
     } else {
       const directItems: SynthesizedStarItem[] = records.map((r, idx) => ({
         id: `direct-star-${idx + 1}`,
@@ -421,7 +437,7 @@ export async function POST(req: NextRequest) {
         impactMagnitude: r.star_portfolio?.impactMagnitude || "medium",
         source_log_indices: [idx + 1],
       }));
-      return await persistSummaryCacheAndBuildResponse(directItems.slice(0, scope));
+      return await persistSummaryCacheAndBuildResponse(directItems.slice(0, scope), true);
     }
   } catch (error) {
     await refundQuota?.();

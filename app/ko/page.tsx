@@ -210,7 +210,6 @@ export default function HomeKo() {
 
     setIsLoading(true);
     try {
-      const settings = getSettings();
       const authToken = await getAuthToken();
       // 한국어 격리 전용 엔드포인트 호출 (서버 사이드 인증 헤더 전송)
       const res = await fetch("/api/transform/ko", {
@@ -223,7 +222,6 @@ export default function HomeKo() {
           raw_memo: rawMemo,
           job_role: role,
           tone_manner: tone,
-          provider: settings.provider,
         }),
       });
 
@@ -232,7 +230,7 @@ export default function HomeKo() {
         throw new Error(errorData.error || "변환 처리에 실패했습니다.");
       }
 
-      const output: TransformationOutput = await res.json();
+      const output: TransformationOutput & { aiFallback?: boolean } = await res.json();
 
       let finalTargetWeek = targetWeek;
       let recordDate = new Date().toISOString();
@@ -275,8 +273,11 @@ export default function HomeKo() {
       setActiveRecordId(newRecord.id);
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
 
-      const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo));
-      setCreditStatus(updatedCredit);
+      // 휴리스틱 폴백 결과는 서버가 크레딧을 환불하므로 로컬 사용량도 올리지 않음
+      if (!output.aiFallback) {
+        const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
+        setCreditStatus(updatedCredit);
+      }
 
       showToast(
         finalExistingRecordId

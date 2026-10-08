@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { knownGap, SAMPLE_MEMO, uniqueIp } from "../helpers";
+import { SAMPLE_MEMO, uniqueIp } from "../helpers";
 
 /**
  * Cost / abuse guardrails: IP rate limit, memo length cap, payload bounds.
  *
  * The "demo" cases rely on the dev-only `x-demo-user: true` bypass in lib/serverAuthQuota.ts,
- * which is disabled when NODE_ENV === "production". With GEMINI_API_KEY blanked by the test
- * server, the routes return the deterministic heuristic fallback (no paid API call).
+ * which is disabled when NODE_ENV === "production". Gemini calls go to the local mock
+ * (e2e/mock-gemini.mjs), never the paid API.
  */
 
 const isManagedDevServer = !process.env.E2E_BASE_URL;
@@ -102,8 +102,7 @@ test.describe("Demo-mode transform (dev only)", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("[M-4] /api/synthesize/en must bound total payload size", async ({ request }) => {
-    knownGap("M-4");
+  test("[M-4] /api/synthesize/en rejects oversized payloads with 413", async ({ request }) => {
     // 150 records x 20k chars = ~3 MB of prompt material. Only the record *count* is clamped (100), not size.
     const records = Array.from({ length: 150 }, (_, i) => ({
       id: `r${i}`,

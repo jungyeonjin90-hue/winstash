@@ -3,8 +3,8 @@ import { knownGap } from "../helpers";
 
 /**
  * Core user journey in demo mode (dev only): onboarding -> brain dump -> AI transform -> dashboard.
- * Demo sessions live in localStorage and the transform route returns the heuristic fallback
- * (GEMINI_API_KEY is blanked by the test server), so nothing touches Firestore or Gemini.
+ * Demo sessions live in localStorage and Gemini calls go to the local mock (e2e/mock-gemini.mjs),
+ * so nothing touches production Firestore or the paid Gemini API.
  */
 
 test.skip(!!process.env.E2E_BASE_URL, "Demo session restore is disabled in production builds");
@@ -81,7 +81,8 @@ test("[L-6] fallback summary must not cut sentences at decimal points", async ({
   await seedDemoSession(page);
   await page.goto("/");
   await finishOnboarding(page);
-  await memoBox(page).fill("Cut p99 latency from 1.2s to 85ms by adding Redis caching.");
+  // [mock:fail] makes the mock Gemini fail so the heuristic fallback produces the output.
+  await memoBox(page).fill("Cut p99 latency from 1.2s to 85ms by adding Redis caching. [mock:fail]");
   await page.getByRole("button", { name: /Save to Week/ }).click();
   await expect(page.getByText(/successfully transformed and synced/)).toBeVisible();
   await expect(page.getByText(/from 1\.$/)).toHaveCount(0);

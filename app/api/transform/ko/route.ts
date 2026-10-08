@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { generateGeminiJson, isTransformationOutput, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
 import { TransformationOutput, JobRole, ToneManner } from "@/types/career";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
@@ -176,6 +177,17 @@ function generateFallbackOutputKo(
   };
 }
 
+// Allow the Gemini budget (TRANSFORM_TIMEOUTS) plus response handling.
+export const maxDuration = 60;
+
+const TRANSFORM_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-flash-lite-latest",
+  "gemini-3.8-flash",
+  "gemini-flash-latest",
+];
+
 export async function POST(req: NextRequest) {
   // Set once a quota unit is reserved; returned if the request fails without delivering a result.
   let refundQuota: (() => Promise<void>) | undefined;
@@ -219,7 +231,6 @@ export async function POST(req: NextRequest) {
       raw_memo,
       job_role = "engineering",
       tone_manner = "impact",
-      provider = "gemini",
     } = body;
 
     if (!raw_memo || typeof raw_memo !== "string" || raw_memo.trim().length === 0) {
@@ -246,75 +257,29 @@ export async function POST(req: NextRequest) {
     }
     refundQuota = reservation.refund;
 
-    const apiKey =
-      provider === "gemini"
-        ? process.env.GEMINI_API_KEY
-        : process.env.OPENAI_API_KEY;
-
     const prompt = buildSystemPromptKo(job_role as JobRole, tone_manner as ToneManner);
-    const userPrefix = "<user_raw_notes>\n";
-    const userSuffix = "\n</user_raw_notes>";
 
-    // Google Gemini API 연동 (systemInstruction 분리 + XML 격리)
-    if (provider === "gemini" && apiKey) {
-      const modelsToTry = [
-        "gemini-3.1-flash-lite",
-        "gemini-3.1-flash-lite-preview",
-        "gemini-flash-lite-latest",
-        "gemini-3.8-flash",
-        "gemini-flash-latest",
-      ];
-      for (const model of modelsToTry) {
-        try {
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                systemInstruction: {
-                  parts: [{ text: prompt }],
-                },
-                contents: [
-                  {
-                    role: "user",
-                    parts: [
-                      {
-                        text: `${userPrefix}${raw_memo}${userSuffix}`,
-                      },
-                    ],
-                  },
-                ],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                },
-              }),
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
-              const parsed = JSON.parse(text) as TransformationOutput;
-              if (parsed.weekly_report && parsed.brag_sheet_item && parsed.star_portfolio) {
-                return NextResponse.json(parsed);
-              }
-            }
-          }
-        } catch (err) {
-          console.warn(`Gemini API (${model}) error, trying next model:`, err);
-        }
-      }
+    // Google Gemini API 연동 (systemInstruction 분리 + XML 격리), TRANSFORM_TIMEOUTS 이내로 제한
+    const aiOutput = await generateGeminiJson({
+      label: "Transform KO",
+      models: TRANSFORM_MODELS,
+      systemInstruction: prompt,
+      userText: `<user_raw_notes>\n${raw_memo}\n</user_raw_notes>`,
+      validate: isTransformationOutput,
+      ...TRANSFORM_TIMEOUTS,
+    });
+    if (aiOutput) {
+      return NextResponse.json({ ...(aiOutput as TransformationOutput), aiFallback: false });
     }
 
-    // AI 호출 실패 또는 미설정 시 지능형 휴리스틱 폴백 반환
+    // AI 호출 실패 또는 미설정 시 지능형 휴리스틱 폴백 반환. AI 결과가 아니므로 크레딧은 환불 (감사 M-3)
     const fallback = generateFallbackOutputKo(
       raw_memo,
       job_role as JobRole,
       tone_manner as ToneManner
     );
-    return NextResponse.json(fallback);
+    await refundQuota?.();
+    return NextResponse.json({ ...fallback, aiFallback: true });
   } catch (error) {
     await refundQuota?.();
     console.error("Transform API Error (KO):", error);

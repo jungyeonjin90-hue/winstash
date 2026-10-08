@@ -3,6 +3,18 @@ import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode, 
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { generateGeminiJson, isTransformationOutput, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
+
+// Allow the Gemini budget (TRANSFORM_TIMEOUTS) plus Firestore persistence.
+export const maxDuration = 60;
+
+const TRANSFORM_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-flash-lite-latest",
+  "gemini-3.8-flash",
+  "gemini-flash-latest",
+];
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
@@ -378,7 +390,6 @@ export async function POST(req: NextRequest) {
       seniority_level,
       industry,
       region,
-      provider = "gemini",
       record_id,
       target_week,
       record_date,
@@ -412,7 +423,7 @@ export async function POST(req: NextRequest) {
      * Helper to atomically persist record into Firestore server-side (credit was reserved above).
      * Ensures 100% completion even if the user abruptly closes browser tab!
      */
-    const persistAndBuildResponse = async (output: TransformationOutput) => {
+    const persistAndBuildResponse = async (output: TransformationOutput, aiFallback: boolean) => {
       const finalRecordId = record_id || `rec-en-${Date.now()}`;
       const finalRecordDate = record_date || new Date().toISOString();
 
@@ -456,13 +467,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      return NextResponse.json({ ...output, record: newRecord });
+      // The heuristic fallback is not an AI result: return the reserved credit (audit M-3).
+      if (aiFallback) await refundQuota?.();
+      return NextResponse.json({ ...output, record: newRecord, aiFallback });
     };
-
-    const apiKey =
-      provider === "gemini"
-        ? process.env.GEMINI_API_KEY
-        : process.env.OPENAI_API_KEY;
 
     const prompt = buildSystemPromptEn(
       job_role as JobRole,
@@ -471,69 +479,27 @@ export async function POST(req: NextRequest) {
       industry,
       region as RegionCode | undefined
     );
-    const userPrefix = "[User's Friday Raw Brain Dump Notes]:\n<user_raw_notes>\n";
-    const userSuffix = "\n</user_raw_notes>";
 
-    // 1. Google Gemini Ultra Low-Cost Model (gemini-3.1-flash-lite)
-    if (provider === "gemini" && apiKey) {
-      const modelsToTry = [
-        "gemini-3.1-flash-lite",
-        "gemini-3.1-flash-lite-preview",
-        "gemini-flash-lite-latest",
-        "gemini-3.8-flash",
-        "gemini-flash-latest",
-      ];
-      for (const model of modelsToTry) {
-        try {
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                systemInstruction: {
-                  parts: [{ text: prompt }],
-                },
-                contents: [
-                  {
-                    role: "user",
-                    parts: [
-                      {
-                        text: `${userPrefix}${raw_memo}${userSuffix}`,
-                      },
-                    ],
-                  },
-                ],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                },
-              }),
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
-              const parsed = JSON.parse(text) as TransformationOutput;
-              if (parsed.weekly_report && parsed.brag_sheet_item && parsed.star_portfolio) {
-                return await persistAndBuildResponse(parsed);
-              }
-            }
-          }
-        } catch (err) {
-          console.warn(`Gemini API (${model}) error, trying next model:`, err);
-        }
-      }
+    // 1. Google Gemini (ultra low-cost models first), bounded by TRANSFORM_TIMEOUTS
+    const aiOutput = await generateGeminiJson({
+      label: "Transform EN",
+      models: TRANSFORM_MODELS,
+      systemInstruction: prompt,
+      userText: `[User's Friday Raw Brain Dump Notes]:\n<user_raw_notes>\n${raw_memo}\n</user_raw_notes>`,
+      validate: isTransformationOutput,
+      ...TRANSFORM_TIMEOUTS,
+    });
+    if (aiOutput) {
+      return await persistAndBuildResponse(aiOutput as TransformationOutput, false);
     }
 
-    // 2. Fallback to Silicon Valley Heuristic Generator
+    // 2. Fallback to Silicon Valley Heuristic Generator (not charged, see persistAndBuildResponse)
     const fallback = generateFallbackOutputEn(
       raw_memo,
       job_role as JobRole,
       tone_manner as ToneManner
     );
-    return await persistAndBuildResponse(fallback);
+    return await persistAndBuildResponse(fallback, true);
   } catch (error) {
     await refundQuota?.();
     console.error("Transform API Error (Global EN):", error);

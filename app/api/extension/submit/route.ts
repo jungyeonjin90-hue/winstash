@@ -13,6 +13,9 @@ const CORS_HEADERS = {
 
 const DEMO_USER_ID = "demo-user-1234";
 
+// Allow the Gemini budget (TRANSFORM_TIMEOUTS) plus Firestore persistence.
+export const maxDuration = 60;
+
 function errorResponse(error: string, status: number, extraHeaders: Record<string, string> = {}) {
   return NextResponse.json({ success: false, error }, { status, headers: { ...CORS_HEADERS, ...extraHeaders } });
 }
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
     refundQuota = reservation.refund;
 
     // 5. AI 3-way transformation (weekly report, brag sheet, STAR portfolio)
-    const transformation = await executeAiTransformation(memoText, jobRole, toneManner);
+    const { output: transformation, aiFallback } = await executeAiTransformation(memoText, jobRole, toneManner);
 
     const recordId = existingRecordId || `rec-${Date.now()}`;
     const cleanRecord = {
@@ -120,11 +123,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // The heuristic fallback is not an AI result: return the reserved credit (audit M-3).
+    if (aiFallback) await refundQuota();
+
     // Omitted when unknown so the extension keeps its last known balance instead of a wrong one.
     const credits = isDemo ? null : await getServerCreditStatus(userId, Boolean(quotaCheck.isAdmin));
 
     return NextResponse.json(
-      { success: true, record: cleanRecord, credits: credits ? toExtensionCredits(credits) : undefined },
+      { success: true, record: cleanRecord, aiFallback, credits: credits ? toExtensionCredits(credits) : undefined },
       { headers: CORS_HEADERS }
     );
   } catch (err) {
