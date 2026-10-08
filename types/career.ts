@@ -39,7 +39,7 @@ export type ImpactCategory = 'efficiency' | 'revenue' | 'quality' | 'leadership'
 
 export type ImpactMagnitude = 'small' | 'medium' | 'large';
 
-export type RecordSource = 'web_text' | 'slack' | 'jira' | 'github' | 'email_inbound';
+export type RecordSource = 'web_text' | 'slack' | 'jira' | 'github' | 'email_inbound' | 'chrome_extension';
 
 export interface PersonaProfile {
   jobRole: JobRole;

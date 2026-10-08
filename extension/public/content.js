@@ -46,10 +46,14 @@
 
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.remove(["winstash_ext_logged_out"], () => {
+        const token = localStorage.getItem("winstash_auth_token");
         const payload = {
           winstash_ext_user: { uid: user.uid, email: user.email || "" },
           winstash_ext_records: records || [],
         };
+        if (token) {
+          payload.winstash_ext_token = token;
+        }
         if (credits) {
           payload.winstash_ext_credits = credits;
         }
@@ -168,6 +172,7 @@
   window.addEventListener("storage", (event) => {
     if (
       event.key === "winstash_auth_user" ||
+      event.key === "winstash_auth_token" ||
       event.key === "winstash_auth_bridge" ||
       event.key === "winstash_latest_records_cache" ||
       event.key === "winstash_latest_credit_cache"
@@ -189,7 +194,8 @@
         }
         const records = user ? getCachedRecords(user.uid) : [];
         const credits = getCachedCredits();
-        sendResponse({ user, records, credits });
+        const token = localStorage.getItem("winstash_auth_token");
+        sendResponse({ user, records, credits, token });
       } else if (msg.type === "SAVE_RECORD_TO_WEB") {
         if (msg.record) {
           window.dispatchEvent(

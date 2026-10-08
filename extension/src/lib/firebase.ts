@@ -48,6 +48,55 @@ export async function logoutUser(): Promise<void> {
   await firebaseSignOut(auth);
 }
 
+export async function getAuthToken(): Promise<string | null> {
+  try {
+    if (auth.currentUser) {
+      return await auth.currentUser.getIdToken();
+    }
+  } catch (err) {
+    console.warn("Failed to get current user token:", err);
+  }
+
+  // Fallback 1: check chrome.storage.local bridge token
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+    try {
+      const res: any = await new Promise((resolve) =>
+        chrome.storage.local.get(["winstash_ext_token"], resolve)
+      );
+      if (res && res.winstash_ext_token) {
+        return res.winstash_ext_token;
+      }
+    } catch {}
+  }
+
+  // Fallback 2: query open web tabs for token
+  if (typeof chrome !== "undefined" && chrome.tabs) {
+    try {
+      const tabs: any[] = await new Promise((resolve) => chrome.tabs.query({}, resolve));
+      for (const tab of tabs || []) {
+        if (tab.id && (tab.url?.includes("winstash") || tab.url?.includes("localhost:3000"))) {
+          try {
+            const resp: any = await new Promise((resolve) => {
+              chrome.tabs.sendMessage(tab.id, { type: "GET_WEB_DATA" }, (r: any) => {
+                if (chrome.runtime?.lastError) resolve(null);
+                else resolve(r);
+              });
+            });
+            if (resp?.token) {
+              if (chrome.storage && chrome.storage.local) {
+                chrome.storage.local.set({ winstash_ext_token: resp.token });
+              }
+              return resp.token;
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
 /**
  * Firestore에서 사용자의 모든 주간 기록 실시간 구독
  */

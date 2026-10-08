@@ -52,6 +52,13 @@ export default function ExtensionConnectPage() {
       };
 
       try {
+        if (auth?.currentUser) {
+          auth.currentUser.getIdToken().then((t) => {
+            try {
+              localStorage.setItem("winstash_auth_token", t);
+            } catch {}
+          }).catch(() => {});
+        }
         localStorage.setItem(
           "winstash_auth_user",
           JSON.stringify({ uid: userData.uid, email: userData.email })

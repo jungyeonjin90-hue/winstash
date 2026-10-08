@@ -1,15 +1,10 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Sparkles, CornerDownLeft, RotateCcw, ExternalLink, Zap, CheckCircle2, Info, LogOut, Loader2 } from "lucide-react";
-import { WeekSpan, CareerRecord, CreditStatus, TransformationOutput } from "./types/career";
+import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
 import { isWeekMatch } from "./lib/weekMatch";
 import { isAdminEmail } from "./lib/adminConfig";
-import {
-  subscribeToUserRecords,
-  saveRecordToFirestore,
-  deductFreeCreditInFirestore,
-  subscribeToUserCredits,
-} from "./lib/firebase";
+import { auth, onAuthStateChanged, logoutUser, getAuthToken } from "./lib/firebase";
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
 import { WinStashBrandBadge } from "./components/WinStashLogo";
@@ -18,9 +13,27 @@ import { LoginView } from "./components/LoginView";
 declare const chrome: any;
 
 const STORAGE_KEY_USER = "winstash_ext_user";
-const STORAGE_KEY_RECORDS = "winstash_ext_records";
-const STORAGE_KEY_CREDITS = "winstash_ext_credits";
 const STORAGE_KEY_LOGGED_OUT = "winstash_ext_logged_out";
+const STORAGE_KEY_DRAFT = "winstash_draft_memo";
+
+async function getApiBaseUrl(): Promise<string> {
+  if (typeof chrome !== "undefined" && chrome.tabs) {
+    try {
+      const allTabs: any[] = await new Promise((resolve) => chrome.tabs.query({}, resolve));
+      const localTab = allTabs?.find(
+        (t) =>
+          t.url?.includes("localhost:3000") ||
+          t.url?.includes("127.0.0.1:3000") ||
+          t.url?.includes("winstash.test")
+      );
+      if (localTab && localTab.url) {
+        const u = new URL(localTab.url);
+        return `${u.protocol}//${u.host}`;
+      }
+    } catch {}
+  }
+  return "https://winstash.net";
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<{ uid: string; email: string } | null>(null);
@@ -49,86 +62,84 @@ export default function App() {
   }, [currentUser, creditStatus]);
 
   // Helper: Save records to persistent storage
-  const saveRecordsToStorage = useCallback((newRecords: CareerRecord[]) => {
-    setRecords(newRecords);
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ [STORAGE_KEY_RECORDS]: newRecords });
-    } else {
-      localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(newRecords));
-    }
-  }, []);
+  // Find existing record for current selected week
+  const existingRecord = useMemo(() => {
+    return records.find((r) => isWeekMatch(r.target_week, selectedWeek));
+  }, [records, selectedWeek]);
 
-  // Helper: Save credits to persistent storage
-  const saveCreditsToStorage = useCallback((newCredits: CreditStatus) => {
-    setCreditStatus(newCredits);
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ [STORAGE_KEY_CREDITS]: newCredits });
-    } else {
-      localStorage.setItem(STORAGE_KEY_CREDITS, JSON.stringify(newCredits));
-    }
-  }, []);
+  // Real Backend Data Loader (GET /api/extension/status)
+  const fetchBackendData = useCallback(async (user?: { uid: string; email: string } | null) => {
+    const targetUser = user || currentUser;
+    if (!targetUser?.uid) return;
 
-  // 1. Initial Load: Read storage immediately without blocking
-  useEffect(() => {
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(
-        [STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER, STORAGE_KEY_RECORDS, STORAGE_KEY_CREDITS],
-        (result: any) => {
-          if (!result?.[STORAGE_KEY_LOGGED_OUT] && result?.[STORAGE_KEY_USER]?.uid) {
-            const user = result[STORAGE_KEY_USER];
-            setCurrentUser(user);
+    try {
+      const token = await getAuthToken();
+      if (!token) return;
 
-            if (result[STORAGE_KEY_RECORDS] && Array.isArray(result[STORAGE_KEY_RECORDS])) {
-              setRecords(result[STORAGE_KEY_RECORDS]);
-            }
+      const baseUrl = await getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/extension/status`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-            if (isAdminEmail(user?.email)) {
-              setCreditStatus({
-                isPro: true,
-                remainingCredits: 999999,
-                maxUserCredits: 999999,
-                isUserExhausted: false,
-                totalGeneratedCount: 0,
-              });
-            } else if (result[STORAGE_KEY_CREDITS]) {
-              setCreditStatus(result[STORAGE_KEY_CREDITS]);
-            }
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          if (json.credits) {
+            setCreditStatus(json.credits);
           }
-          setIsAuthChecking(false);
-        }
-      );
-    } else {
-      const isLoggedOut = localStorage.getItem(STORAGE_KEY_LOGGED_OUT);
-      if (!isLoggedOut) {
-        const savedUser = localStorage.getItem(STORAGE_KEY_USER);
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser);
-            if (parsed?.uid) {
-              setCurrentUser(parsed);
-              if (isAdminEmail(parsed.email)) {
-                setCreditStatus({
-                  isPro: true,
-                  remainingCredits: 999999,
-                  maxUserCredits: 999999,
-                  isUserExhausted: false,
-                  totalGeneratedCount: 0,
-                });
-              }
-            }
-          } catch {}
-        }
-        const savedRecs = localStorage.getItem(STORAGE_KEY_RECORDS);
-        if (savedRecs) {
-          try {
-            setRecords(JSON.parse(savedRecs));
-          } catch {}
+          if (Array.isArray(json.records)) {
+            setRecords(json.records);
+          }
         }
       }
-      setIsAuthChecking(false);
+    } catch (e) {
+      console.warn("[WinStash Extension] Backend status fetch error:", e);
     }
+  }, [currentUser]);
 
-    // Auto-close any leftover extension-connect tabs
+  // 1. Initial Authentication & Session Listener
+  useEffect(() => {
+    let isMounted = true;
+
+    // Listen to Firebase Auth state directly
+    const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
+      if (!isMounted) return;
+      if (fbUser) {
+        const userData = { uid: fbUser.uid, email: fbUser.email || "" };
+        setCurrentUser(userData);
+        setIsAuthChecking(false);
+        fetchBackendData(userData);
+      } else {
+        // Fallback: check chrome.storage.local bridge session from web tab
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: any) => {
+            if (!isMounted) return;
+            if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
+              const bridgedUser = res[STORAGE_KEY_USER];
+              setCurrentUser(bridgedUser);
+              fetchBackendData(bridgedUser);
+            } else {
+              setCurrentUser(null);
+            }
+            setIsAuthChecking(false);
+          });
+        } else {
+          setIsAuthChecking(false);
+        }
+      }
+    });
+
+    // Restore draft memo if user was writing previously
+    try {
+      const savedDraft = localStorage.getItem(STORAGE_KEY_DRAFT);
+      if (savedDraft) {
+        setMemo(savedDraft);
+      }
+    } catch {}
+
+    // Auto-close leftover extension-connect tabs
     if (typeof chrome !== "undefined" && chrome.tabs) {
       chrome.tabs.query({}, (tabs: any[]) => {
         tabs?.forEach((t) => {
@@ -140,167 +151,56 @@ export default function App() {
         });
       });
     }
-  }, []);
-
-  // 2. Direct DB & Web Sync when logged in
-  useEffect(() => {
-    if (!currentUser?.uid) return;
-
-    // A. Query open WinStash tab for instant vault records & credits
-    if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.query({}, (tabs: any[]) => {
-        const winstashTab = tabs?.find(
-          (t) => t.id && (t.url?.includes("winstash.net") || t.url?.includes("localhost:3000"))
-        );
-        if (winstashTab && winstashTab.id) {
-          chrome.tabs.sendMessage(winstashTab.id, { type: "GET_WEB_DATA" }, (res: any) => {
-            if (res && Array.isArray(res.records) && res.records.length > 0) {
-              saveRecordsToStorage(res.records);
-            }
-            if (res && res.credits && !isAdminEmail(currentUser.email)) {
-              saveCreditsToStorage(res.credits);
-            }
-          });
-        }
-      });
-    }
-
-    // B. Fetch records from server API endpoint
-    const fetchApiRecords = async () => {
-      try {
-        const res = await fetch(`https://winstash.net/api/extension/records?userId=${currentUser.uid}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && Array.isArray(json.records) && json.records.length > 0) {
-            saveRecordsToStorage(json.records);
-          }
-        }
-      } catch (e) {
-        try {
-          const localRes = await fetch(`http://localhost:3000/api/extension/records?userId=${currentUser.uid}`);
-          if (localRes.ok) {
-            const localJson = await localRes.json();
-            if (localJson.success && Array.isArray(localJson.records) && localJson.records.length > 0) {
-              saveRecordsToStorage(localJson.records);
-            }
-          }
-        } catch {}
-      }
-    };
-    fetchApiRecords();
-
-    // C. Stream user records from Firestore Database
-    const unsubscribe = subscribeToUserRecords(currentUser.uid, (syncedRecords) => {
-      if (syncedRecords && Array.isArray(syncedRecords) && syncedRecords.length > 0) {
-        saveRecordsToStorage(syncedRecords);
-      }
-    });
-
-    // D. Stream user credits & plan status directly from Firestore Database
-    const unsubscribeCredits = subscribeToUserCredits(
-      currentUser.uid,
-      currentUser.email,
-      (syncedCredits) => {
-        saveCreditsToStorage(syncedCredits);
-      }
-    );
 
     return () => {
-      if (unsubscribe) unsubscribe();
-      if (unsubscribeCredits) unsubscribeCredits();
+      isMounted = false;
+      unsubAuth();
     };
-  }, [currentUser?.uid, currentUser?.email, saveRecordsToStorage, saveCreditsToStorage]);
+  }, [fetchBackendData]);
 
-  // 3. Real-time storage change listener (for login events from web bridge)
-  useEffect(() => {
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
-      const listener = (changes: any, areaName: string) => {
-        if (areaName === "local") {
-          if (changes[STORAGE_KEY_LOGGED_OUT]?.newValue) {
-            setCurrentUser(null);
-            setRecords([]);
-            return;
-          }
-          if (changes[STORAGE_KEY_USER]?.newValue) {
-            const newUser = changes[STORAGE_KEY_USER].newValue;
-            setCurrentUser(newUser);
-            if (isAdminEmail(newUser?.email)) {
-              setCreditStatus({
-                isPro: true,
-                remainingCredits: 999999,
-                maxUserCredits: 999999,
-                isUserExhausted: false,
-                totalGeneratedCount: 0,
-              });
-            }
-          }
-          if (changes[STORAGE_KEY_RECORDS]?.newValue) {
-            setRecords(changes[STORAGE_KEY_RECORDS].newValue);
-          }
-          if (changes[STORAGE_KEY_CREDITS]?.newValue && !isAdminEmail(currentUser?.email)) {
-            setCreditStatus(changes[STORAGE_KEY_CREDITS].newValue);
-          }
-        }
-      };
-      chrome.storage.onChanged.addListener(listener);
-      return () => {
-        try {
-          chrome.storage.onChanged.removeListener(listener);
-        } catch {}
-      };
-    }
-  }, [currentUser?.email]);
-
-  // Handle successful login callback
+  // 2. Handle successful login callback
   const handleLoginSuccess = useCallback((authData: any) => {
-    const user = { uid: authData.uid, email: authData.email || "" };
-    setCurrentUser(user);
-
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.remove([STORAGE_KEY_LOGGED_OUT]);
-      chrome.storage.local.set({ [STORAGE_KEY_USER]: user });
-    } else {
-      localStorage.removeItem(STORAGE_KEY_LOGGED_OUT);
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    if (authData?.uid) {
+      const user = { uid: authData.uid, email: authData.email || "" };
+      setCurrentUser(user);
+      if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.remove([STORAGE_KEY_LOGGED_OUT]);
+        chrome.storage.local.set({ [STORAGE_KEY_USER]: user });
+      }
+      fetchBackendData(user);
+      setStatusFeedback({
+        type: "success",
+        message: `Connected as ${user.email}!`,
+      });
+      setTimeout(() => setStatusFeedback(null), 3000);
     }
+  }, [fetchBackendData]);
 
-    if (authData.records && Array.isArray(authData.records)) {
-      saveRecordsToStorage(authData.records);
-    }
-
-    if (isAdminEmail(user.email)) {
-      const adminCreds: CreditStatus = {
-        isPro: true,
-        remainingCredits: 999999,
-        maxUserCredits: 999999,
-        isUserExhausted: false,
-        totalGeneratedCount: 0,
-      };
-      saveCreditsToStorage(adminCreds);
-    } else if (authData.credits) {
-      saveCreditsToStorage(authData.credits);
-    }
-
-    setStatusFeedback({
-      type: "success",
-      message: `Connected as ${user.email}!`,
-    });
-    setTimeout(() => setStatusFeedback(null), 3500);
-  }, [saveRecordsToStorage, saveCreditsToStorage]);
-
-  // Existing record detection for current week
-  const existingRecord = useMemo(() => {
-    return records.find((rec) => isWeekMatch(rec, selectedWeek));
-  }, [records, selectedWeek]);
-
-  // Auto-populate memo when selectedWeek or existingRecord changes
+  // 3. Update textarea content when week or existing record changes
+  const prevExistingIdRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (existingRecord) {
-      setMemo(existingRecord.raw_memo || "");
+      if (prevExistingIdRef.current !== existingRecord.id) {
+        setMemo(existingRecord.raw_memo || "");
+        prevExistingIdRef.current = existingRecord.id;
+      }
     } else {
-      setMemo("");
+      prevExistingIdRef.current = undefined;
+      const savedDraft = localStorage.getItem(STORAGE_KEY_DRAFT);
+      setMemo(savedDraft || "");
     }
   }, [selectedWeek, existingRecord]);
+  // 4. Draft memo change handler
+  const handleMemoChange = (newText: string) => {
+    setMemo(newText);
+    try {
+      if (newText.trim().length > 0) {
+        localStorage.setItem(STORAGE_KEY_DRAFT, newText);
+      } else {
+        localStorage.removeItem(STORAGE_KEY_DRAFT);
+      }
+    } catch {}
+  };
 
   const handleOpenWebApp = (path: string = "/") => {
     const url = `https://winstash.net${path}`;
@@ -311,49 +211,32 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch {}
+
     setCurrentUser(null);
     setRecords([]);
     setMemo("");
     setStatusFeedback(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY_DRAFT);
+    } catch {}
 
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.set({ [STORAGE_KEY_LOGGED_OUT]: true }, () => {
-        chrome.storage.local.remove([STORAGE_KEY_USER, STORAGE_KEY_RECORDS, STORAGE_KEY_CREDITS]);
+        chrome.storage.local.remove([
+          STORAGE_KEY_USER,
+          "winstash_ext_token",
+          "winstash_ext_records",
+          "winstash_ext_credits",
+        ]);
       });
-
-      // Clear session across all open WinStash tabs
-      chrome.tabs.query({}, (tabs: any[]) => {
-        tabs?.forEach((tab) => {
-          if (tab.id && (tab.url?.includes("winstash.net") || tab.url?.includes("localhost:3000"))) {
-            try {
-              chrome.tabs.sendMessage(tab.id, { type: "LOGOUT_FROM_EXTENSION" });
-            } catch {}
-            try {
-              chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: () => {
-                  try {
-                    localStorage.removeItem("winstash_auth_user");
-                    localStorage.removeItem("winstash_auth_bridge");
-                    localStorage.removeItem("career_pulse_demo_user");
-                    window.dispatchEvent(new CustomEvent("winstash_auth_changed", { detail: null }));
-                  } catch {}
-                },
-              });
-            } catch {}
-          }
-        });
-      });
-    } else {
-      localStorage.setItem(STORAGE_KEY_LOGGED_OUT, "true");
-      localStorage.removeItem(STORAGE_KEY_USER);
-      localStorage.removeItem(STORAGE_KEY_RECORDS);
-      localStorage.removeItem(STORAGE_KEY_CREDITS);
     }
   };
 
-  // Main Submit Handler
+  // Main Submit Trigger
   const handleSubmitClick = () => {
     if (!memo.trim()) return;
 
@@ -370,7 +253,7 @@ export default function App() {
         return;
       }
 
-      // Free users confirm credit deduction (Admins/Pros skip)
+      // Free users confirm credit deduction before AI update
       if (!isUserPro) {
         setIsModalOpen(true);
         return;
@@ -380,191 +263,87 @@ export default function App() {
     executeTransform();
   };
 
+  // Real Backend API Submitter (POST /api/extension/submit)
   const executeTransform = async () => {
-    if (!currentUser || !memo.trim()) return;
+    if (!memo.trim() || !currentUser) return;
     setIsLoading(true);
 
     try {
-      const isModifyingExisting = Boolean(existingRecord);
-      const shouldDeduct = !isUserPro && isModifyingExisting;
-
-      // 1. Determine API endpoint (Korean or English based on text or user context)
-      const hasKorean = /[\uac00-\ud7af]/.test(memo);
-      const endpoint = hasKorean ? "/api/transform/ko" : "/api/transform";
-
-      // Discover current base URL (local dev or production)
-      let baseUrl = "https://winstash.net";
-      if (typeof chrome !== "undefined" && chrome.tabs) {
-        try {
-          const allTabs: any[] = await new Promise((resolve) => chrome.tabs.query({}, resolve));
-          const localTab = allTabs?.find((t) => t.url?.includes("localhost:3000") || t.url?.includes("127.0.0.1:3000"));
-          if (localTab) {
-            baseUrl = "http://localhost:3000";
-          }
-        } catch {}
+      const token = await getAuthToken();
+      if (!token) {
+        setStatusFeedback({ type: "info", message: "Please sign in again to authorize." });
+        setTimeout(() => setStatusFeedback(null), 3500);
+        return;
       }
 
-      // 2. Call AI transformation engine
-      let output: TransformationOutput | null = null;
-      try {
-        const res = await fetch(`${baseUrl}${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            raw_memo: memo.trim(),
-            job_role: "engineering",
-            tone_manner: "impact",
-          }),
-        });
-
-        if (res.ok) {
-          output = await res.json();
-        } else if (baseUrl !== "https://winstash.net") {
-          const fallbackRes = await fetch(`https://winstash.net${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              raw_memo: memo.trim(),
-              job_role: "engineering",
-              tone_manner: "impact",
-            }),
-          });
-          if (fallbackRes.ok) {
-            output = await fallbackRes.json();
-          }
-        }
-      } catch (fetchErr) {
-        console.warn("AI transform fetch error, trying public endpoint:", fetchErr);
-        try {
-          const fallbackRes = await fetch(`https://winstash.net${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              raw_memo: memo.trim(),
-              job_role: "engineering",
-              tone_manner: "impact",
-            }),
-          });
-          if (fallbackRes.ok) {
-            output = await fallbackRes.json();
-          }
-        } catch {}
-      }
-
-      // Build complete record with weekly_report, brag_sheet_item, star_portfolio
-      const weeklyReport = output?.weekly_report || {
-        done: [memo.trim().slice(0, 100)],
-        in_progress: [],
-        next_week: [],
-      };
-      const bragItem = output?.brag_sheet_item || {
-        metric_summary: memo.trim().slice(0, 80),
-        business_impact: "Updated via WinStash Quick Log",
-        quarter: `${selectedWeek.year}-Q${Math.ceil(selectedWeek.month / 3)}`,
-      };
-      const starItem = output?.star_portfolio || {
-        title: `${selectedWeek.label} 업무 기록`,
-        situation: memo.trim(),
-        task: "주간 업무 완수",
-        action: memo.trim(),
-        result: "주간 목표 달성",
-        nda_tags: ["#업무기록"],
-      };
-
-      const updatedRec: CareerRecord = {
-        id: existingRecord ? existingRecord.id : `rec_${Date.now()}`,
-        createdAt: existingRecord ? existingRecord.createdAt : new Date().toISOString(),
-        target_week: selectedWeek,
-        raw_memo: memo.trim(),
-        weekly_report: weeklyReport,
-        brag_sheet_item: bragItem,
-        star_portfolio: starItem,
-        source: "chrome_extension",
-      };
-
-      const newRecords = existingRecord
-        ? records.map((r) => (r.id === existingRecord.id ? updatedRec : r))
-        : [updatedRec, ...records];
-
-      // Deduct credit only for free users modifying an existing entry
-      if (shouldDeduct) {
-        const nextRemaining = Math.max(0, creditStatus.remainingCredits - 1);
-        const nextCredits: CreditStatus = {
-          ...creditStatus,
-          remainingCredits: nextRemaining,
-          isUserExhausted: nextRemaining === 0,
-          totalGeneratedCount: creditStatus.totalGeneratedCount + 1,
-        };
-        saveCreditsToStorage(nextCredits);
-
-        // Directly increment freeUsedCount in Firestore users/{userId}
-        try {
-          await deductFreeCreditInFirestore(currentUser.uid);
-        } catch (creditErr) {
-          console.warn("Direct Firestore credit deduction:", creditErr);
-        }
-      }
-
-      // 1. Save locally to extension storage
-      saveRecordsToStorage(newRecords);
-
-      // 2. Direct Firestore save with full weekly_report, brag_sheet_item, star_portfolio
-      try {
-        await saveRecordToFirestore(currentUser.uid, updatedRec);
-      } catch (err) {
-        console.warn("Direct Firestore save fallback:", err);
-      }
-
-      // 3. Broadcast to open tabs of winstash
-      if (typeof chrome !== "undefined" && chrome.tabs) {
-        chrome.tabs.query({}, (tabs: any[]) => {
-          tabs?.forEach((tab) => {
-            if (
-              tab.id &&
-              (tab.url?.includes("winstash") || tab.url?.includes("localhost:3000"))
-            ) {
-              try {
-                chrome.tabs.sendMessage(tab.id, {
-                  type: "SAVE_RECORD_TO_WEB",
-                  record: updatedRec,
-                  deductCredit: shouldDeduct,
-                });
-              } catch {}
-            }
-          });
-        });
-      }
-
-      // 4. Post to server API endpoint for direct DB persistence and server-side credit deduction
-      try {
-        const payload = JSON.stringify({
-          userId: currentUser.uid,
-          userEmail: currentUser.email,
-          record: updatedRec,
-          deductCredit: shouldDeduct,
-        });
-        fetch("https://winstash.net/api/extension/records", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: payload,
-        }).catch(() => {
-          fetch("http://localhost:3000/api/extension/records", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: payload,
-          }).catch(() => {});
-        });
-      } catch {}
-
-      setIsModalOpen(false);
-      const actionVerb = existingRecord ? "updated" : "saved";
-      setStatusFeedback({
-        type: "success",
-        message: `Successfully ${actionVerb} for ${selectedWeek.label}!`,
+      const baseUrl = await getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/extension/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          raw_memo: memo.trim(),
+          target_week: selectedWeek,
+          existingRecordId: existingRecord?.id,
+          existingCreatedAt: existingRecord?.createdAt,
+          job_role: "engineering",
+          tone_manner: "impact",
+        }),
       });
-      setTimeout(() => setStatusFeedback(null), 3000);
-    } catch (err) {
-      console.error("Save error:", err);
+
+      if (!res.ok) {
+        const errorJson = await res.json().catch(() => ({}));
+        throw new Error(errorJson.error || "Failed to save and transform record");
+      }
+
+      const json = await res.json();
+      if (json.success && json.record) {
+        // 1. Update records in state with full AI-synthesized record
+        setRecords((prev) => [json.record, ...prev.filter((r) => r.id !== json.record.id)]);
+
+        // 2. Update credits from authoritative backend response
+        if (json.credits) {
+          setCreditStatus(json.credits);
+        }
+
+        // 3. Clear draft memo
+        try {
+          localStorage.removeItem(STORAGE_KEY_DRAFT);
+        } catch {}
+
+        // 4. Notify open web tabs to update their live dashboard
+        if (typeof chrome !== "undefined" && chrome.tabs) {
+          chrome.tabs.query({}, (tabs: any[]) => {
+            tabs?.forEach((tab) => {
+              if (tab.id && (tab.url?.includes("winstash") || tab.url?.includes("localhost:3000"))) {
+                try {
+                  chrome.tabs.sendMessage(tab.id, {
+                    type: "SAVE_RECORD_TO_WEB",
+                    record: json.record,
+                  });
+                } catch {}
+              }
+            });
+          });
+        }
+
+        setIsModalOpen(false);
+        const actionVerb = existingRecord ? "updated" : "saved";
+        setStatusFeedback({
+          type: "success",
+          message: `Successfully ${actionVerb} & synthesized with AI!`,
+        });
+        setTimeout(() => setStatusFeedback(null), 3000);
+      }
+    } catch (err: any) {
+      console.error("[WinStash Extension] Transform error:", err);
+      setStatusFeedback({
+        type: "info",
+        message: err.message || "Failed to transform memo.",
+      });
+      setTimeout(() => setStatusFeedback(null), 3500);
     } finally {
       setIsLoading(false);
     }
@@ -649,7 +428,7 @@ export default function App() {
       <div className="relative border border-zinc-700/80 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all bg-zinc-950/70">
         <textarea
           value={memo}
-          onChange={(e) => setMemo(e.target.value)}
+          onChange={(e) => handleMemoChange(e.target.value)}
           maxLength={5000}
           autoFocus
           onKeyDown={(e) => {
