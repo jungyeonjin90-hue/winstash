@@ -4,7 +4,7 @@ import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
 import { isWeekMatch } from "./lib/weekMatch";
 import { isAdminEmail } from "./lib/adminConfig";
-import { auth, onAuthStateChanged, logoutUser, getAuthToken } from "./lib/firebase";
+import { auth, onAuthStateChanged, logoutUser, getAuthToken, deductFreeCreditInFirestore } from "./lib/firebase";
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
 import { WinStashBrandBadge } from "./components/WinStashLogo";
@@ -87,7 +87,19 @@ export default function App() {
         const json = await res.json();
         if (json.success) {
           if (json.credits) {
-            setCreditStatus(json.credits);
+            setCreditStatus((prev) => {
+              if (
+                json.credits.remainingCredits === 10 &&
+                json.credits.totalGeneratedCount === 0 &&
+                prev.totalGeneratedCount > 0
+              ) {
+                return prev;
+              }
+              if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+                chrome.storage.local.set({ winstash_ext_credits: json.credits });
+              }
+              return json.credits;
+            });
           }
           if (Array.isArray(json.records)) {
             setRecords(json.records);
@@ -103,6 +115,80 @@ export default function App() {
   useEffect(() => {
     let isMounted = true;
 
+    // 0. Immediate local storage cache restore (0ms delay)
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(
+        [
+          STORAGE_KEY_LOGGED_OUT,
+          STORAGE_KEY_USER,
+          "winstash_ext_credits",
+          "winstash_ext_records",
+        ],
+        (res: any) => {
+          if (!isMounted) return;
+          if (res?.winstash_ext_credits) {
+            setCreditStatus(res.winstash_ext_credits);
+          }
+          if (Array.isArray(res?.winstash_ext_records) && res.winstash_ext_records.length > 0) {
+            setRecords(res.winstash_ext_records);
+          }
+          if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
+            const bridgedUser = res[STORAGE_KEY_USER];
+            setCurrentUser(bridgedUser);
+            setIsAuthChecking(false);
+          }
+        }
+      );
+    }
+
+    // 0-b. Query open WinStash web tabs for real-time credit status
+    const syncFromWebTabs = () => {
+      if (typeof chrome !== "undefined" && chrome.tabs) {
+        chrome.tabs.query({}, (tabs: any[]) => {
+          tabs?.forEach((tab) => {
+            if (tab.id && (tab.url?.includes("winstash") || tab.url?.includes("localhost:3000"))) {
+              try {
+                chrome.tabs.sendMessage(tab.id, { type: "GET_WEB_DATA" }, (resp: any) => {
+                  if (chrome.runtime?.lastError || !resp || !isMounted) return;
+                  if (resp.credits) {
+                    setCreditStatus(resp.credits);
+                    if (chrome.storage && chrome.storage.local) {
+                      chrome.storage.local.set({ winstash_ext_credits: resp.credits });
+                    }
+                  }
+                  if (Array.isArray(resp.records) && resp.records.length > 0) {
+                    setRecords(resp.records);
+                  }
+                  if (resp.user?.uid) {
+                    setCurrentUser(resp.user);
+                    setIsAuthChecking(false);
+                  }
+                });
+              } catch {}
+            }
+          });
+        });
+      }
+    };
+    syncFromWebTabs();
+
+    // 0-c. Listen for live credit & record changes broadcast from web tabs
+    const handleStorageChange = (changes: any, areaName: string) => {
+      if (!isMounted || areaName !== "local") return;
+      if (changes["winstash_ext_credits"]?.newValue) {
+        setCreditStatus(changes["winstash_ext_credits"].newValue);
+      }
+      if (changes["winstash_ext_records"]?.newValue) {
+        setRecords(changes["winstash_ext_records"].newValue);
+      }
+      if (changes[STORAGE_KEY_USER]?.newValue?.uid) {
+        setCurrentUser(changes[STORAGE_KEY_USER].newValue);
+      }
+    };
+    if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+      chrome.storage.onChanged.addListener(handleStorageChange);
+    }
+
     // Listen to Firebase Auth state directly
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       if (!isMounted) return;
@@ -114,8 +200,11 @@ export default function App() {
       } else {
         // Fallback: check chrome.storage.local bridge session from web tab
         if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: any) => {
+          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER, "winstash_ext_credits"], (res: any) => {
             if (!isMounted) return;
+            if (res?.winstash_ext_credits) {
+              setCreditStatus(res.winstash_ext_credits);
+            }
             if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
               const bridgedUser = res[STORAGE_KEY_USER];
               setCurrentUser(bridgedUser);
@@ -155,6 +244,11 @@ export default function App() {
     return () => {
       isMounted = false;
       unsubAuth();
+      if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+        try {
+          chrome.storage.onChanged.removeListener(handleStorageChange);
+        } catch {}
+      }
     };
   }, [fetchBackendData]);
 
@@ -163,9 +257,16 @@ export default function App() {
     if (authData?.uid) {
       const user = { uid: authData.uid, email: authData.email || "" };
       setCurrentUser(user);
+      if (authData.credits) {
+        setCreditStatus(authData.credits);
+      }
       if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
         chrome.storage.local.remove([STORAGE_KEY_LOGGED_OUT]);
-        chrome.storage.local.set({ [STORAGE_KEY_USER]: user });
+        const payload: any = { [STORAGE_KEY_USER]: user };
+        if (authData.credits) {
+          payload.winstash_ext_credits = authData.credits;
+        }
+        chrome.storage.local.set(payload);
       }
       fetchBackendData(user);
       setStatusFeedback({
@@ -303,9 +404,30 @@ export default function App() {
         // 1. Update records in state with full AI-synthesized record
         setRecords((prev) => [json.record, ...prev.filter((r) => r.id !== json.record.id)]);
 
-        // 2. Update credits from authoritative backend response
-        if (json.credits) {
+        // 2. Update credits locally and synchronously
+        const shouldDeduct = Boolean(existingRecord && !isUserPro);
+        if (shouldDeduct) {
+          const nextRemaining = Math.max(0, creditStatus.remainingCredits - 1);
+          const nextCredits: CreditStatus = {
+            ...creditStatus,
+            remainingCredits: nextRemaining,
+            isUserExhausted: nextRemaining === 0,
+            totalGeneratedCount: creditStatus.totalGeneratedCount + 1,
+          };
+          setCreditStatus(nextCredits);
+          if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.set({ winstash_ext_credits: nextCredits });
+          }
+          if (currentUser?.uid) {
+            try {
+              await deductFreeCreditInFirestore(currentUser.uid);
+            } catch {}
+          }
+        } else if (json.credits) {
           setCreditStatus(json.credits);
+          if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.set({ winstash_ext_credits: json.credits });
+          }
         }
 
         // 3. Clear draft memo
@@ -313,7 +435,7 @@ export default function App() {
           localStorage.removeItem(STORAGE_KEY_DRAFT);
         } catch {}
 
-        // 4. Notify open web tabs to update their live dashboard
+        // 4. Notify open web tabs to update their live dashboard AND deduct credit
         if (typeof chrome !== "undefined" && chrome.tabs) {
           chrome.tabs.query({}, (tabs: any[]) => {
             tabs?.forEach((tab) => {
@@ -322,6 +444,7 @@ export default function App() {
                   chrome.tabs.sendMessage(tab.id, {
                     type: "SAVE_RECORD_TO_WEB",
                     record: json.record,
+                    deductCredit: shouldDeduct,
                   });
                 } catch {}
               }

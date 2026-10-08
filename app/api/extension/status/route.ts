@@ -56,7 +56,49 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. Fetch Latest Credit Status directly from DB
-    const creditStatus = await getCreditStatus(userId, false, userEmail);
+    let creditStatus = await getCreditStatus(userId, false, userEmail);
+
+    // If server cannot reach Firestore via adminDb/clientDb, query Firestore REST API using the user's Bearer token
+    if (!creditStatus.isPro && !creditStatus.isAdmin && creditStatus.userUsedCount === 0) {
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "careerpulse-c2213";
+      try {
+        const userRestRes = await fetch(
+          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (userRestRes.ok) {
+          const uDoc = await userRestRes.json();
+          const plan = uDoc?.fields?.plan?.stringValue || "free";
+          const planStatus = uDoc?.fields?.planStatus?.stringValue;
+          const isPro = plan === "pro" && (planStatus === "active" || planStatus === "paid" || planStatus === "on_trial");
+          const freeCount = parseInt(uDoc?.fields?.freeUsedCount?.integerValue || "0", 10);
+          
+          let usageCount = 0;
+          try {
+            const usageRestRes = await fetch(
+              `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}/usage/summary`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (usageRestRes.ok) {
+              const usDoc = await usageRestRes.json();
+              usageCount = parseInt(usDoc?.fields?.freeUsedCount?.integerValue || "0", 10);
+            }
+          } catch {}
+
+          const effectiveCount = Math.max(freeCount, usageCount);
+          creditStatus = {
+            ...creditStatus,
+            plan: isPro ? "pro" : "free",
+            isPro,
+            userUsedCount: effectiveCount,
+            remainingCredits: isPro ? 999999 : Math.max(0, 10 - effectiveCount),
+            isUserExhausted: !isPro && effectiveCount >= 10,
+          };
+        }
+      } catch (restErr) {
+        console.warn("[Extension Status API] REST fallback check notice:", restErr);
+      }
+    }
 
     // 3. Fetch User Records (Last 30 records)
     let records: CareerRecord[] = [];

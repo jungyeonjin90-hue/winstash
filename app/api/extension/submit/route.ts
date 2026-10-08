@@ -132,7 +132,30 @@ export async function POST(req: NextRequest) {
     // 7. Deduct Credit if applicable
     let updatedCredits = currentCredit;
     if (shouldDeduct) {
-      updatedCredits = await consumeFreeCredit(userId, false, userEmail);
+      try {
+        updatedCredits = await consumeFreeCredit(userId, false, userEmail);
+      } catch {}
+
+      try {
+        const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "careerpulse-c2213";
+        const currentCount = updatedCredits.userUsedCount || 0;
+        await fetch(
+          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=updatedAt`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              fields: {
+                freeUsedCount: { integerValue: String(currentCount + 1) },
+                updatedAt: { stringValue: new Date().toISOString() },
+              },
+            }),
+          }
+        );
+      } catch {}
     }
 
     return NextResponse.json(
