@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { extensionCorsHeaders } from "@/lib/extensionCors";
 import { getServerCreditStatus, isProPlan, toExtensionCredits, verifyRequestToken } from "@/lib/serverAuthQuota";
 import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 import { CareerRecord } from "@/types/career";
@@ -9,17 +10,13 @@ import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 // No hard-coded fallback: a wrong project would silently read another database (audit M-1).
 const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: extensionCorsHeaders(req) });
 }
 
 export async function GET(req: NextRequest) {
+  const cors = extensionCorsHeaders(req);
   try {
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
@@ -27,7 +24,7 @@ export async function GET(req: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { success: false, error: "Authentication required" },
-        { status: 401, headers: CORS_HEADERS }
+        { status: 401, headers: cors }
       );
     }
 
@@ -47,7 +44,7 @@ export async function GET(req: NextRequest) {
     } else {
       return NextResponse.json(
         { success: false, error: "Invalid or expired token" },
-        { status: 401, headers: CORS_HEADERS }
+        { status: 401, headers: cors }
       );
     }
 
@@ -185,13 +182,14 @@ export async function GET(req: NextRequest) {
         credits: creditStatus ? toExtensionCredits(creditStatus) : undefined,
         records,
       },
-      { headers: CORS_HEADERS }
+      { headers: cors }
     );
-  } catch (err: any) {
+  } catch (err) {
+    // Details stay in server logs; clients get a generic message (audit M-9).
     console.error("[Extension Status API] Fatal error:", err);
     return NextResponse.json(
-      { success: false, error: err.message || "Internal server error" },
-      { status: 500, headers: CORS_HEADERS }
+      { success: false, error: "Internal server error" },
+      { status: 500, headers: cors }
     );
   }
 }

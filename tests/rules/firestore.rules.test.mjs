@@ -198,12 +198,51 @@ describe("system/usage (global kill switch counter)", () => {
 });
 
 describe("feedbacks", () => {
+  // Same shape as lib/firestoreService.ts submitFeedbackToFirestore()
+  const feedback = (id, uid, extra = {}) => ({
+    id,
+    type: "bug",
+    title: "Export button does nothing",
+    message: "Clicking export on the brag tab has no effect.",
+    userEmail: `${uid}@example.com`,
+    userId: uid,
+    status: "new",
+    metadata: { userAgent: "Mozilla/5.0", screenResolution: "1440x900", pathname: "/", platform: "Win32", language: "en" },
+    createdAt: new Date().toISOString(),
+    ...extra,
+  });
+
   test("signed-in users can submit feedback", async () => {
-    await assertSucceeds(setDoc(doc(as(ALICE), "feedbacks", "f1"), { message: "hi" }));
+    await assertSucceeds(setDoc(doc(as(ALICE), "feedbacks", "fb-1"), feedback("fb-1", ALICE)));
   });
 
   test("anonymous cannot submit feedback", async () => {
-    await assertFails(setDoc(doc(anon(), "feedbacks", "f2"), { message: "spam" }));
+    await assertFails(setDoc(doc(anon(), "feedbacks", "f2"), feedback("f2", "guest")));
+  });
+
+  test("[M-10] feedback must be attributed to the caller's own uid", async () => {
+    await assertFails(setDoc(doc(as(BOB), "feedbacks", "fb-2"), feedback("fb-2", ALICE)));
+  });
+
+  test("[M-10] feedback cannot be pre-marked as resolved or carry extra fields", async () => {
+    await assertFails(setDoc(doc(as(ALICE), "feedbacks", "fb-3"), feedback("fb-3", ALICE, { status: "resolved" })));
+    await assertFails(setDoc(doc(as(ALICE), "feedbacks", "fb-4"), feedback("fb-4", ALICE, { admin: true })));
+    await assertFails(setDoc(doc(as(ALICE), "feedbacks", "fb-5"), feedback("fb-5", ALICE, { type: "spam" })));
+  });
+
+  test("[M-10] oversized feedback is rejected", async () => {
+    await assertFails(setDoc(doc(as(ALICE), "feedbacks", "fb-6"), feedback("fb-6", ALICE, { message: "x".repeat(5001) })));
+    await assertFails(setDoc(doc(as(ALICE), "feedbacks", "fb-7"), feedback("fb-7", ALICE, { title: "x".repeat(201) })));
+    await assertFails(
+      setDoc(doc(as(ALICE), "feedbacks", "fb-8"), feedback("fb-8", ALICE, { metadata: { userAgent: "x".repeat(501) } }))
+    );
+    await assertFails(
+      setDoc(doc(as(ALICE), "feedbacks", "fb-9"), feedback("fb-9", ALICE, { metadata: { cookie: "session=..." } }))
+    );
+  });
+
+  test("[M-10] doc id must match the feedback id", async () => {
+    await assertFails(setDoc(doc(as(ALICE), "feedbacks", "fb-10"), feedback("other-id", ALICE)));
   });
 
   test("non-admin cannot read feedback", async () => {

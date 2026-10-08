@@ -68,10 +68,40 @@ service cloud.firestore {
     }
 
     // 사용자 피드백 및 버그 제보 컬렉션
-    // 스팸 봇 방지를 위해 로그인한 사용자만 작성 허용, 열람/관리는 관리자만 가능
+    // 스팸 봇 방지를 위해 로그인한 사용자만 작성 허용(본인 uid, 정해진 필드·길이만), 열람/관리는 관리자만 가능
     match /feedbacks/{feedbackId} {
-      allow create: if request.auth != null;
+      allow create: if request.auth != null && isValidFeedback(feedbackId);
       allow read, update, delete: if isAdmin();
+    }
+
+    // lib/firestoreService.ts submitFeedbackToFirestore() 의 FeedbackReport 형태 + FEEDBACK_LIMITS 와 일치 (감사 M-10)
+    function isValidFeedback(feedbackId) {
+      let d = request.resource.data;
+      return d.keys().hasAll(['id', 'type', 'title', 'message', 'userId', 'status', 'createdAt'])
+        && d.keys().hasOnly(['id', 'type', 'title', 'message', 'userEmail', 'userId', 'status', 'metadata', 'createdAt'])
+        && d.id == feedbackId
+        && d.type in ['bug', 'feature', 'general']
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+        && d.message is string && d.message.size() > 0 && d.message.size() <= 5000
+        && optionalString(d, 'userEmail', 254)
+        && d.userId == request.auth.uid
+        && d.status == 'new'
+        && d.createdAt is string && d.createdAt.size() <= 40
+        && (!('metadata' in d) || isValidFeedbackMetadata(d.metadata));
+    }
+
+    function isValidFeedbackMetadata(m) {
+      return m is map
+        && m.keys().hasOnly(['userAgent', 'screenResolution', 'pathname', 'platform', 'language'])
+        && optionalString(m, 'userAgent', 500)
+        && optionalString(m, 'screenResolution', 500)
+        && optionalString(m, 'pathname', 500)
+        && optionalString(m, 'platform', 500)
+        && optionalString(m, 'language', 500);
+    }
+
+    function optionalString(m, key, maxSize) {
+      return !(key in m) || (m[key] is string && m[key].size() <= maxSize);
     }
 
     // Pro 멤버십 얼리액세스 대기자 명단 (pro_waitlist)
