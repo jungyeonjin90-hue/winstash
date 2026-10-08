@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Award,
   Copy,
@@ -102,33 +102,46 @@ export function BragDocumentTab({
   const [selectedHalf, setSelectedHalf] = useState<string>("ALL");
   const [selectedQuarter, setSelectedQuarter] = useState<string>("ALL");
 
-  // Keep selectedYear synchronized when records load asynchronously
-  useEffect(() => {
-    if (records.length > 0) {
-      const availableYears = new Set(records.map((r) => getDetailedRecordDateInfo(r).year));
-      if (!availableYears.has(selectedYear)) {
-        setSelectedYear(latestRecordYear);
-      }
-    }
-  }, [records, latestRecordYear, selectedYear]);
+  // Professional Scope (3 | 5 | 10) & Density ("detailed" | "compact")
+  const [scale, setScale] = useState<3 | 5 | 10>(5);
+  const [density, setDensity] = useState<ViewDensity>("detailed");
 
-  // Automatically restore settings from the most recently generated AI summary
-  const hasRestoredRef = useRef(false);
+  // Cached summary state
+  const [storedEntry, setCachedEntry] = useState<SummaryCacheEntry | null>(null);
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+
+  // Action states
+  const [isCopied, setIsCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Keep selectedYear synchronized when records load asynchronously.
+  // Adjusted during render (not in an effect) so the corrected year is used on the same render.
+  const availableYears = useMemo(
+    () => new Set(records.map((r) => getDetailedRecordDateInfo(r).year)),
+    [records]
+  );
+  if (records.length > 0 && !availableYears.has(selectedYear)) {
+    setSelectedYear(latestRecordYear);
+  }
 
   // Reset cached entry when switching accounts
-  useEffect(() => {
-    hasRestoredRef.current = false;
+  const [cacheOwnerId, setCacheOwnerId] = useState(userId);
+  if (cacheOwnerId !== userId) {
+    setCacheOwnerId(userId);
     setCachedEntry(null);
-  }, [userId]);
+  }
+
+  // Automatically restore settings from the most recently generated AI summary (once per account)
+  const restoredForUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (records.length === 0 || !userId || hasRestoredRef.current) return;
+    if (records.length === 0 || !userId || restoredForUserRef.current === userId) return;
 
     const restoreLatestSummary = async () => {
       try {
         const latest = await getLatestSummaryCache(userId, isDemo, "brag");
         if (latest && Array.isArray(latest.items) && latest.items.length > 0) {
-          hasRestoredRef.current = true;
+          restoredForUserRef.current = userId;
           if (latest.year) setSelectedYear(latest.year);
           if (latest.half) setSelectedHalf(latest.half);
           if (latest.quarter) setSelectedQuarter(latest.quarter);
@@ -145,18 +158,6 @@ export function BragDocumentTab({
 
     restoreLatestSummary();
   }, [records.length, userId, isDemo, onToneMannerChange]);
-
-  // Professional Scope (3 | 5 | 10) & Density ("detailed" | "compact")
-  const [scale, setScale] = useState<3 | 5 | 10>(5);
-  const [density, setDensity] = useState<ViewDensity>("detailed");
-
-  // Cached summary state
-  const [cachedEntry, setCachedEntry] = useState<SummaryCacheEntry | null>(null);
-  const [isSynthesizing, setIsSynthesizing] = useState(false);
-
-  // Action states
-  const [isCopied, setIsCopied] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // 1. Filter raw records by dropdown periods
   const filteredRecords = useMemo(() => {
@@ -179,32 +180,30 @@ export function BragDocumentTab({
     );
   }, [selectedYear, selectedHalf, selectedQuarter, scale, jobRole, toneManner, currentRecordIds]);
 
-  // 3. Load from cache whenever key changes
-  const loadCache = useCallback(async () => {
-    if (filteredRecords.length === 0) {
-      setCachedEntry(null);
-      return;
-    }
-    const cached = await getSummaryCache(userId, isDemo, cacheKey);
-    // If cached entry is stale or references deleted records, evict it immediately!
-    if (cached && !isCacheValid(cached, currentRecordIds)) {
-      setCachedEntry(null);
-      deleteSummaryCache(userId, isDemo, cacheKey).catch(() => {});
-      return;
-    }
-    setCachedEntry(cached);
-  }, [userId, isDemo, cacheKey, filteredRecords.length, currentRecordIds]);
-
+  // 3. Load from cache whenever key changes. State is only set after the await, and a newer
+  //    key cancels an older in-flight load so it cannot overwrite the newer result.
+  const hasFilteredRecords = filteredRecords.length > 0;
   useEffect(() => {
-    loadCache();
-  }, [loadCache]);
+    let cancelled = false;
+    (async () => {
+      const cached = await (hasFilteredRecords ? getSummaryCache(userId, isDemo, cacheKey) : Promise.resolve(null));
+      if (cancelled) return;
+      // If cached entry is stale or references deleted records, evict it immediately!
+      if (cached && !isCacheValid(cached, currentRecordIds)) {
+        setCachedEntry(null);
+        deleteSummaryCache(userId, isDemo, cacheKey).catch(() => {});
+        return;
+      }
+      setCachedEntry(cached);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, isDemo, cacheKey, hasFilteredRecords, currentRecordIds]);
 
-  // Keep cache strictly in sync if currentRecordIds changes (e.g. user deletes or edits records)
-  useEffect(() => {
-    if (cachedEntry && !isCacheValid(cachedEntry, currentRecordIds)) {
-      setCachedEntry(null);
-    }
-  }, [cachedEntry, currentRecordIds]);
+  // Keep cache strictly in sync if currentRecordIds changes (e.g. user deletes or edits records):
+  // an entry that no longer matches the current records is treated as absent.
+  const cachedEntry = storedEntry && isCacheValid(storedEntry, currentRecordIds) ? storedEntry : null;
 
   // 4. Stale check: has any weekly record been added or deleted since this summary was cached?
   const isStale = useMemo(() => {
