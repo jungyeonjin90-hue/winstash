@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build output and test artifacts are not source (audit L-2)
+    "extension/dist/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

@@ -94,6 +94,40 @@ test.describe("Demo-mode transform (dev only)", () => {
     expect(res.status()).toBe(200);
   });
 
+  test("[L-4] invalid record_id / record_date / target_week -> 400", async ({ request }) => {
+    const cases: Record<string, unknown>[] = [
+      { record_id: "users/other/records/x" },
+      { record_id: ".." },
+      { record_id: "x".repeat(200) },
+      { record_date: "not-a-date" },
+      { target_week: { year: "2026", label: 1 } },
+    ];
+    for (const extra of cases) {
+      const res = await request.post("/api/transform", { headers: demoHeaders(), data: { raw_memo: SAMPLE_MEMO, ...extra } });
+      expect(res.status(), JSON.stringify(extra)).toBe(400);
+    }
+  });
+
+  test("[L-4] valid record metadata is accepted and unknown week fields are dropped", async ({ request }) => {
+    const res = await request.post("/api/transform", {
+      headers: demoHeaders(),
+      data: {
+        raw_memo: SAMPLE_MEMO,
+        record_id: "rec-en-1760000000000",
+        record_date: "2026-10-09T09:00:00.000Z",
+        target_week: {
+          year: 2026, month: 10, weekOfMonth: 2, startDate: "2026-10-05", endDate: "2026-10-11", label: "Week 2", extra: "x",
+        },
+      },
+    });
+    expect(res.status()).toBe(200);
+    const { record } = await res.json();
+    expect(record.id).toBe("rec-en-1760000000000");
+    expect(record.target_week).toEqual({
+      year: 2026, month: 10, weekOfMonth: 2, startDate: "2026-10-05", endDate: "2026-10-11", label: "Week 2",
+    });
+  });
+
   test("invalid JSON body -> 400", async ({ request }) => {
     const res = await request.post("/api/transform", {
       headers: { ...demoHeaders(), "content-type": "application/json" },

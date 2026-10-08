@@ -1,20 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode, CareerRecord } from "@/types/career";
+import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode, CareerRecord, WeekSpan } from "@/types/career";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { adminDb } from "@/lib/firebaseAdmin";
-import { generateGeminiJson, isTransformationOutput, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
+import { generateGeminiJson, isTransformationOutput, TRANSFORM_MODELS, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
 
 // Allow the Gemini budget (TRANSFORM_TIMEOUTS) plus Firestore persistence.
 export const maxDuration = 60;
 
-const TRANSFORM_MODELS = [
-  "gemini-3.1-flash-lite",
-  "gemini-3.1-flash-lite-preview",
-  "gemini-flash-lite-latest",
-  "gemini-3.8-flash",
-  "gemini-flash-latest",
-];
+// Record ids in use: `rec-<ts>`, `rec-en-<ts>`, sample data. No "/" (path) and no "."-only ids.
+function isValidRecordId(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,127}$/.test(value);
+}
+
+function isValidIsoDate(value: unknown): value is string {
+  return typeof value === "string" && value.length <= 40 && !Number.isNaN(Date.parse(value));
+}
+
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidWeekSpan(value: unknown): value is WeekSpan {
+  const w = value as Partial<WeekSpan> | null;
+  return Boolean(
+    w &&
+      typeof w === "object" &&
+      Number.isInteger(w.year) &&
+      Number.isInteger(w.month) &&
+      Number.isInteger(w.weekOfMonth) &&
+      typeof w.startDate === "string" && YMD.test(w.startDate) &&
+      typeof w.endDate === "string" && YMD.test(w.endDate) &&
+      typeof w.label === "string" && w.label.length <= 100
+  );
+}
+
+/** Stores only the known WeekSpan fields (older records may carry extra keys). */
+function pickWeekSpan(w: WeekSpan): WeekSpan {
+  return {
+    year: w.year,
+    month: w.month,
+    weekOfMonth: w.weekOfMonth,
+    startDate: w.startDate,
+    endDate: w.endDate,
+    label: w.label,
+  };
+}
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
@@ -253,7 +282,8 @@ function generateFallbackOutputEn(
 ): TransformationOutput {
   const currentQuarter = getCurrentQuarter();
   const sentences = rawMemo
-    .split(/(?<=[.?!])|\n+/)
+    // Split after sentence punctuation only when followed by whitespace/end, so "1.2s" stays intact (audit L-6)
+    .split(/(?<=[.?!])(?=\s|$)|\n+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 2);
 
@@ -374,7 +404,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let body: any;
+    let body: Record<string, unknown>;
     try {
       body = await req.json();
     } catch {
@@ -412,6 +442,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Client-supplied record metadata becomes a Firestore document id and stored fields (audit L-4)
+    if (record_id !== undefined && !isValidRecordId(record_id)) {
+      return NextResponse.json({ error: "Invalid record_id." }, { status: 400 });
+    }
+    if (record_date !== undefined && !isValidIsoDate(record_date)) {
+      return NextResponse.json({ error: "Invalid record_date." }, { status: 400 });
+    }
+    if (target_week !== undefined && target_week !== null && !isValidWeekSpan(target_week)) {
+      return NextResponse.json({ error: "Invalid target_week." }, { status: 400 });
+    }
+
     // 3. Atomically reserve one credit (per-user + global kill switch) before the paid AI call
     const reservation = await quotaCheck.reserve!();
     if (!reservation.ok) {
@@ -430,7 +471,7 @@ export async function POST(req: NextRequest) {
       const newRecord: CareerRecord = {
         id: finalRecordId,
         createdAt: finalRecordDate,
-        target_week: target_week || undefined,
+        target_week: target_week ? pickWeekSpan(target_week) : undefined,
         raw_memo,
         weekly_report: output.weekly_report,
         brag_sheet_item: output.brag_sheet_item,
@@ -476,7 +517,8 @@ export async function POST(req: NextRequest) {
       job_role as JobRole,
       tone_manner as ToneManner,
       seniority_level as SeniorityLevel | undefined,
-      industry,
+      // Free-text profile field that lands in the system prompt: keep it a short string.
+      typeof industry === "string" ? industry.slice(0, 100) : undefined,
       region as RegionCode | undefined
     );
 

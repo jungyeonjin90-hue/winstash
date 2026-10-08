@@ -19,7 +19,8 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    // microphone=(self): the voice memo input (hooks/useSpeechRecognition.ts) needs it on our own origin
+    value: "camera=(), microphone=(self), geolocation=()",
   },
 ];
 

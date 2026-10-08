@@ -119,7 +119,7 @@ export function UpgradeModal({
       }
 
       trackEvent("pro_waitlist_joined", {
-        email: targetEmail.toLowerCase(),
+        signedIn: Boolean(user?.uid), // no raw email in analytics (audit L-8)
         triggerReason,
       });
 

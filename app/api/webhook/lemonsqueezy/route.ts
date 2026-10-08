@@ -16,6 +16,24 @@ const SUBSCRIPTION_EVENTS = new Set([
 // Refund events revoke Pro: payload `data` is an order or subscription invoice.
 const REFUND_EVENTS = new Set(["order_refunded", "subscription_payment_refunded"]);
 
+/** The Lemon Squeezy webhook fields this handler reads (everything else is ignored). */
+interface LemonSqueezyWebhookPayload {
+  meta?: { event_name?: string; custom_data?: { user_id?: unknown } };
+  data?: {
+    id?: string | number;
+    type?: string;
+    attributes?: {
+      status?: string;
+      customer_id?: string | number;
+      user_email?: string;
+      renews_at?: string | null;
+      ends_at?: string | null;
+      updated_at?: string;
+      created_at?: string;
+    };
+  };
+}
+
 // Firebase Auth uids are 1-128 chars; reject anything that could form a different Firestore path.
 const FIREBASE_UID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
@@ -59,7 +77,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let payload: any;
+    let payload: LemonSqueezyWebhookPayload;
     try {
       payload = JSON.parse(rawBody);
     } catch {

@@ -41,6 +41,21 @@ test("security headers are applied", async ({ request }) => {
   expect(h["permissions-policy"]).toBeTruthy();
 });
 
+test("[L-1] Permissions-Policy lets our own pages use the microphone (voice input on /ko)", async ({ page }) => {
+  await page.goto("/ko");
+  const allowed = await page.evaluate(() => {
+    const fp = (document as unknown as { featurePolicy?: { allowsFeature(f: string): boolean } }).featurePolicy;
+    return fp ? fp.allowsFeature("microphone") : null;
+  });
+  expect(allowed).toBe(true);
+  // ...while camera and geolocation stay disabled.
+  const others = await page.evaluate(() => {
+    const fp = (document as unknown as { featurePolicy?: { allowsFeature(f: string): boolean } }).featurePolicy;
+    return fp ? [fp.allowsFeature("camera"), fp.allowsFeature("geolocation")] : null;
+  });
+  expect(others).toEqual([false, false]);
+});
+
 test("robots.txt and sitemap.xml are served", async ({ request }) => {
   const robots = await request.get("/robots.txt");
   expect(robots.status()).toBe(200);

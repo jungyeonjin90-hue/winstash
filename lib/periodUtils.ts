@@ -1,4 +1,5 @@
 import { CareerRecord } from "@/types/career";
+import { getWeekSpanFromDateEn, formatWeekDateRangeEn } from "./weekUtilsEn";
 
 export interface PeriodInfo {
   year: string; // "2026"
@@ -75,8 +76,6 @@ export function getDetailedRecordDateInfo(record: CareerRecord): DetailedRecordD
   let yearStr = "";
   let monthRaw = 1;
   let weekNum = 1;
-
-  const { getWeekSpanFromDateEn, formatWeekDateRangeEn } = require("./weekUtilsEn");
 
   if (record.target_week) {
     yearStr = String(record.target_week.year);

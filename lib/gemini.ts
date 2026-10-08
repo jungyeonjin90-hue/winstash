@@ -94,6 +94,15 @@ export function isTransformationOutput(value: unknown): value is {
   return Boolean(v && v.weekly_report && v.brag_sheet_item && v.star_portfolio);
 }
 
+/** Model order for the 3-way transformation (web EN/KO and the extension), cheapest first. */
+export const TRANSFORM_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-flash-lite-latest",
+  "gemini-3.8-flash",
+  "gemini-flash-latest",
+] as const;
+
 /** Time limits for the interactive transform routes (keep total + DB work under maxDuration). */
 export const TRANSFORM_TIMEOUTS = { attemptTimeoutMs: 12_000, totalBudgetMs: 25_000 } as const;
 /** Synthesis prompts are larger; still bounded well under maxDuration. */
