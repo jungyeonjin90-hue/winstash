@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Mic, MicOff, Sparkles, CornerDownLeft, RotateCcw, Lightbulb, Zap } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { WeekSpan, CareerRecord } from "@/types/career";
+import { WeekSpan, CareerRecord, JobRole, ToneManner } from "@/types/career";
 import { getCurrentWeekSpan } from "@/lib/weekUtils";
 import { WeekPicker } from "./WeekPicker";
 import { CreditStatus } from "@/lib/creditService";
@@ -12,8 +12,8 @@ interface QuickLoggerProps {
   onTransform: (
     rawMemo: string,
     targetWeek?: WeekSpan,
-    role?: any,
-    tone?: any,
+    role?: JobRole,
+    tone?: ToneManner,
     existingRecordId?: string
   ) => Promise<void>;
   isLoading: boolean;

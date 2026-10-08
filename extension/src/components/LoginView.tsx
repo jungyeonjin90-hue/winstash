@@ -3,10 +3,23 @@ import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { WinStashBrandBadge } from "./WinStashLogo";
 import { loginWithGoogle } from "../lib/firebase";
 
-declare const chrome: any;
+/** What LoginView reports once the user is signed in (directly or via the web bridge). */
+export interface LoginResult {
+  uid: string;
+  email: string;
+  records?: unknown[];
+  credits?: unknown;
+}
+
+/** Keys the web app's content script writes into chrome.storage.local after sign-in. */
+interface BridgedLogin {
+  winstash_ext_user?: { uid: string; email: string };
+  winstash_ext_records?: unknown[];
+  winstash_ext_credits?: unknown;
+}
 
 interface LoginViewProps {
-  onLoginSuccess: (authData: any) => void;
+  onLoginSuccess: (authData: LoginResult) => void;
 }
 
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
@@ -24,7 +37,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     }
 
     if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.query({}, (tabs: any[]) => {
+      chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
         tabs?.forEach((t) => {
           if (t.id && t.url && t.url.includes("/auth/extension-connect")) {
             try {
@@ -38,13 +51,13 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
 
   // Listen for storage changes and poll for auth completion
   useEffect(() => {
-    let intervalId: any = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
     const checkStorage = () => {
       if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
         chrome.storage.local.get(
           ["winstash_ext_user", "winstash_ext_records", "winstash_ext_credits"],
-          (res: any) => {
+          (res: BridgedLogin) => {
             if (res?.winstash_ext_user?.uid) {
               if (intervalId) clearInterval(intervalId);
               setIsLoading(false);
@@ -61,13 +74,13 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       }
     };
 
-    const handleStorageChange = (changes: any, areaName: string) => {
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
       if (areaName === "local" && changes["winstash_ext_user"]?.newValue?.uid) {
         checkStorage();
       }
     };
 
-    const handleRuntimeMessage = (msg: any) => {
+    const handleRuntimeMessage = (msg: { type?: string } | undefined) => {
       if (msg?.type === "CLOSE_EXTENSION_CONNECT_WINDOW") {
         closeAuthWindow();
       }
@@ -100,7 +113,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
 
   const openConnectWindow = () => {
     if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.query({}, (allTabs: any[]) => {
+      chrome.tabs.query({}, (allTabs: chrome.tabs.Tab[]) => {
         const isLocalDev = allTabs?.some((t) => t.url && t.url.includes("localhost:3000"));
         const base = isLocalDev ? "http://localhost:3000" : "https://winstash.net";
         const connectUrl = `${base}/auth/extension-connect?auto=true`;
@@ -114,7 +127,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
               height: 650,
               focused: true,
             },
-            (win: any) => {
+            (win?: chrome.windows.Window) => {
               if (win?.id) {
                 authWindowIdRef.current = win.id;
                 try {
@@ -162,8 +175,8 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
         });
         return;
       }
-    } catch (popupErr: any) {
-      console.log("[WinStash Extension] Direct popup fallback:", popupErr?.message);
+    } catch (popupErr) {
+      console.log("[WinStash Extension] Direct popup fallback:", (popupErr as Error | null)?.message);
     }
 
     // Method 2: Open dedicated connect window (which redirects directly to Google OAuth)

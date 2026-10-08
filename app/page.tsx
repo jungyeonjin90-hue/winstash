@@ -237,11 +237,12 @@ export default function Home() {
       user.email
     );
 
-    const handleExtSave = async (e: any) => {
-      if (e.detail?.record && user) {
+    const handleExtSave = async (e: Event) => {
+      const detail = (e as CustomEvent<{ record?: CareerRecord; deductCredit?: boolean }>).detail;
+      if (detail?.record && user) {
         try {
-          await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), e.detail.record);
-          if (e.detail.deductCredit) {
+          await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), detail.record);
+          if (detail.deductCredit) {
             const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
             setCreditStatus(updatedCredit);
           }

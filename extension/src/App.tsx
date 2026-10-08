@@ -13,9 +13,13 @@ import {
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
 import { WinStashBrandBadge } from "./components/WinStashLogo";
-import { LoginView } from "./components/LoginView";
+import { LoginView, type LoginResult } from "./components/LoginView";
 
-declare const chrome: any;
+/** Session data the web app's content script bridges into chrome.storage.local. */
+interface BridgedSession {
+  winstash_ext_logged_out?: boolean;
+  winstash_ext_user?: { uid: string; email: string };
+}
 
 const STORAGE_KEY_USER = "winstash_ext_user";
 const STORAGE_KEY_LOGGED_OUT = "winstash_ext_logged_out";
@@ -24,7 +28,7 @@ const STORAGE_KEY_DRAFT = "winstash_draft_memo";
 async function getApiBaseUrl(): Promise<string> {
   if (typeof chrome !== "undefined" && chrome.tabs) {
     try {
-      const allTabs: any[] = await new Promise((resolve) => chrome.tabs.query({}, resolve));
+      const allTabs = await new Promise<chrome.tabs.Tab[]>((resolve) => chrome.tabs.query({}, resolve));
       const localTab = allTabs?.find(
         (t) =>
           t.url?.includes("localhost:3000") ||
@@ -106,7 +110,7 @@ export default function App() {
           // 2. Bind Records and populate current week rawNote
           if (Array.isArray(json.records)) {
             setRecords(json.records);
-            const currentMatch = json.records.find((r: any) => isWeekMatch(r, selectedWeek));
+            const currentMatch = json.records.find((r: CareerRecord) => isWeekMatch(r, selectedWeek));
             if (currentMatch) {
               const note = currentMatch.rawNote || currentMatch.raw_memo || "";
               setMemo(note);
@@ -121,8 +125,8 @@ export default function App() {
       } else {
         setDataFetchError("Server busy. You can still type notes offline.");
       }
-    } catch (err: any) {
-      if (err.name === "AbortError") {
+    } catch (err) {
+      if ((err as Error | null)?.name === "AbortError") {
         console.warn("[WinStash Extension] API timeout after 2000ms. Released loading.");
         setDataFetchError("Sync timed out (2s). You can still write and save notes.");
       } else {
@@ -142,7 +146,7 @@ export default function App() {
 
     // Check chrome.storage.local bridge session first
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: any) => {
+      chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: BridgedSession) => {
         if (!isMounted) return;
         if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
           const bridgedUser = res[STORAGE_KEY_USER];
@@ -163,7 +167,7 @@ export default function App() {
         fetchStatusAndRecords(userData);
       } else {
         if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: any) => {
+          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: BridgedSession) => {
             if (!isMounted) return;
             if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
               const bridgedUser = res[STORAGE_KEY_USER];
@@ -183,7 +187,7 @@ export default function App() {
 
     // Auto-close leftover extension-connect tabs
     if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.query({}, (tabs: any[]) => {
+      chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
         tabs?.forEach((t) => {
           if (t.id && t.url && t.url.includes("/auth/extension-connect")) {
             try {
@@ -201,7 +205,7 @@ export default function App() {
   }, [fetchStatusAndRecords]);
 
   // 3. Login callback
-  const handleLoginSuccess = useCallback((authData: any) => {
+  const handleLoginSuccess = useCallback((authData: LoginResult) => {
     if (authData?.uid) {
       const user = { uid: authData.uid, email: authData.email || "" };
       setCurrentUser(user);
@@ -364,11 +368,11 @@ export default function App() {
         });
         setTimeout(() => setStatusFeedback(null), 3000);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("[WinStash Extension] Transform error:", err);
       setStatusFeedback({
         type: "info",
-        message: err.message || "Failed to transform memo.",
+        message: (err as Error | null)?.message || "Failed to transform memo.",
       });
       setTimeout(() => setStatusFeedback(null), 3500);
     } finally {

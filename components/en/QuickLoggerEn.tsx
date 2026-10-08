@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, CornerDownLeft, RotateCcw, Lightbulb, Lock, Zap } from "lucide-react";
-import { WeekSpan, CareerRecord } from "@/types/career";
+import { WeekSpan, CareerRecord, JobRole, ToneManner } from "@/types/career";
 import { getCurrentWeekSpanEn } from "@/lib/weekUtilsEn";
 import { WeekPickerEn } from "./WeekPickerEn";
 import { CreditStatus } from "@/lib/creditService";
@@ -11,8 +11,8 @@ interface QuickLoggerEnProps {
   onTransform: (
     rawMemo: string,
     targetWeek?: WeekSpan,
-    role?: any,
-    tone?: any,
+    role?: JobRole,
+    tone?: ToneManner,
     existingRecordId?: string
   ) => Promise<void>;
   isLoading: boolean;

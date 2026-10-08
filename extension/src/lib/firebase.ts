@@ -46,8 +46,8 @@ export async function getAuthToken(): Promise<string | null> {
   // Fallback: check chrome.storage.local bridge token
   if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
     try {
-      const res: any = await new Promise((resolve) =>
-        chrome.storage.local.get(["winstash_ext_token"], resolve)
+      const res = await new Promise<{ winstash_ext_token?: string }>((resolve) =>
+        chrome.storage.local.get<{ winstash_ext_token?: string }>(["winstash_ext_token"], resolve)
       );
       if (res && res.winstash_ext_token) {
         return res.winstash_ext_token;

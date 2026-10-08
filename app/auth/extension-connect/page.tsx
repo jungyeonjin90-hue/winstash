@@ -6,6 +6,7 @@ import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { subscribeUserRecords } from "@/lib/firestoreService";
 import { getCreditStatus } from "@/lib/creditService";
+import type { CareerRecord } from "@/types/career";
 import { isAdminEmail } from "@/lib/adminConfig";
 import { auth, googleProvider } from "@/lib/firebase";
 import { signInWithRedirect, getRedirectResult } from "firebase/auth";
@@ -40,8 +41,9 @@ export default function ExtensionConnectPage() {
   const dispatchBridgeData = useCallback(
     (
       userData: { uid: string; email: string | null },
-      recordsData: any[],
-      creditsData: any
+      recordsData: CareerRecord[],
+      // Full CreditStatus or the compact cached/admin shape; only serialised for the extension.
+      creditsData: object | null
     ) => {
       const bridgePayload = {
         uid: userData.uid,
@@ -136,7 +138,7 @@ export default function ExtensionConnectPage() {
     }
 
     // 1. User is authenticated! Read cached records immediately (0ms delay)
-    let cachedRecords: any[] = [];
+    let cachedRecords: CareerRecord[] = [];
     try {
       const rawCache =
         localStorage.getItem("winstash_latest_records_cache") ||
