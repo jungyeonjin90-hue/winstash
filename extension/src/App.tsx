@@ -57,14 +57,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState<{ type: "success" | "info"; message: string } | null>(null);
 
-  // Credit status (Admins are always Pro Unlimited)
-  const [creditStatus, setCreditStatus] = useState<CreditStatus>({
-    isPro: false,
-    remainingCredits: 10,
-    maxUserCredits: 10,
-    isUserExhausted: false,
-    totalGeneratedCount: 0,
-  });
+  // Credit status (Admins are always Pro Unlimited; null during initial Firestore load)
+  const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
 
   // Determine whether current user is Pro (Admin is always Pro Unlimited)
   const isUserPro = useMemo(() => {
@@ -77,7 +71,7 @@ export default function App() {
     return records.find((r) => isWeekMatch(r, selectedWeek));
   }, [records, selectedWeek]);
 
-  // Real Backend Data Loader (GET /api/extension/status)
+  // Real Backend Data Loader (GET /api/extension/status) - only for syncing records
   const fetchBackendData = useCallback(async (user?: { uid: string; email: string } | null) => {
     const targetUser = user || currentUser;
     if (!targetUser?.uid) return;
@@ -96,21 +90,8 @@ export default function App() {
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
-          if (json.credits) {
-            setCreditStatus((prev) => {
-              if (
-                json.credits.remainingCredits === 10 &&
-                json.credits.totalGeneratedCount === 0 &&
-                prev.totalGeneratedCount > 0
-              ) {
-                return prev;
-              }
-              if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-                chrome.storage.local.set({ winstash_ext_credits: json.credits });
-              }
-              return json.credits;
-            });
-          }
+          // IMPORTANT: Credits are strictly managed via Firestore onSnapshot (Source of Truth).
+          // Do NOT overwrite creditStatus here to eliminate race condition flickering!
           if (Array.isArray(json.records) && json.records.length > 0) {
             setRecords(json.records);
           }
@@ -127,20 +108,16 @@ export default function App() {
     let unsubFirestoreRecords: (() => void) | null = null;
     let unsubFirestoreCredits: (() => void) | null = null;
 
-    // 0. Immediate local storage cache restore (0ms instant UI display)
+    // 0. Immediate local storage cache restore (0ms instant UI display for records only)
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get(
         [
           STORAGE_KEY_LOGGED_OUT,
           STORAGE_KEY_USER,
-          "winstash_ext_credits",
           "winstash_ext_records",
         ],
         (res: any) => {
           if (!isMounted) return;
-          if (res?.winstash_ext_credits) {
-            setCreditStatus(res.winstash_ext_credits);
-          }
           if (Array.isArray(res?.winstash_ext_records) && res.winstash_ext_records.length > 0) {
             setRecords(res.winstash_ext_records);
           }
@@ -184,22 +161,16 @@ export default function App() {
         }
       });
 
-      // 3. Live Firestore Credits Subscription (Exact sync with Web App Source of Truth)
+      // 3. Live Firestore Credits Subscription - SOLE SOURCE OF TRUTH
       unsubFirestoreCredits = subscribeToUserCredits(userId, userEmail, (freshCredits) => {
         if (!isMounted) return;
         setCreditStatus(freshCredits);
-        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.set({ winstash_ext_credits: freshCredits });
-        }
       });
 
-      // 4. Direct Firestore Credit Fetch (Immediate 0ms query)
+      // 4. Direct Firestore Credit Fetch (Immediate 1-time fetch on mount)
       fetchUserCreditsFromFirestore(userId, userEmail).then((freshCredits) => {
         if (!isMounted) return;
         setCreditStatus(freshCredits);
-        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.set({ winstash_ext_credits: freshCredits });
-        }
       });
     };
 
@@ -215,11 +186,8 @@ export default function App() {
       } else {
         // Fallback: check chrome.storage.local bridge session
         if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER, "winstash_ext_credits"], (res: any) => {
+          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: any) => {
             if (!isMounted) return;
-            if (res?.winstash_ext_credits) {
-              setCreditStatus(res.winstash_ext_credits);
-            }
             if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
               const bridgedUser = res[STORAGE_KEY_USER];
               setCurrentUser(bridgedUser);
@@ -262,16 +230,9 @@ export default function App() {
     if (authData?.uid) {
       const user = { uid: authData.uid, email: authData.email || "" };
       setCurrentUser(user);
-      if (authData.credits) {
-        setCreditStatus(authData.credits);
-      }
       if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
         chrome.storage.local.remove([STORAGE_KEY_LOGGED_OUT]);
-        const payload: any = { [STORAGE_KEY_USER]: user };
-        if (authData.credits) {
-          payload.winstash_ext_credits = authData.credits;
-        }
-        chrome.storage.local.set(payload);
+        chrome.storage.local.set({ [STORAGE_KEY_USER]: user });
       }
       fetchBackendData(user);
       setStatusFeedback({
@@ -322,6 +283,7 @@ export default function App() {
     setCurrentUser(null);
     setRecords([]);
     setMemo("");
+    setCreditStatus(null);
     setStatusFeedback(null);
     try {
       localStorage.removeItem(STORAGE_KEY_DRAFT);
@@ -343,7 +305,7 @@ export default function App() {
   const handleSubmitClick = () => {
     if (!memo.trim()) return;
 
-    if (creditStatus.isUserExhausted && !isUserPro) {
+    if (creditStatus?.isUserExhausted && !isUserPro) {
       handleOpenWebApp("/pricing");
       return;
     }
@@ -450,29 +412,14 @@ export default function App() {
           await saveRecordToFirestore(currentUser.uid, json.record);
         } catch {}
 
-        // 3. Update credits locally and synchronously
+        // 3. Deduct credit in Firestore if updating existing record as free user
+        // The live Firestore subscription (subscribeToUserCredits) will automatically update the credit state!
         const shouldDeduct = Boolean(existingRecord && !isUserPro);
-        if (shouldDeduct) {
-          const nextRemaining = Math.max(0, creditStatus.remainingCredits - 1);
-          const nextCredits: CreditStatus = {
-            ...creditStatus,
-            remainingCredits: nextRemaining,
-            isUserExhausted: nextRemaining === 0,
-            totalGeneratedCount: creditStatus.totalGeneratedCount + 1,
-          };
-          setCreditStatus(nextCredits);
-          if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.set({ winstash_ext_credits: nextCredits });
-          }
-          if (currentUser?.uid) {
-            try {
-              await deductFreeCreditInFirestore(currentUser.uid);
-            } catch {}
-          }
-        } else if (json.credits) {
-          setCreditStatus(json.credits);
-          if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.set({ winstash_ext_credits: json.credits });
+        if (shouldDeduct && currentUser?.uid) {
+          try {
+            await deductFreeCreditInFirestore(currentUser.uid);
+          } catch (deductErr) {
+            console.warn("[Extension] Credit deduct in Firestore error:", deductErr);
           }
         }
 
@@ -606,13 +553,17 @@ export default function App() {
                 <Sparkles className="w-3 h-3 animate-spin-slow" />
                 <span>Pro Unlimited</span>
               </span>
-            ) : creditStatus && (
+            ) : creditStatus ? (
               <span className="text-[11px] text-zinc-400 font-medium">
                 {creditStatus.isUserExhausted ? (
                   <span className="text-rose-400 font-semibold">0/{creditStatus.maxUserCredits} free left</span>
                 ) : (
                   <span>{creditStatus.remainingCredits}/{creditStatus.maxUserCredits} free left</span>
                 )}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 font-medium">
+                <Loader2 className="w-3 h-3 animate-spin text-zinc-500" />
               </span>
             )}
 
@@ -670,8 +621,8 @@ export default function App() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={executeTransform}
-        remainingCredits={creditStatus.remainingCredits}
-        maxCredits={creditStatus.maxUserCredits}
+        remainingCredits={creditStatus?.remainingCredits ?? 0}
+        maxCredits={creditStatus?.maxUserCredits ?? 10}
         targetWeekLabel={selectedWeek.label}
         onUpgradeClick={() => {
           setIsModalOpen(false);
