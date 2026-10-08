@@ -16,7 +16,8 @@ service cloud.firestore {
     // 결제/쿼터 관련 필드: 서버(Admin SDK, Lemon Squeezy 웹훅)만 기록 가능
     function protectedProfileKeys() {
       return ['plan', 'planStatus', 'endsAt', 'renewsAt',
-              'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId', 'freeUsedCount'];
+              'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId',
+              'lemonSqueezyEventAt', 'lemonSqueezyLastEvent', 'freeUsedCount'];
     }
 
     // WinStash 사용자별 철통 격리 보안 규칙
@@ -31,7 +32,8 @@ service cloud.firestore {
                     && (!('plan' in request.resource.data) || request.resource.data.plan == 'free')
                     && (!('planStatus' in request.resource.data) || request.resource.data.planStatus == 'inactive')
                     && !request.resource.data.keys().hasAny(
-                        ['endsAt', 'renewsAt', 'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId', 'freeUsedCount']);
+                        ['endsAt', 'renewsAt', 'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId',
+                         'lemonSqueezyEventAt', 'lemonSqueezyLastEvent', 'freeUsedCount']);
 
       // 기존 계정 수정 시: 보호 필드는 변경 불가
       allow update: if isOwner(userId)
@@ -73,12 +75,28 @@ service cloud.firestore {
     }
 
     // Pro 멤버십 얼리액세스 대기자 명단 (pro_waitlist)
-    // 로그인 및 비로그인 방문자 모두 신청 가능 (이메일 기반 create/update 허용)
+    // 로그인 및 비로그인 방문자 모두 신청 가능. 문서 ID = 소문자 이메일.
+    // 최초 신청(create)만 허용하고 기존 항목 덮어쓰기(update)는 금지 (감사 M-8: 타인 항목 탈취/변조 방지)
     // 개인정보 보호: 타인의 신청 내역 조회 및 삭제 불가, 관리자만 열람/삭제 가능
     match /pro_waitlist/{emailDoc} {
-      allow create, update: if request.resource.data.email is string
-                            && request.resource.data.email.size() > 3;
+      allow create: if isValidWaitlistEntry(emailDoc);
       allow read, delete: if isAdmin();
+    }
+
+    // PricingWaitlistButton / UpgradeModal 이 보내는 필드 구성과 일치해야 함
+    function isValidWaitlistEntry(emailDoc) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['email', 'userId', 'displayName', 'triggerReason', 'joinedAt', 'source'])
+        && d.email is string
+        && d.email == emailDoc
+        && d.email.size() <= 254
+        && d.email.matches('^[a-z0-9._%+-]+@[a-z0-9.-]+[.][a-z]{2,}$')
+        // 로그인 사용자는 본인 uid만, 비로그인 방문자는 "anonymous"만 기록 가능
+        && (request.auth != null ? d.userId == request.auth.uid : d.userId == 'anonymous')
+        && (!('displayName' in d) || (d.displayName is string && d.displayName.size() <= 100))
+        && (!('triggerReason' in d) || (d.triggerReason is string && d.triggerReason.size() <= 50))
+        && (!('source' in d) || (d.source is string && d.source.size() <= 50))
+        && (!('joinedAt' in d) || d.joinedAt == request.time);
     }
   }
 }

@@ -13,7 +13,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 
 const STRICT = Boolean(process.env.STRICT_SECURITY);
 const gap = (id) => (STRICT ? {} : { todo: `Known defect ${id} (docs/AUDIT_REPORT.md)` });
@@ -45,7 +45,7 @@ beforeEach(async () => {
     await setDoc(doc(db, "users", ALICE, "records", "rec-1"), { raw_memo: "secret work", createdAt: "2026-10-01" });
     await setDoc(doc(db, "users", BOB), { plan: "free" });
     await setDoc(doc(db, "system", "usage"), { totalCount: 42 });
-    await setDoc(doc(db, "pro_waitlist", "alice@example.com"), { email: "alice@example.com", note: "original" });
+    await setDoc(doc(db, "pro_waitlist", "alice@example.com"), { email: "alice@example.com", userId: "anonymous", source: "original" });
   });
 });
 
@@ -223,21 +223,68 @@ describe("feedbacks", () => {
 });
 
 describe("pro_waitlist", () => {
+  // Same shape as components/pricing/PricingWaitlistButton.tsx and components/UpgradeModal.tsx
+  const entry = (email, userId = "anonymous", extra = {}) => ({
+    email,
+    userId,
+    displayName: "",
+    triggerReason: "pricing_page",
+    joinedAt: serverTimestamp(),
+    source: "pricing_page_card",
+    ...extra,
+  });
+
   test("anonymous visitors can join the waitlist", async () => {
-    await assertSucceeds(setDoc(doc(anon(), "pro_waitlist", "new@example.com"), { email: "new@example.com" }));
+    await assertSucceeds(setDoc(doc(anon(), "pro_waitlist", "new@example.com"), entry("new@example.com"), { merge: true }));
+  });
+
+  test("signed-in users can join with their own uid", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(BOB), "pro_waitlist", "bob@example.com"), entry("bob@example.com", BOB), { merge: true })
+    );
   });
 
   test("entries cannot be read by the public", async () => {
     await assertFails(getDoc(doc(anon(), "pro_waitlist", "alice@example.com")));
   });
 
-  test("[M-8] anonymous must NOT be able to overwrite someone else's entry", gap("M-8"), async () => {
+  test("[M-8] anonymous must NOT be able to overwrite someone else's entry", async () => {
     await assertFails(
-      setDoc(doc(anon(), "pro_waitlist", "alice@example.com"), { email: "attacker@example.com", note: "hijacked" })
+      setDoc(doc(anon(), "pro_waitlist", "alice@example.com"), entry("alice@example.com", "anonymous", { source: "hijacked" }))
+    );
+    await assertFails(
+      setDoc(doc(anon(), "pro_waitlist", "alice@example.com"), { email: "attacker@example.com" }, { merge: true })
     );
   });
 
-  test("[M-8] doc id must match the submitted email", gap("M-8"), async () => {
-    await assertFails(setDoc(doc(anon(), "pro_waitlist", "whatever"), { email: "someone@example.com" }));
+  test("[M-8] doc id must match the submitted email", async () => {
+    await assertFails(setDoc(doc(anon(), "pro_waitlist", "whatever"), entry("someone@example.com")));
+  });
+
+  test("[M-8] signed-in users cannot attribute an entry to another uid", async () => {
+    await assertFails(setDoc(doc(as(BOB), "pro_waitlist", "x@example.com"), entry("x@example.com", ALICE)));
+  });
+
+  test("[M-8] anonymous visitors cannot claim a uid", async () => {
+    await assertFails(setDoc(doc(anon(), "pro_waitlist", "y@example.com"), entry("y@example.com", ALICE)));
+  });
+
+  test("[M-8] unexpected fields, invalid emails and oversized values are rejected", async () => {
+    await assertFails(setDoc(doc(anon(), "pro_waitlist", "z@example.com"), entry("z@example.com", "anonymous", { admin: true })));
+    await assertFails(setDoc(doc(anon(), "pro_waitlist", "not-an-email"), entry("not-an-email")));
+    await assertFails(
+      setDoc(doc(anon(), "pro_waitlist", "w@example.com"), entry("w@example.com", "anonymous", { displayName: "x".repeat(101) }))
+    );
+  });
+});
+
+describe("webhook bookkeeping fields on users/{uid}", () => {
+  test("[M-6] owner cannot set lemonSqueezyEventAt (would block future webhook updates)", async () => {
+    await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { lemonSqueezyEventAt: "2999-01-01T00:00:00Z" }));
+    await assertFails(setDoc(doc(as("gina"), "users", "gina"), { lemonSqueezyEventAt: "2999-01-01T00:00:00Z" }));
+  });
+
+  test("[M-6] owner cannot set lemonSqueezyLastEvent", async () => {
+    await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { lemonSqueezyLastEvent: "subscription_created" }));
   });
 });
