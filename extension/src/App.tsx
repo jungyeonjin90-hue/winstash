@@ -445,7 +445,7 @@ export default function App() {
       <div className="flex items-center justify-between gap-2">
         <WeekPickerEn
           selectedWeek={selectedWeek}
-          onWeekSelect={(w) => setSelectedWeek(w)}
+          onWeekChange={setSelectedWeek}
           existingRecords={records}
         />
         {existingRecord && (
