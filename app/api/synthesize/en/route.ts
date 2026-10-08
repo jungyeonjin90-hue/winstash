@@ -177,8 +177,15 @@ Note: "source_log_indices" MUST be an array of 1-based integer indices correspon
 /**
  * Attaches the actual user source records to each synthesized item for 100% transparent auditability
  */
+/**
+ * An item as returned by the model (shape requested via the JSON schema in the prompt) or the fallback
+ * mapper. Brag and STAR items share this path, so it stays loosely typed until they get separate handlers.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RawSynthesisItem = any;
+
 function attachSourceRecordsToItems(
-  items: any[],
+  items: RawSynthesisItem[],
   records: CareerRecord[],
   jobRole: JobRole,
   toneManner: ToneManner,
@@ -188,7 +195,7 @@ function attachSourceRecordsToItems(
     let sourceIndices: number[] = [];
     if (Array.isArray(item.source_log_indices) && item.source_log_indices.length > 0) {
       sourceIndices = item.source_log_indices.filter(
-        (idx: any) => typeof idx === "number" && idx >= 1 && idx <= records.length
+        (idx: unknown): idx is number => typeof idx === "number" && idx >= 1 && idx <= records.length
       );
     }
     // Fallback: If no valid indices were returned by model, map to matching record index or record 1
@@ -325,7 +332,7 @@ export async function POST(req: NextRequest) {
      * Atomically saves synthesized items into Firestore summary_cache collection server-side.
      * Ensures completion even if user immediately closes browser tab!
      */
-    const persistSummaryCacheAndBuildResponse = async (rawItems: any[], aiFallback: boolean) => {
+    const persistSummaryCacheAndBuildResponse = async (rawItems: RawSynthesisItem[], aiFallback: boolean) => {
       const itemsWithSources = attachSourceRecordsToItems(
         rawItems,
         records,
@@ -399,7 +406,7 @@ export async function POST(req: NextRequest) {
       models: SYNTHESIS_MODELS,
       systemInstruction: prompt.systemInstruction,
       userText: prompt.userContent,
-      validate: (v: unknown): v is { items: unknown[] } =>
+      validate: (v: unknown): v is { items: RawSynthesisItem[] } =>
         Array.isArray((v as { items?: unknown })?.items) && (v as { items: unknown[] }).items.length > 0,
       ...SYNTHESIS_TIMEOUTS,
     });

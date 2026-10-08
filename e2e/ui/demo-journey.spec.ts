@@ -1,5 +1,4 @@
 import { test, expect, type Page } from "@playwright/test";
-import { knownGap } from "../helpers";
 
 /**
  * Core user journey in demo mode (dev only): onboarding -> brain dump -> AI transform -> dashboard.
@@ -77,7 +76,6 @@ test("save button is disabled for an empty memo", async ({ page }) => {
 });
 
 test("[L-6] fallback summary must not cut sentences at decimal points", async ({ page }) => {
-  knownGap("L-6");
   await seedDemoSession(page);
   await page.goto("/");
   await finishOnboarding(page);
@@ -104,7 +102,6 @@ test("30-minute inactivity signs the user out (idle tab regains focus)", async (
 });
 
 test("[L-5] 30-minute inactivity must also apply after a reload / reopened browser", async ({ page }) => {
-  knownGap("L-5");
   test.setTimeout(45_000);
   // Stale timestamp from a previous visit. AuthContext's `if (!user) removeItem(LAST_ACTIVITY_KEY)`
   // branch runs before the session is restored and wipes it, so the user is never signed out.

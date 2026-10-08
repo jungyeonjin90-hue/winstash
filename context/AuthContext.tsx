@@ -53,7 +53,10 @@ function getStoredDemoUser(): AppUser | null {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Only wait for an auth state when Firebase can deliver one; otherwise the app would show its
+  // loading state forever (audit L-3). isFirebaseConfigured is a build-time constant, so server and
+  // client agree on this initial value.
+  const [loading, setLoading] = useState<boolean>(isFirebaseConfigured);
 
   const signOut = useCallback(async () => {
     try {
@@ -136,7 +139,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 2. 30-Minute Inactivity Auto Sign-Out System
   useEffect(() => {
     if (!user) {
-      if (typeof window !== "undefined") {
+      // Only clear the idle clock once we know there is no session. While the session is still being
+      // restored `user` is null too, and clearing here reset the clock on every reload, so a user idle
+      // for hours stayed signed in after reopening the app (audit L-5).
+      if (!loading && typeof window !== "undefined") {
         localStorage.removeItem(LAST_ACTIVITY_KEY);
       }
       return;
@@ -211,6 +217,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Periodic background evaluation every 15 seconds
     const intervalId = setInterval(checkInactivity, 15000);
+    // Evaluate right away too: a restored session may already be past the idle limit.
+    const initialCheckId = setTimeout(checkInactivity, 0);
 
     return () => {
       events.forEach((evt) => {
@@ -219,8 +227,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", checkInactivity);
       clearInterval(intervalId);
+      clearTimeout(initialCheckId);
     };
-  }, [user]);
+  }, [user, loading]);
 
   const signInWithGoogle = async () => {
     if (!isFirebaseConfigured || !auth) {

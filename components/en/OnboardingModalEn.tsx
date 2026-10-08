@@ -45,7 +45,7 @@ export function OnboardingModalEn({ isOpen, onSave }: OnboardingModalEnProps) {
             Welcome to WinStash
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Let's personalize your AI engine. Select your primary job role. 
+            Let&apos;s personalize your AI engine. Select your primary job role. 
             <br className="hidden sm:block"/>
             <span className="text-xs opacity-80">(You can change this later in Settings)</span>
           </p>

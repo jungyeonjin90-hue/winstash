@@ -7,6 +7,19 @@ import { CareerRecord } from "@/types/career";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 
+/** Subset of the Firestore REST document shape read by the records fallback. */
+interface FirestoreRestDocument {
+  name: string;
+  fields?: Record<
+    string,
+    {
+      stringValue?: string;
+      integerValue?: string;
+      mapValue?: { fields?: Record<string, { stringValue?: string; integerValue?: string }> };
+    }
+  >;
+}
+
 // No hard-coded fallback: a wrong project would silently read another database (audit M-1).
 const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -142,7 +155,7 @@ export async function GET(req: NextRequest) {
         if (recordsRestRes.ok) {
           const rJson = await recordsRestRes.json();
           if (Array.isArray(rJson.documents)) {
-            records = rJson.documents.map((doc: any) => {
+            records = rJson.documents.map((doc: FirestoreRestDocument) => {
               const id = doc.name.split("/").pop();
               const fields = doc.fields || {};
               const rawMemo = fields.raw_memo?.stringValue || fields.rawNote?.stringValue || "";
