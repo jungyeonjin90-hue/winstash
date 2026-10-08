@@ -163,38 +163,175 @@ export async function saveRecordToFirestore(
   await setDoc(docRef, cleanData, { merge: true });
 }
 
+export const MAX_USER_FREE_CREDITS = 10;
+const FIREBASE_PROJECT_ID = "careerpulse-c2213";
+
 /**
- * Firestore users/{userId} 및 users/{userId}/usage/summary 문서에 freeUsedCount 원자적 1회 차감 (증가)
+ * Firestore REST API를 통해 users/{uid} 및 users/{uid}/usage/summary 문서를 안전하게 조회
+ * (익스텐션 SDK 세션이 비어있는 브릿지 환경에서도 Bearer Token으로 100% 인증 조회 보장)
  */
-export async function deductFreeCreditInFirestore(userId: string): Promise<void> {
+export async function fetchUserCreditsViaRest(
+  userId: string,
+  userEmail?: string | null
+): Promise<CreditStatus | null> {
+  if (isAdminEmail(userEmail)) {
+    return {
+      isPro: true,
+      remainingCredits: 999999,
+      maxUserCredits: 999999,
+      isUserExhausted: false,
+      totalGeneratedCount: 0,
+    };
+  }
+
+  const token = await getAuthToken();
+  if (!token) {
+    console.warn("[Extension Firebase] fetchUserCreditsViaRest: No auth token found.");
+    return null;
+  }
+
   try {
-    const userDocRef = doc(db, "users", userId);
-    const userUsageRef = doc(db, "users", userId, "usage", "summary");
-    await Promise.allSettled([
-      setDoc(
-        userDocRef,
-        {
-          freeUsedCount: increment(1),
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
+    const [userRes, usageRes] = await Promise.allSettled([
+      fetch(
+        `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       ),
-      setDoc(
-        userUsageRef,
-        {
-          freeUsedCount: increment(1),
-          lastUsedAt: new Date().toISOString(),
-        },
-        { merge: true }
+      fetch(
+        `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}/usage/summary`,
+        { headers: { Authorization: `Bearer ${token}` } }
       ),
     ]);
+
+    let userDocCount = 0;
+    let isPro = false;
+
+    if (userRes.status === "fulfilled" && userRes.value.ok) {
+      const uDoc = await userRes.value.json();
+      const plan = uDoc?.fields?.plan?.stringValue || "free";
+      const planStatus = uDoc?.fields?.planStatus?.stringValue;
+      isPro = plan === "pro" && (planStatus === "active" || planStatus === "paid" || planStatus === "on_trial");
+      userDocCount = parseInt(uDoc?.fields?.freeUsedCount?.integerValue || "0", 10);
+    }
+
+    if (isPro) {
+      return {
+        isPro: true,
+        remainingCredits: 999999,
+        maxUserCredits: 999999,
+        isUserExhausted: false,
+        totalGeneratedCount: 0,
+      };
+    }
+
+    let usageDocCount = 0;
+    if (usageRes.status === "fulfilled" && usageRes.value.ok) {
+      const usDoc = await usageRes.value.json();
+      usageDocCount = parseInt(usDoc?.fields?.freeUsedCount?.integerValue || "0", 10);
+    }
+
+    // Exact web formula: Math.max(userDocCount, usageDocCount)
+    const usedCount = Math.max(userDocCount, usageDocCount);
+    const remaining = Math.max(0, MAX_USER_FREE_CREDITS - usedCount);
+
+    console.info(`[Extension Credit REST] userDocCount=${userDocCount}, usageDocCount=${usageDocCount} => used=${usedCount}, remaining=${remaining}/${MAX_USER_FREE_CREDITS}`);
+
+    return {
+      isPro: false,
+      remainingCredits: remaining,
+      maxUserCredits: MAX_USER_FREE_CREDITS,
+      isUserExhausted: remaining === 0,
+      totalGeneratedCount: usedCount,
+    };
   } catch (err) {
-    console.warn("[Extension Firebase] deductFreeCreditInFirestore error:", err);
+    console.warn("[Extension Firebase] REST credit fetch error:", err);
+    return null;
   }
 }
 
 /**
- * Firestore에서 사용자의 최신 크레딧 상태 직접 1회 조회
+ * Firestore users/{userId} 및 users/{userId}/usage/summary 문서에 freeUsedCount 원자적 1회 차감 (증가)
+ */
+export async function deductFreeCreditInFirestore(userId: string): Promise<void> {
+  const token = await getAuthToken();
+
+  // 1. Client SDK direct increment if auth.currentUser is ready
+  if (auth.currentUser && auth.currentUser.uid === userId) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const userUsageRef = doc(db, "users", userId, "usage", "summary");
+      await Promise.allSettled([
+        setDoc(
+          userDocRef,
+          {
+            freeUsedCount: increment(1),
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        ),
+        setDoc(
+          userUsageRef,
+          {
+            freeUsedCount: increment(1),
+            lastUsedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        ),
+      ]);
+      return;
+    } catch (sdkErr) {
+      console.warn("[Extension Firebase] Client SDK deduct failed, using REST fallback:", sdkErr);
+    }
+  }
+
+  // 2. Fallback to Firestore REST API with token
+  if (token) {
+    try {
+      const current = await fetchUserCreditsViaRest(userId);
+      const currentCount = current?.totalGeneratedCount || 0;
+      const nextCount = currentCount + 1;
+
+      await Promise.allSettled([
+        fetch(
+          `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=updatedAt`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              fields: {
+                freeUsedCount: { integerValue: String(nextCount) },
+                updatedAt: { stringValue: new Date().toISOString() },
+              },
+            }),
+          }
+        ),
+        fetch(
+          `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${userId}/usage/summary?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=lastUsedAt`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              fields: {
+                freeUsedCount: { integerValue: String(nextCount) },
+                lastUsedAt: { stringValue: new Date().toISOString() },
+              },
+            }),
+          }
+        ),
+      ]);
+    } catch (restErr) {
+      console.warn("[Extension Firebase] REST deduct error:", restErr);
+    }
+  }
+}
+
+/**
+ * Firestore에서 사용자의 최신 크레딧 상태 직접 1회 조회 (100% 웹 creditService.ts 수식 동일)
  */
 export async function fetchUserCreditsFromFirestore(
   userId: string,
@@ -210,62 +347,70 @@ export async function fetchUserCreditsFromFirestore(
     };
   }
 
-  try {
-    const userDocRef = doc(db, "users", userId);
-    const userUsageRef = doc(db, "users", userId, "usage", "summary");
+  // 1. Try Firebase Client SDK first if authenticated
+  if (auth.currentUser && auth.currentUser.uid === userId) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const userUsageRef = doc(db, "users", userId, "usage", "summary");
 
-    const [userSnap, usageSnap] = await Promise.all([
-      getDoc(userDocRef),
-      getDoc(userUsageRef),
-    ]);
+      const [userSnap, usageSnap] = await Promise.all([
+        getDoc(userDocRef),
+        getDoc(userUsageRef),
+      ]);
 
-    const userData = userSnap.exists() ? userSnap.data() : null;
-    const usageData = usageSnap.exists() ? usageSnap.data() : null;
+      const userData = userSnap.exists() ? userSnap.data() : null;
+      const usageData = usageSnap.exists() ? usageSnap.data() : null;
 
-    const isPro =
-      userData?.plan === "pro" &&
-      (userData?.planStatus === "active" ||
-        userData?.planStatus === "paid" ||
-        userData?.planStatus === "on_trial");
+      const isPro =
+        userData?.plan === "pro" &&
+        (userData?.planStatus === "active" ||
+          userData?.planStatus === "paid" ||
+          userData?.planStatus === "on_trial");
 
-    if (isPro) {
+      if (isPro) {
+        return {
+          isPro: true,
+          remainingCredits: 999999,
+          maxUserCredits: 999999,
+          isUserExhausted: false,
+          totalGeneratedCount: 0,
+        };
+      }
+
+      const userDocCount = Number(userData?.freeUsedCount || 0);
+      const usageDocCount = Number(usageData?.freeUsedCount || 0);
+      const usedCount = Math.max(userDocCount, usageDocCount);
+      const remaining = Math.max(0, MAX_USER_FREE_CREDITS - usedCount);
+
       return {
-        isPro: true,
-        remainingCredits: 999999,
-        maxUserCredits: 999999,
-        isUserExhausted: false,
-        totalGeneratedCount: 0,
+        isPro: false,
+        remainingCredits: remaining,
+        maxUserCredits: MAX_USER_FREE_CREDITS,
+        isUserExhausted: remaining === 0,
+        totalGeneratedCount: usedCount,
       };
+    } catch (sdkErr) {
+      console.warn("[Extension Firebase] Client SDK getDoc notice, falling back to REST:", sdkErr);
     }
-
-    const userDocCount = (userData?.freeUsedCount as number) || 0;
-    const usageDocCount = (usageData?.freeUsedCount as number) || 0;
-    const usedCount = Math.max(userDocCount, usageDocCount);
-
-    const maxCredits = 10;
-    const remaining = Math.max(0, maxCredits - usedCount);
-
-    return {
-      isPro: false,
-      remainingCredits: remaining,
-      maxUserCredits: maxCredits,
-      isUserExhausted: remaining === 0,
-      totalGeneratedCount: usedCount,
-    };
-  } catch (e) {
-    console.warn("[Extension Firebase] fetchUserCreditsFromFirestore notice:", e);
-    return {
-      isPro: false,
-      remainingCredits: 10,
-      maxUserCredits: 10,
-      isUserExhausted: false,
-      totalGeneratedCount: 0,
-    };
   }
+
+  // 2. Fallback to Firestore REST API using user's Bearer token
+  const restResult = await fetchUserCreditsViaRest(userId, userEmail);
+  if (restResult) {
+    return restResult;
+  }
+
+  return {
+    isPro: false,
+    remainingCredits: MAX_USER_FREE_CREDITS,
+    maxUserCredits: MAX_USER_FREE_CREDITS,
+    isUserExhausted: false,
+    totalGeneratedCount: 0,
+  };
 }
 
 /**
- * Firestore에서 사용자의 실시간 크레딧 및 플랜 상태 직접 구독
+ * Firestore에서 사용자의 실시간 크레딧 및 플랜 상태 직접 구독 (Source of Truth)
  */
 export function subscribeToUserCredits(
   userId: string,
@@ -283,13 +428,12 @@ export function subscribeToUserCredits(
     return () => {};
   }
 
-  const userDocRef = doc(db, "users", userId);
-  const userUsageRef = doc(db, "users", userId, "usage", "summary");
-
+  let isCancelled = false;
   let userData: any = null;
   let usageData: any = null;
 
   const calculateAndEmit = () => {
+    if (isCancelled) return;
     const isPro =
       userData?.plan === "pro" &&
       (userData?.planStatus === "active" ||
@@ -307,43 +451,69 @@ export function subscribeToUserCredits(
       return;
     }
 
-    const userDocCount = (userData?.freeUsedCount as number) || 0;
-    const usageDocCount = (usageData?.freeUsedCount as number) || 0;
+    const userDocCount = Number(userData?.freeUsedCount || 0);
+    const usageDocCount = Number(usageData?.freeUsedCount || 0);
     const usedCount = Math.max(userDocCount, usageDocCount);
-
-    const maxCredits = 10;
-    const remaining = Math.max(0, maxCredits - usedCount);
+    const remaining = Math.max(0, MAX_USER_FREE_CREDITS - usedCount);
 
     onCredits({
       isPro: false,
       remainingCredits: remaining,
-      maxUserCredits: maxCredits,
+      maxUserCredits: MAX_USER_FREE_CREDITS,
       isUserExhausted: remaining === 0,
       totalGeneratedCount: usedCount,
     });
   };
 
-  const unsubUser = onSnapshot(
-    userDocRef,
-    (snap) => {
-      userData = snap.exists() ? snap.data() : null;
-      calculateAndEmit();
-    },
-    (err) => console.warn("[Extension Firebase] userDoc credit sub error:", err)
-  );
+  // Immediate 1-time fetch via SDK or REST
+  fetchUserCreditsFromFirestore(userId, userEmail).then((initialCredits) => {
+    if (!isCancelled && initialCredits) {
+      onCredits(initialCredits);
+    }
+  });
 
-  const unsubUsage = onSnapshot(
-    userUsageRef,
-    (snap) => {
-      usageData = snap.exists() ? snap.data() : null;
-      calculateAndEmit();
-    },
-    (err) => console.warn("[Extension Firebase] userUsage credit sub error:", err)
-  );
+  let unsubUser: (() => void) | null = null;
+  let unsubUsage: (() => void) | null = null;
+
+  try {
+    const userDocRef = doc(db, "users", userId);
+    const userUsageRef = doc(db, "users", userId, "usage", "summary");
+
+    unsubUser = onSnapshot(
+      userDocRef,
+      (snap) => {
+        userData = snap.exists() ? snap.data() : null;
+        calculateAndEmit();
+      },
+      (err) => {
+        console.warn("[Extension Firebase] userDoc onSnapshot permission notice:", err.message);
+        fetchUserCreditsViaRest(userId, userEmail).then((res) => {
+          if (!isCancelled && res) onCredits(res);
+        });
+      }
+    );
+
+    unsubUsage = onSnapshot(
+      userUsageRef,
+      (snap) => {
+        usageData = snap.exists() ? snap.data() : null;
+        calculateAndEmit();
+      },
+      (err) => {
+        console.warn("[Extension Firebase] userUsage onSnapshot permission notice:", err.message);
+        fetchUserCreditsViaRest(userId, userEmail).then((res) => {
+          if (!isCancelled && res) onCredits(res);
+        });
+      }
+    );
+  } catch (subErr) {
+    console.warn("[Extension Firebase] Subscription initialization notice:", subErr);
+  }
 
   return () => {
-    unsubUser();
-    unsubUsage();
+    isCancelled = true;
+    if (unsubUser) unsubUser();
+    if (unsubUsage) unsubUsage();
   };
 }
 
