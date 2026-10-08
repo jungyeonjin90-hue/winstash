@@ -13,11 +13,8 @@ import {
   ChevronDown,
   Copy,
   Terminal,
-  FileSpreadsheet,
   Award,
-  Layers,
   Cpu,
-  Eye,
   CheckCircle2,
   Briefcase,
 } from "lucide-react";

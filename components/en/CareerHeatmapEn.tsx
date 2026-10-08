@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarCheck2, ArrowRight, Sparkles, Check, Clock } from "lucide-react";
+import { CalendarCheck2, Sparkles, Check, Clock } from "lucide-react";
 import { WeekSpan, CareerRecord } from "@/types/career";
 import {
   getAllWeeksForYearEn,

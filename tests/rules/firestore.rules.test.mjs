@@ -16,6 +16,8 @@ import {
 import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 
 const STRICT = Boolean(process.env.STRICT_SECURITY);
+// Mark a test that documents a not-yet-fixed defect: `test("...", gap("X-1"), fn)`. No open gaps right now.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const gap = (id) => (STRICT ? {} : { todo: `Known defect ${id} (docs/AUDIT_REPORT.md)` });
 
 const ALICE = "alice";

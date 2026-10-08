@@ -41,7 +41,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
             chrome.windows.remove(res.winstash_auth_window_id, () => {
               chrome.storage.local.remove(["winstash_auth_window_id"]);
             });
-          } catch (e) {}
+          } catch {}
         }
       });
 

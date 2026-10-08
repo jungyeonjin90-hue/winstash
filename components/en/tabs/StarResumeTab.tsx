@@ -8,7 +8,6 @@ import {
   Check,
   Briefcase,
   Sparkles,
-  Calendar,
 } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner, SynthesizedStarItem } from "@/types/career";
 import { maskSynthesizedStarItem } from "@/lib/masking";
@@ -32,7 +31,7 @@ import {
   checkSynthesisCooldown,
   recordSynthesisCooldown,
 } from "@/lib/rateLimitService";
-import { checkSynthesisQuota, consumeSynthesisQuota, CreditStatus } from "@/lib/creditService";
+import { checkSynthesisQuota, CreditStatus } from "@/lib/creditService";
 import { getAuthToken } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 
@@ -76,7 +75,6 @@ export function StarResumeTab({
   creditStatus,
   jobRole = "engineering",
   toneManner = "impact",
-  onJobRoleChange,
   onToneMannerChange,
   onUpgradeClick,
 }: StarResumeTabProps) {
@@ -112,7 +110,8 @@ export function StarResumeTab({
 
   // Masking & Action states
   const [isNdaMasked, setIsNdaMasked] = useState(false);
-  const [selectedTag, setSelectedTag] = useState<string>("ALL");
+  // Tag filter UI is not exposed; every tag is shown.
+  const [selectedTag] = useState<string>("ALL");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isAllCopied, setIsAllCopied] = useState(false);
 
@@ -338,15 +337,6 @@ export function StarResumeTab({
     }
     return [];
   }, [filteredRecords.length, isValid, cachedEntry]);
-
-  // Unique domain tags
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    baseItems.forEach((item) => {
-      item.nda_tags.forEach((t) => tags.add(t));
-    });
-    return Array.from(tags);
-  }, [baseItems]);
 
   // Tag filter & NDA Masking
   const displayedItems = useMemo(() => {

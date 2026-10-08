@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useHasPriorSession } from "@/hooks/useHasPriorSession";
 import Link from "next/link";
 import { HeaderEn } from "@/components/en/HeaderEn";
 import { QuickLoggerEn } from "@/components/en/QuickLoggerEn";
@@ -58,16 +59,7 @@ export default function Home() {
   const [industry, setIndustry] = useState<string | undefined>(undefined);
   const [region, setRegion] = useState<RegionCode | undefined>(undefined);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [isPersonaLoaded, setIsPersonaLoaded] = useState(false);
-  const [hasPriorSession, setHasPriorSession] = useState<boolean>(false);
-
-  useEffect(() => {
-    try {
-      setHasPriorSession(localStorage.getItem("winstash_has_session") === "true");
-    } catch {
-      setHasPriorSession(false);
-    }
-  }, [user]);
+  const hasPriorSession = useHasPriorSession();
 
   // Modal handlers with browser history support (Back button closes modal instead of leaving site)
   const openSettingsModal = () => {
@@ -140,15 +132,17 @@ export default function Home() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  // Subscribe to user records & credit status, load persona
-  useEffect(() => {
+  // Reset per-user state whenever the signed-in user changes. Done during render (keyed on the same
+  // `user` object the subscription effect below depends on) so no frame shows the previous user's data.
+  const [stateOwner, setStateOwner] = useState<typeof user | undefined>(undefined);
+  if (stateOwner !== user) {
+    setStateOwner(user);
     if (!user) {
       // User is logged out: Immediately wipe all state to ensure zero cross-account data retention
       setRecords([]);
       setActiveRecordId(undefined);
       setPendingUpdate(null);
       setIsClientLoaded(false);
-      setIsPersonaLoaded(false);
       setShowOnboarding(false);
       setCreditStatus(null);
       setJobRole("engineering");
@@ -156,22 +150,25 @@ export default function Home() {
       setSeniorityLevel(undefined);
       setIndustry(undefined);
       setRegion(undefined);
-      return;
+    } else {
+      // User is logged in: First reset state to prevent brief flash of prior user's state
+      setRecords([]);
+      setIsClientLoaded(false);
+      setShowOnboarding(false);
+
+      // Read user-scoped settings if available, else clean defaults
+      const userSettings = getSettings(user.uid);
+      setJobRole(userSettings.jobRole || "engineering");
+      setToneManner(userSettings.toneManner || "impact");
+      setSeniorityLevel(userSettings.seniorityLevel);
+      setIndustry(userSettings.industry);
+      setRegion(userSettings.region);
     }
+  }
 
-    // User is logged in: First reset state to prevent brief flash of prior user's state
-    setRecords([]);
-    setIsClientLoaded(false);
-    setIsPersonaLoaded(false);
-    setShowOnboarding(false);
-
-    // Read user-scoped settings if available, else clean defaults
-    const userSettings = getSettings(user.uid);
-    setJobRole(userSettings.jobRole || "engineering");
-    setToneManner(userSettings.toneManner || "impact");
-    setSeniorityLevel(userSettings.seniorityLevel);
-    setIndustry(userSettings.industry);
-    setRegion(userSettings.region);
+  // Subscribe to user records & credit status, load persona
+  useEffect(() => {
+    if (!user) return;
 
     // Purge legacy unkeyed caches immediately to prevent ghost summaries
     purgeLegacySummaryCaches();
@@ -197,7 +194,6 @@ export default function Home() {
       } else {
         setShowOnboarding(true);
       }
-      setIsPersonaLoaded(true);
     };
 
     loadPersona();

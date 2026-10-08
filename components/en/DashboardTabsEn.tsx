@@ -87,9 +87,6 @@ export function DashboardTabsEn({
     }
   };
 
-  // Most recent record
-  const latestRecord = records[0];
-
   return (
     <div className="space-y-6">
       {/* Tab Navigation Pill Bar */}

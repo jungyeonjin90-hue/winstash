@@ -57,14 +57,17 @@ export function UpgradeModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
+  // Reset the waitlist form whenever the modal closes (adjusted during render)
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
     if (!isOpen) {
       setIsWaitlistSubmitting(false);
       setIsWaitlistSuccess(false);
       setCustomEmail("");
       setWaitlistError(null);
     }
-  }, [isOpen]);
+  }
 
   const handleJoinWaitlist = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

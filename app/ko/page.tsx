@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useHasPriorSession } from "@/hooks/useHasPriorSession";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { QuickLogger } from "@/components/QuickLogger";
@@ -31,15 +32,7 @@ export default function HomeKo() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [hasPriorSession, setHasPriorSession] = useState<boolean>(false);
-
-  useEffect(() => {
-    try {
-      setHasPriorSession(localStorage.getItem("winstash_has_session") === "true");
-    } catch {
-      setHasPriorSession(false);
-    }
-  }, [user]);
+  const hasPriorSession = useHasPriorSession();
 
   // Modal handlers with browser history support (Back button closes modal instead of leaving site)
   const openSettingsModal = () => {
@@ -85,24 +78,27 @@ export default function HomeKo() {
   const [jobRole, setJobRole] = useState<JobRole>("engineering");
   const [toneManner, setToneManner] = useState<ToneManner>("impact");
 
-  // Firestore 동기화
-  useEffect(() => {
+  // 사용자 변경 시 사용자별 상태 초기화 (아래 구독 effect 와 같은 `user` 기준, 렌더 중 처리)
+  const [stateOwner, setStateOwner] = useState<typeof user | undefined>(undefined);
+  if (stateOwner !== user) {
+    setStateOwner(user);
+    setRecords([]);
+    setIsClientLoaded(false);
     if (!user) {
-      setRecords([]);
       setActiveRecordId(undefined);
-      setIsClientLoaded(false);
       setCreditStatus(null);
       setJobRole("engineering");
       setToneManner("impact");
-      return;
+    } else {
+      const userSettings = getSettings(user.uid);
+      setJobRole(userSettings.jobRole || "engineering");
+      setToneManner(userSettings.toneManner || "impact");
     }
+  }
 
-    setRecords([]);
-    setIsClientLoaded(false);
-
-    const userSettings = getSettings(user.uid);
-    setJobRole(userSettings.jobRole || "engineering");
-    setToneManner(userSettings.toneManner || "impact");
+  // Firestore 동기화
+  useEffect(() => {
+    if (!user) return;
 
     const unsubscribeRecords = subscribeUserRecords(
       user.uid,

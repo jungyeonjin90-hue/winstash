@@ -1,7 +1,6 @@
 "use client";
 
 import { LayoutGrid, List, Sparkles } from "lucide-react";
-import { SynthesisScale } from "@/types/career";
 
 export type ViewDensity = "detailed" | "compact";
 
@@ -22,10 +21,6 @@ export function ViewControlsEn({
   onScaleChange,
   density,
   onDensityChange,
-  isStale = false,
-  onRegenerateAi,
-  isSynthesizing = false,
-  isCached = true,
   accentColor = "emerald",
 }: ViewControlsEnProps) {
   const scaleOptions: {

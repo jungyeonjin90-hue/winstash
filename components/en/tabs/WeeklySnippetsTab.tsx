@@ -11,10 +11,9 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Filter,
 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
-import { getDetailedRecordDateInfo, DetailedRecordDateInfo } from "@/lib/periodUtils";
+import { getDetailedRecordDateInfo } from "@/lib/periodUtils";
 import { formatWeeklySnippet } from "@/lib/exportFormatters";
 
 interface WeeklySnippetsTabProps {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Sparkles, CornerDownLeft, RotateCcw, ExternalLink, Zap, CheckCircle2, Info, LogOut, Loader2, AlertCircle } from "lucide-react";
 import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
@@ -72,7 +72,7 @@ export default function App() {
   }, [records, selectedWeek]);
 
   // 1. Single Unified Backend API Loader (GET /api/extension/status with 2s timeout)
-  const fetchStatusAndRecords = useCallback(async (user: { uid: string; email: string }) => {
+  const fetchStatusAndRecords = useCallback(async () => {
     setIsLoadingData(true);
     setDataFetchError(null);
 
@@ -152,7 +152,7 @@ export default function App() {
           const bridgedUser = res[STORAGE_KEY_USER];
           setCurrentUser(bridgedUser);
           setIsAuthChecking(false);
-          fetchStatusAndRecords(bridgedUser);
+          fetchStatusAndRecords();
         }
       });
     }
@@ -164,7 +164,7 @@ export default function App() {
         const userData = { uid: fbUser.uid, email: fbUser.email || "" };
         setCurrentUser(userData);
         setIsAuthChecking(false);
-        fetchStatusAndRecords(userData);
+        fetchStatusAndRecords();
       } else {
         if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
           chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: BridgedSession) => {
@@ -173,7 +173,7 @@ export default function App() {
               const bridgedUser = res[STORAGE_KEY_USER];
               setCurrentUser(bridgedUser);
               setIsAuthChecking(false);
-              fetchStatusAndRecords(bridgedUser);
+              fetchStatusAndRecords();
             } else {
               setCurrentUser(null);
               setIsAuthChecking(false);
@@ -213,7 +213,7 @@ export default function App() {
         chrome.storage.local.remove([STORAGE_KEY_LOGGED_OUT]);
         chrome.storage.local.set({ [STORAGE_KEY_USER]: user });
       }
-      fetchStatusAndRecords(user);
+      fetchStatusAndRecords();
       setStatusFeedback({
         type: "success",
         message: `Connected as ${user.email}!`,
@@ -222,17 +222,18 @@ export default function App() {
     }
   }, [fetchStatusAndRecords]);
 
-  // 4. Update textarea content when selectedWeek or records change
-  useEffect(() => {
+  // 4. Update textarea content when selectedWeek or records change (adjusted during render; the
+  //    initial null makes the first render load it, like the former mount effect did)
+  const [memoSource, setMemoSource] = useState<{ week: WeekSpan; records: CareerRecord[] } | null>(null);
+  if (!memoSource || memoSource.week !== selectedWeek || memoSource.records !== records) {
+    setMemoSource({ week: selectedWeek, records });
     const match = records.find((r) => isWeekMatch(r, selectedWeek));
     if (match) {
-      const note = match.rawNote || match.raw_memo || "";
-      setMemo(note);
+      setMemo(match.rawNote || match.raw_memo || "");
     } else {
-      const savedDraft = localStorage.getItem(STORAGE_KEY_DRAFT);
-      setMemo(savedDraft || "");
+      setMemo(localStorage.getItem(STORAGE_KEY_DRAFT) || "");
     }
-  }, [selectedWeek, records]);
+  }
 
   // 5. Draft memo change handler
   const handleMemoChange = (newText: string) => {

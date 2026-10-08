@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
@@ -19,23 +19,21 @@ export default function ExtensionConnectPage() {
 
   // 1. Process OAuth redirect result if returning from Google
   useEffect(() => {
-    if (!auth) {
-      setIsResolvingRedirect(false);
-      return;
-    }
+    const pending = auth
+      ? getRedirectResult(auth)
+          .then((res) => {
+            if (res?.user) {
+              console.log("[ExtensionConnect] Logged in via redirect:", res.user.email);
+            }
+          })
+          .catch((err) => {
+            console.warn("[ExtensionConnect] getRedirectResult notice:", err);
+          })
+      : Promise.resolve(); // Firebase not configured: nothing to resolve
 
-    getRedirectResult(auth)
-      .then((res) => {
-        if (res?.user) {
-          console.log("[ExtensionConnect] Logged in via redirect:", res.user.email);
-        }
-      })
-      .catch((err) => {
-        console.warn("[ExtensionConnect] getRedirectResult notice:", err);
-      })
-      .finally(() => {
-        setIsResolvingRedirect(false);
-      });
+    pending.finally(() => {
+      setIsResolvingRedirect(false);
+    });
   }, []);
 
   const dispatchBridgeData = useCallback(
@@ -117,6 +115,9 @@ export default function ExtensionConnectPage() {
         // Redirect directly to Google Account Chooser without popup blocking!
         if (isAuto && !hasRedirected && !isLoggingIn && auth) {
           sessionStorage.setItem("winstash_ext_redirected", "true");
+          // This effect drives an external flow (OAuth redirect, sessionStorage, extension bridge);
+          // the state updates mirror that flow for the UI, which is what effects are for.
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setIsLoggingIn(true);
           signInWithRedirect(auth, googleProvider).catch((e) => {
             console.error("signInWithRedirect error:", e);

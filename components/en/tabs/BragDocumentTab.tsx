@@ -7,8 +7,6 @@ import {
   Check,
   FileSpreadsheet,
   Sparkles,
-  Clock,
-  Calendar,
 } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem } from "@/types/career";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
@@ -16,7 +14,7 @@ import { PeriodFilterEn } from "../PeriodFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
 import { SourceNotesAccordionEn } from "../SourceNotesAccordionEn";
 import { formatBragSheet } from "@/lib/exportFormatters";
-import { filterRecordsByPeriod, getDetailedRecordDateInfo, getRecordPeriodInfo } from "@/lib/periodUtils";
+import { filterRecordsByPeriod, getDetailedRecordDateInfo } from "@/lib/periodUtils";
 import {
   buildSummaryCacheKey,
   getSummaryCache,
@@ -31,7 +29,7 @@ import {
   checkSynthesisCooldown,
   recordSynthesisCooldown,
 } from "@/lib/rateLimitService";
-import { checkSynthesisQuota, consumeSynthesisQuota, CreditStatus } from "@/lib/creditService";
+import { checkSynthesisQuota, CreditStatus } from "@/lib/creditService";
 import { getAuthToken } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 
@@ -75,7 +73,6 @@ export function BragDocumentTab({
   creditStatus,
   jobRole = "engineering",
   toneManner = "impact",
-  onJobRoleChange,
   onToneMannerChange,
   onUpgradeClick,
 }: BragDocumentTabProps) {
