@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, type DocumentData } from "firebase-admin/firestore";
 import { adminAuth, adminDb, isFirebaseAdminConfigured } from "./firebaseAdmin";
 import { isAdminEmail } from "./adminConfig";
 import { verifyFirebaseIdTokenLightweight } from "./lightweightAuth";
@@ -95,17 +95,7 @@ export async function verifyServerAuthAndQuota(
   // 6. Query User Plan & Membership Status
   try {
     const userDocSnap = await adminDb.collection("users").doc(userId).get();
-    const userData = userDocSnap.data();
-    const plan = userData?.plan;
-    const planStatus = userData?.planStatus;
-    const endsAt = userData?.endsAt ? new Date(userData.endsAt).getTime() : 0;
-
-    const isPro =
-      plan === "pro" &&
-      (planStatus === "active" ||
-        planStatus === "on_trial" ||
-        planStatus === "paid" ||
-        (planStatus === "cancelled" && endsAt > Date.now()));
+    const isPro = isProPlan(userDocSnap.data());
 
     // Pro members have unlimited access
     if (isPro) {
@@ -215,4 +205,95 @@ export async function verifyServerAuthAndQuota(
     // Allow through if Firestore check fails unexpectedly to prevent blocking legitimate users
     return { allowed: true, userId, isPro: false };
   }
+}
+
+/**
+ * Pro membership check shared by quota enforcement and credit reporting.
+ * A cancelled subscription stays Pro until its paid period (endsAt) runs out.
+ */
+export function isProPlan(userData: DocumentData | undefined): boolean {
+  const planStatus = userData?.planStatus;
+  const endsAt = userData?.endsAt ? new Date(userData.endsAt).getTime() : 0;
+  return (
+    userData?.plan === "pro" &&
+    (planStatus === "active" ||
+      planStatus === "on_trial" ||
+      planStatus === "paid" ||
+      (planStatus === "cancelled" && endsAt > Date.now()))
+  );
+}
+
+export interface ServerCreditStatus {
+  isPro: boolean;
+  isAdmin: boolean;
+  usedCount: number;
+  maxUserCredits: number;
+  remainingCredits: number;
+  isUserExhausted: boolean;
+}
+
+const UNLIMITED = 999999;
+
+/**
+ * Reads the canonical free-transform usage (users/{uid}/usage/summary) with the Admin SDK.
+ * This is the same counter verifyServerAuthAndQuota() enforces, so what we report matches what we block.
+ * Returns null when the Admin SDK is unavailable or the read fails.
+ */
+export async function getServerCreditStatus(
+  userId: string,
+  userEmail?: string | null
+): Promise<ServerCreditStatus | null> {
+  if (isAdminEmail(userEmail)) {
+    return {
+      isPro: true,
+      isAdmin: true,
+      usedCount: 0,
+      maxUserCredits: UNLIMITED,
+      remainingCredits: UNLIMITED,
+      isUserExhausted: false,
+    };
+  }
+  if (!adminDb) return null;
+
+  try {
+    const userRef = adminDb.collection("users").doc(userId);
+    const [userSnap, summarySnap] = await Promise.all([
+      userRef.get(),
+      userRef.collection("usage").doc("summary").get(),
+    ]);
+    const usedCount = (summarySnap.data()?.freeUsedCount as number) || 0;
+
+    if (isProPlan(userSnap.data())) {
+      return {
+        isPro: true,
+        isAdmin: false,
+        usedCount,
+        maxUserCredits: UNLIMITED,
+        remainingCredits: UNLIMITED,
+        isUserExhausted: false,
+      };
+    }
+    return {
+      isPro: false,
+      isAdmin: false,
+      usedCount,
+      maxUserCredits: MAX_USER_FREE_CREDITS,
+      remainingCredits: Math.max(0, MAX_USER_FREE_CREDITS - usedCount),
+      isUserExhausted: usedCount >= MAX_USER_FREE_CREDITS,
+    };
+  } catch (e) {
+    console.error("[AuthQuota] Failed to read server credit status:", e);
+    return null;
+  }
+}
+
+/** Credit payload shape consumed by the Chrome extension (extension/src/App.tsx). */
+export function toExtensionCredits(s: ServerCreditStatus) {
+  return {
+    isPro: s.isPro || s.isAdmin,
+    remainingCredits: s.remainingCredits,
+    maxUserCredits: s.maxUserCredits,
+    isUserExhausted: s.isUserExhausted,
+    totalGeneratedCount: s.usedCount,
+  };
 }

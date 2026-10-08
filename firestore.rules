@@ -2,44 +2,57 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // 결제/쿼터 관련 필드: 서버(Admin SDK, Lemon Squeezy 웹훅)만 기록 가능
+    function protectedProfileKeys() {
+      return ['plan', 'planStatus', 'endsAt', 'renewsAt',
+              'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId', 'freeUsedCount'];
+    }
+
     // WinStash 사용자별 철통 격리 보안 규칙
+    // 주의: 하위 컬렉션에 `match /{document=**}`를 쓰지 말 것. rules_version 2에서 재귀 와일드카드는
+    // 0개 세그먼트에도 매칭되어 users/{userId} 문서 자체(plan 등)와 usage까지 쓰기를 열어버린다 (감사 C-1).
     match /users/{userId} {
       // 본인만 사용자 프로필 읽기 가능
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
 
-      // 신규 계정 생성 시: plan 관련 필드는 클라이언트에서 임의 지정 불가 (기본 free 허용)
-      allow create: if request.auth != null && request.auth.uid == userId
+      // 신규 계정 생성 시: 보호 필드는 지정 불가 (plan='free', planStatus='inactive' 기본값만 허용)
+      allow create: if isOwner(userId)
                     && (!('plan' in request.resource.data) || request.resource.data.plan == 'free')
-                    && (!('planStatus' in request.resource.data) || request.resource.data.planStatus == 'inactive');
+                    && (!('planStatus' in request.resource.data) || request.resource.data.planStatus == 'inactive')
+                    && !request.resource.data.keys().hasAny(
+                        ['endsAt', 'renewsAt', 'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId', 'freeUsedCount']);
 
-      // 기존 계정 수정 시: 일반 유저는 plan, planStatus, lemonSqueezy* 필드를 직접 수정할 수 없음
-      allow update: if request.auth != null && request.auth.uid == userId 
-                    && !request.resource.data.diff(resource.data).affectedKeys()
-                        .hasAny(['plan', 'planStatus', 'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId']);
+      // 기존 계정 수정 시: 보호 필드는 변경 불가
+      allow update: if isOwner(userId)
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedProfileKeys());
 
       // 본인 계정 삭제 허용
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow delete: if isOwner(userId);
 
-      // 사용자 하위 컬렉션 중 usage는 서버(Firebase Admin SDK)에서만 원자적으로 관리 (M-1 위변조 원천 방지)
-      // 클라이언트는 실시간 조회만 가능하고 임의 쓰기는 차단
-      match /usage/{document=**} {
-        allow read: if request.auth != null && request.auth.uid == userId;
+      // usage는 서버(Firebase Admin SDK)에서만 원자적으로 관리. 클라이언트는 조회만 가능
+      match /usage/{docId} {
+        allow read: if isOwner(userId);
         allow write: if false;
       }
 
-      // 사용자 하위 컬렉션 (records, persona, summary_cache 등)은 본인에게 읽기/쓰기 허용
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      // 본인 데이터 하위 컬렉션 (여기 없는 컬렉션은 기본 거부)
+      match /records/{recordId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /settings/{settingId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /summary_cache/{cacheKey} {
+        allow read, write: if isOwner(userId);
       }
     }
 
-    // 서비스 전체 사용량 통계 (10,000회 상한선 통제용)
-    // 읽기는 누구나 가능, system/usage 문서만 인증된 유저가 카운터 증가 가능
-    match /system/usage {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
+    // 서비스 전체 사용량 통계 (10,000회 상한선 통제용) 포함 system 문서
+    // 읽기는 누구나 가능, 쓰기는 서버(Admin SDK)만 가능 (감사 H-5: 임의 유저가 킬스위치를 조작할 수 있었음)
     match /system/{document=**} {
       allow read: if true;
       allow write: if false;

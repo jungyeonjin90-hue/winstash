@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdTokenLightweight } from "@/lib/lightweightAuth";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
-import { getCreditStatus } from "@/lib/creditService";
+import { getServerCreditStatus, isProPlan, toExtensionCredits } from "@/lib/serverAuthQuota";
+import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 import { CareerRecord } from "@/types/career";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
@@ -55,48 +56,40 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 2. Fetch Latest Credit Status directly from DB
-    let creditStatus = await getCreditStatus(userId, false, userEmail);
+    // 2. Credit status from the canonical server counter (users/{uid}/usage/summary),
+    //    the same one /api/extension/submit and /api/transform enforce.
+    let creditStatus = await getServerCreditStatus(userId, userEmail);
 
-    // If server cannot reach Firestore via adminDb/clientDb, query Firestore REST API using the user's Bearer token
-    if (!creditStatus.isPro && !creditStatus.isAdmin && creditStatus.userUsedCount === 0) {
+    // Admin SDK unavailable: read the same docs via Firestore REST with the user's own token (owner-readable)
+    if (!creditStatus) {
       const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "careerpulse-c2213";
+      const docUrl = (path: string) =>
+        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`;
       try {
-        const userRestRes = await fetch(
-          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (userRestRes.ok) {
-          const uDoc = await userRestRes.json();
-          const plan = uDoc?.fields?.plan?.stringValue || "free";
-          const planStatus = uDoc?.fields?.planStatus?.stringValue;
-          const isPro = plan === "pro" && (planStatus === "active" || planStatus === "paid" || planStatus === "on_trial");
-          const freeCount = parseInt(uDoc?.fields?.freeUsedCount?.integerValue || "0", 10);
-          
-          let usageCount = 0;
-          try {
-            const usageRestRes = await fetch(
-              `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}/usage/summary`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            if (usageRestRes.ok) {
-              const usDoc = await usageRestRes.json();
-              usageCount = parseInt(usDoc?.fields?.freeUsedCount?.integerValue || "0", 10);
-            }
-          } catch {}
-
-          const effectiveCount = Math.max(freeCount, usageCount);
+        const [userRestRes, usageRestRes] = await Promise.all([
+          fetch(docUrl(`users/${userId}`), { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(docUrl(`users/${userId}/usage/summary`), { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (userRestRes.ok || userRestRes.status === 404) {
+          const fields = userRestRes.ok ? (await userRestRes.json())?.fields ?? {} : {};
+          const usageFields = usageRestRes.ok ? (await usageRestRes.json())?.fields ?? {} : {};
+          const usedCount = parseInt(usageFields.freeUsedCount?.integerValue || "0", 10);
+          const isPro = isProPlan({
+            plan: fields.plan?.stringValue,
+            planStatus: fields.planStatus?.stringValue,
+            endsAt: fields.endsAt?.stringValue,
+          });
           creditStatus = {
-            ...creditStatus,
-            plan: isPro ? "pro" : "free",
             isPro,
-            userUsedCount: effectiveCount,
-            remainingCredits: isPro ? 999999 : Math.max(0, 10 - effectiveCount),
-            isUserExhausted: !isPro && effectiveCount >= 10,
+            isAdmin: false,
+            usedCount,
+            maxUserCredits: isPro ? 999999 : MAX_USER_FREE_CREDITS,
+            remainingCredits: isPro ? 999999 : Math.max(0, MAX_USER_FREE_CREDITS - usedCount),
+            isUserExhausted: !isPro && usedCount >= MAX_USER_FREE_CREDITS,
           };
         }
       } catch (restErr) {
-        console.warn("[Extension Status API] REST fallback check notice:", restErr);
+        console.warn("[Extension Status API] REST credit fallback failed:", restErr);
       }
     }
 
@@ -195,13 +188,8 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         user: { uid: userId, email: userEmail },
-        credits: {
-          isPro: creditStatus.isPro || creditStatus.isAdmin,
-          remainingCredits: creditStatus.remainingCredits,
-          maxUserCredits: creditStatus.maxUserCredits,
-          isUserExhausted: creditStatus.isUserExhausted,
-          totalGeneratedCount: creditStatus.userUsedCount,
-        },
+        // Omitted when unknown so the extension never shows a fabricated balance.
+        credits: creditStatus ? toExtensionCredits(creditStatus) : undefined,
         records,
       },
       { headers: CORS_HEADERS }

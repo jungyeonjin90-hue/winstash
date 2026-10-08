@@ -2,7 +2,6 @@ import {
   doc,
   getDoc,
   setDoc,
-  increment,
   onSnapshot,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
@@ -259,7 +258,7 @@ export async function getCreditStatus(
 }
 
 /**
- * 무료 변환 1회 소모 기록 (원자적 increment)
+ * 무료 변환 1회 소모 반영 (서버 차감 후 로컬 캐시/UI 동기화)
  * Pro 유저이거나 관리자인 경우 소모하지 않음
  */
 export async function consumeFreeCredit(
@@ -272,22 +271,8 @@ export async function consumeFreeCredit(
     return status;
   }
 
-  // 1. Firebase Firestore 연동 모드: users/{userId} 문서에 원자적 freeUsedCount: increment(1) 즉각 기록
-  if (isFirebaseConfigured && db && !isDemo) {
-    try {
-      const userDocRef = doc(db, "users", userId);
-      await setDoc(
-        userDocRef,
-        {
-          freeUsedCount: increment(1),
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-    } catch (err) {
-      console.warn("[CreditService] Direct userDoc increment error:", err);
-    }
-  }
+  // 1. 실제 계정의 차감은 서버 API가 usage/summary에 원자적으로 기록함.
+  //    freeUsedCount 등 쿼터 필드는 보안 규칙상 클라이언트 쓰기가 금지되어 있음 (감사 C-1)
 
   // 2. 데모 및 로컬 스토리지 카운트 동기화
   if (typeof window !== "undefined") {

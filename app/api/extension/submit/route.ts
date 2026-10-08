@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyFirebaseIdTokenLightweight } from "@/lib/lightweightAuth";
-import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
-import { getCreditStatus, consumeFreeCredit } from "@/lib/creditService";
+import { adminDb } from "@/lib/firebaseAdmin";
+import { getServerCreditStatus, toExtensionCredits, verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
+import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { CareerRecord, JobRole, ToneManner } from "@/types/career";
 import { executeAiTransformation } from "@/lib/transformService";
-import { saveUserRecordToFirestore } from "@/lib/firestoreService";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -12,107 +11,91 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+const DEMO_USER_ID = "demo-user-1234";
+
+function errorResponse(error: string, status: number, extraHeaders: Record<string, string> = {}) {
+  return NextResponse.json({ success: false, error }, { status, headers: { ...CORS_HEADERS, ...extraHeaders } });
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
+/**
+ * Chrome extension memo submit.
+ * Same guardrails as /api/transform: IP rate limit, verified Firebase token, server-side free quota
+ * (new entries and edits share the 10 free credits, see lib/creditConfig.ts), and the memo length cap.
+ * The credit is deducted only after the record is persisted.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401, headers: CORS_HEADERS }
+    // 1. IP rate limit (same budget as the web transform route)
+    const rateLimit = checkServerRateLimit(getClientIp(req), 12, 60 * 1000);
+    if (!rateLimit.success) {
+      return errorResponse(
+        `Rate limit exceeded. Please wait ${rateLimit.resetSeconds} seconds before submitting again.`,
+        429,
+        { "Retry-After": String(rateLimit.resetSeconds) }
       );
     }
 
-    // 1. Verify User Token
-    let userId = "";
-    let userEmail: string | null = null;
+    // 2. Token verification + server-side quota (usage/summary)
+    const quotaCheck = await verifyServerAuthAndQuota(req, "transform");
+    if (!quotaCheck.allowed || !quotaCheck.userId) {
+      return errorResponse(quotaCheck.error || "Free transformation credit limit reached", quotaCheck.status || 403);
+    }
+    const userId = quotaCheck.userId;
+    const isDemo = userId === DEMO_USER_ID;
 
+    // 3. Parse and validate body
+    let body: Record<string, unknown>;
     try {
-      if (adminAuth) {
-        const decoded = await adminAuth.verifyIdToken(token);
-        userId = decoded.uid;
-        userEmail = decoded.email || null;
-      } else {
-        const decoded = await verifyFirebaseIdTokenLightweight(token);
-        userId = decoded.uid;
-        userEmail = decoded.email || null;
-      }
-    } catch (authErr) {
-      const isDemo = req.headers.get("x-demo-user") === "true";
-      if (isDemo && process.env.NODE_ENV !== "production") {
-        userId = "demo-user-1234";
-      } else {
-        return NextResponse.json(
-          { success: false, error: "Invalid or expired token" },
-          { status: 401, headers: CORS_HEADERS }
-        );
-      }
+      body = await req.json();
+    } catch {
+      return errorResponse("Invalid JSON request body.", 400);
     }
 
-    // 2. Parse Request Body
-    const body = await req.json();
-    const memoText = typeof body.rawNote === "string" && body.rawNote.trim() ? body.rawNote : body.raw_memo;
-    const {
-      target_week,
-      existingRecordId,
-      existingCreatedAt,
-      job_role = "engineering",
-      tone_manner = "impact",
-    } = body;
-
-    if (!memoText || typeof memoText !== "string" || memoText.trim().length === 0) {
-      return NextResponse.json(
-        { success: false, error: "Memo content is required" },
-        { status: 400, headers: CORS_HEADERS }
+    const rawMemo =
+      typeof body.rawNote === "string" && body.rawNote.trim() ? body.rawNote : body.raw_memo;
+    if (typeof rawMemo !== "string" || rawMemo.trim().length === 0) {
+      return errorResponse("Memo content is required", 400);
+    }
+    const memoText = rawMemo.trim();
+    if (memoText.length > MAX_MEMO_CHAR_LIMIT) {
+      return errorResponse(
+        `Your memo is too long (${memoText.length.toLocaleString()} characters). Please shorten it under ${MAX_MEMO_CHAR_LIMIT.toLocaleString()} characters.`,
+        400
       );
     }
 
-    // 3. Check Quota / Credit Status
-    const currentCredit = await getCreditStatus(userId, false, userEmail);
-    const isModifyingExisting = Boolean(existingRecordId);
-    const shouldDeduct = !currentCredit.isPro && !currentCredit.isAdmin && isModifyingExisting;
+    const existingRecordId = typeof body.existingRecordId === "string" ? body.existingRecordId : undefined;
+    const existingCreatedAt = typeof body.existingCreatedAt === "string" ? body.existingCreatedAt : undefined;
+    const jobRole = (typeof body.job_role === "string" ? body.job_role : "engineering") as JobRole;
+    const toneManner = (typeof body.tone_manner === "string" ? body.tone_manner : "impact") as ToneManner;
 
-    if (shouldDeduct && currentCredit.isUserExhausted) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Weekly modification credits exhausted. Upgrade to Pro for unlimited edits.",
-        },
-        { status: 403, headers: CORS_HEADERS }
-      );
-    }
+    // 4. AI 3-way transformation (weekly report, brag sheet, STAR portfolio)
+    const transformation = await executeAiTransformation(memoText, jobRole, toneManner);
 
-    // 4. Server-Side AI 3-Way Transformation (Weekly Report, Brag Sheet, STAR Portfolio)
-    const transformation = await executeAiTransformation(
-      memoText.trim(),
-      job_role as JobRole,
-      tone_manner as ToneManner
-    );
-
-    // 5. Construct Complete Canonical CareerRecord
     const recordId = existingRecordId || `rec-${Date.now()}`;
-    const cleanRecord: CareerRecord = {
+    const cleanRecord = {
       id: recordId,
       createdAt: existingCreatedAt || new Date().toISOString(),
-      target_week: target_week || undefined,
-      raw_memo: memoText.trim(),
-      rawNote: memoText.trim(),
+      target_week: body.target_week || undefined,
+      raw_memo: memoText,
+      rawNote: memoText,
       weekly_report: transformation.weekly_report,
       brag_sheet_item: transformation.brag_sheet_item,
       star_portfolio: transformation.star_portfolio,
-      jobRole: job_role,
-      toneManner: tone_manner,
+      jobRole,
+      toneManner,
       source: "chrome_extension",
-    } as any;
+    } as unknown as CareerRecord;
 
-    // 6. Save to Firestore (adminDb primary, client SDK fallback)
-    let saved = false;
-    if (adminDb) {
+    // 5. Persist (Admin SDK). Demo users are never written to Firestore.
+    if (!isDemo) {
+      if (!adminDb) {
+        return errorResponse("Server database is unavailable. Please try again later.", 503);
+      }
       try {
         await adminDb
           .collection("users")
@@ -120,114 +103,24 @@ export async function POST(req: NextRequest) {
           .collection("records")
           .doc(recordId)
           .set(JSON.parse(JSON.stringify(cleanRecord)), { merge: true });
-        saved = true;
-      } catch (adminDbErr) {
-        console.warn("[Extension Submit API] adminDb save failed, using fallback:", adminDbErr);
+      } catch (saveErr) {
+        console.error("[Extension Submit API] Failed to save record:", saveErr);
+        return errorResponse("Failed to save your record. No credit was used.", 503);
       }
     }
 
-    if (!saved) {
-      await saveUserRecordToFirestore(userId, false, cleanRecord);
-    }
+    // 6. Deduct one free credit (no-op for Pro / admin / demo)
+    await quotaCheck.deduct?.();
 
-    // 7. Deduct Credit if applicable
-    let updatedCredits = currentCredit;
-    if (shouldDeduct) {
-      if (adminDb) {
-        try {
-          const { FieldValue } = await import("firebase-admin/firestore");
-          await Promise.allSettled([
-            adminDb
-              .collection("users")
-              .doc(userId)
-              .set(
-                {
-                  freeUsedCount: FieldValue.increment(1),
-                  updatedAt: new Date().toISOString(),
-                },
-                { merge: true }
-              ),
-            adminDb
-              .collection("users")
-              .doc(userId)
-              .collection("usage")
-              .doc("summary")
-              .set(
-                {
-                  freeUsedCount: FieldValue.increment(1),
-                  lastUsedAt: new Date().toISOString(),
-                },
-                { merge: true }
-              ),
-          ]);
-        } catch (adminErr) {
-          console.warn("[Extension Submit API] adminDb credit increment error:", adminErr);
-        }
-      }
-
-      try {
-        updatedCredits = await consumeFreeCredit(userId, false, userEmail);
-      } catch {}
-
-      try {
-        const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "careerpulse-c2213";
-        const currentCount = updatedCredits.userUsedCount || 0;
-        await Promise.allSettled([
-          fetch(
-            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=updatedAt`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                fields: {
-                  freeUsedCount: { integerValue: String(currentCount + 1) },
-                  updatedAt: { stringValue: new Date().toISOString() },
-                },
-              }),
-            }
-          ),
-          fetch(
-            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}/usage/summary?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=lastUsedAt`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                fields: {
-                  freeUsedCount: { integerValue: String(currentCount + 1) },
-                  lastUsedAt: { stringValue: new Date().toISOString() },
-                },
-              }),
-            }
-          ),
-        ]);
-      } catch {}
-    }
+    // Omitted when unknown so the extension keeps its last known balance instead of a wrong one.
+    const credits = isDemo ? null : await getServerCreditStatus(userId, quotaCheck.userEmail);
 
     return NextResponse.json(
-      {
-        success: true,
-        record: cleanRecord,
-        credits: {
-          isPro: updatedCredits.isPro || updatedCredits.isAdmin,
-          remainingCredits: updatedCredits.remainingCredits,
-          maxUserCredits: updatedCredits.maxUserCredits,
-          isUserExhausted: updatedCredits.isUserExhausted,
-          totalGeneratedCount: updatedCredits.userUsedCount,
-        },
-      },
+      { success: true, record: cleanRecord, credits: credits ? toExtensionCredits(credits) : undefined },
       { headers: CORS_HEADERS }
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error("[Extension Submit API] Fatal error:", err);
-    return NextResponse.json(
-      { success: false, error: err.message || "Failed to process record" },
-      { status: 500, headers: CORS_HEADERS }
-    );
+    return errorResponse("Failed to process record", 500);
   }
 }
