@@ -8,3 +8,7 @@ export const E2E_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
 
 /** Admin allow-list used by the E2E server (overrides the production admin emails). */
 export const E2E_ADMIN_EMAIL = "e2e-admin@example.com";
+
+/** Local Gemini mock (e2e/mock-gemini.mjs) and the fake key the E2E server sends to it. */
+export const E2E_MOCK_GEMINI_PORT = 3199;
+export const E2E_GEMINI_KEY = "e2e-fake-key";
