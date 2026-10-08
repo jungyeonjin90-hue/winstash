@@ -4,7 +4,18 @@ import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
 import { isWeekMatch } from "./lib/weekMatch";
 import { isAdminEmail } from "./lib/adminConfig";
-import { auth, onAuthStateChanged, logoutUser, getAuthToken, deductFreeCreditInFirestore } from "./lib/firebase";
+import {
+  auth,
+  onAuthStateChanged,
+  logoutUser,
+  getAuthToken,
+  deductFreeCreditInFirestore,
+  subscribeToUserRecords,
+  fetchUserRecordsFromFirestore,
+  saveRecordToFirestore,
+  subscribeToUserCredits,
+  fetchUserCreditsFromFirestore,
+} from "./lib/firebase";
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
 import { WinStashBrandBadge } from "./components/WinStashLogo";
@@ -61,10 +72,9 @@ export default function App() {
     return Boolean(creditStatus?.isPro);
   }, [currentUser, creditStatus]);
 
-  // Helper: Save records to persistent storage
-  // Find existing record for current selected week
+  // Helper: Find existing record for current selected week
   const existingRecord = useMemo(() => {
-    return records.find((r) => isWeekMatch(r.target_week, selectedWeek));
+    return records.find((r) => isWeekMatch(r, selectedWeek));
   }, [records, selectedWeek]);
 
   // Real Backend Data Loader (GET /api/extension/status)
@@ -101,7 +111,7 @@ export default function App() {
               return json.credits;
             });
           }
-          if (Array.isArray(json.records)) {
+          if (Array.isArray(json.records) && json.records.length > 0) {
             setRecords(json.records);
           }
         }
@@ -111,11 +121,13 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // 1. Initial Authentication & Session Listener
+  // 1. Initial Authentication & Firestore Direct Subscription (Source of Truth)
   useEffect(() => {
     let isMounted = true;
+    let unsubFirestoreRecords: (() => void) | null = null;
+    let unsubFirestoreCredits: (() => void) | null = null;
 
-    // 0. Immediate local storage cache restore (0ms delay)
+    // 0. Immediate local storage cache restore (0ms instant UI display)
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get(
         [
@@ -136,58 +148,60 @@ export default function App() {
             const bridgedUser = res[STORAGE_KEY_USER];
             setCurrentUser(bridgedUser);
             setIsAuthChecking(false);
+            attachFirestore(bridgedUser.uid, bridgedUser.email);
           }
         }
       );
     }
 
-    // 0-b. Query open WinStash web tabs for real-time credit status
-    const syncFromWebTabs = () => {
-      if (typeof chrome !== "undefined" && chrome.tabs) {
-        chrome.tabs.query({}, (tabs: any[]) => {
-          tabs?.forEach((tab) => {
-            if (tab.id && (tab.url?.includes("winstash") || tab.url?.includes("localhost:3000"))) {
-              try {
-                chrome.tabs.sendMessage(tab.id, { type: "GET_WEB_DATA" }, (resp: any) => {
-                  if (chrome.runtime?.lastError || !resp || !isMounted) return;
-                  if (resp.credits) {
-                    setCreditStatus(resp.credits);
-                    if (chrome.storage && chrome.storage.local) {
-                      chrome.storage.local.set({ winstash_ext_credits: resp.credits });
-                    }
-                  }
-                  if (Array.isArray(resp.records) && resp.records.length > 0) {
-                    setRecords(resp.records);
-                  }
-                  if (resp.user?.uid) {
-                    setCurrentUser(resp.user);
-                    setIsAuthChecking(false);
-                  }
-                });
-              } catch {}
-            }
-          });
-        });
+    const attachFirestore = (userId: string, userEmail?: string | null) => {
+      if (unsubFirestoreRecords) {
+        unsubFirestoreRecords();
+        unsubFirestoreRecords = null;
       }
-    };
-    syncFromWebTabs();
+      if (unsubFirestoreCredits) {
+        unsubFirestoreCredits();
+        unsubFirestoreCredits = null;
+      }
 
-    // 0-c. Listen for live credit & record changes broadcast from web tabs
-    const handleStorageChange = (changes: any, areaName: string) => {
-      if (!isMounted || areaName !== "local") return;
-      if (changes["winstash_ext_credits"]?.newValue) {
-        setCreditStatus(changes["winstash_ext_credits"].newValue);
-      }
-      if (changes["winstash_ext_records"]?.newValue) {
-        setRecords(changes["winstash_ext_records"].newValue);
-      }
-      if (changes[STORAGE_KEY_USER]?.newValue?.uid) {
-        setCurrentUser(changes[STORAGE_KEY_USER].newValue);
-      }
+      // 1. Live Firestore Subscription (Direct DB connection to users/{uid}/records)
+      unsubFirestoreRecords = subscribeToUserRecords(userId, (freshRecords) => {
+        if (!isMounted) return;
+        setRecords(freshRecords);
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({ winstash_ext_records: freshRecords });
+        }
+      });
+
+      // 2. Direct Firestore Fetch (Immediate query)
+      fetchUserRecordsFromFirestore(userId).then((freshRecords) => {
+        if (!isMounted) return;
+        if (freshRecords.length > 0) {
+          setRecords(freshRecords);
+          if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.set({ winstash_ext_records: freshRecords });
+          }
+        }
+      });
+
+      // 3. Live Firestore Credits Subscription (Exact sync with Web App Source of Truth)
+      unsubFirestoreCredits = subscribeToUserCredits(userId, userEmail, (freshCredits) => {
+        if (!isMounted) return;
+        setCreditStatus(freshCredits);
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({ winstash_ext_credits: freshCredits });
+        }
+      });
+
+      // 4. Direct Firestore Credit Fetch (Immediate 0ms query)
+      fetchUserCreditsFromFirestore(userId, userEmail).then((freshCredits) => {
+        if (!isMounted) return;
+        setCreditStatus(freshCredits);
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({ winstash_ext_credits: freshCredits });
+        }
+      });
     };
-    if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
-      chrome.storage.onChanged.addListener(handleStorageChange);
-    }
 
     // Listen to Firebase Auth state directly
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
@@ -196,9 +210,10 @@ export default function App() {
         const userData = { uid: fbUser.uid, email: fbUser.email || "" };
         setCurrentUser(userData);
         setIsAuthChecking(false);
+        attachFirestore(userData.uid, userData.email);
         fetchBackendData(userData);
       } else {
-        // Fallback: check chrome.storage.local bridge session from web tab
+        // Fallback: check chrome.storage.local bridge session
         if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
           chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER, "winstash_ext_credits"], (res: any) => {
             if (!isMounted) return;
@@ -208,6 +223,7 @@ export default function App() {
             if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
               const bridgedUser = res[STORAGE_KEY_USER];
               setCurrentUser(bridgedUser);
+              attachFirestore(bridgedUser.uid, bridgedUser.email);
               fetchBackendData(bridgedUser);
             } else {
               setCurrentUser(null);
@@ -219,14 +235,6 @@ export default function App() {
         }
       }
     });
-
-    // Restore draft memo if user was writing previously
-    try {
-      const savedDraft = localStorage.getItem(STORAGE_KEY_DRAFT);
-      if (savedDraft) {
-        setMemo(savedDraft);
-      }
-    } catch {}
 
     // Auto-close leftover extension-connect tabs
     if (typeof chrome !== "undefined" && chrome.tabs) {
@@ -244,11 +252,8 @@ export default function App() {
     return () => {
       isMounted = false;
       unsubAuth();
-      if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
-        try {
-          chrome.storage.onChanged.removeListener(handleStorageChange);
-        } catch {}
-      }
+      if (unsubFirestoreRecords) unsubFirestoreRecords();
+      if (unsubFirestoreCredits) unsubFirestoreCredits();
     };
   }, [fetchBackendData]);
 
@@ -277,20 +282,17 @@ export default function App() {
     }
   }, [fetchBackendData]);
 
-  // 3. Update textarea content when week or existing record changes
-  const prevExistingIdRef = useRef<string | undefined>(undefined);
+  // 3. Update textarea content when selectedWeek or records from Firestore change
   useEffect(() => {
-    if (existingRecord) {
-      if (prevExistingIdRef.current !== existingRecord.id) {
-        setMemo(existingRecord.raw_memo || "");
-        prevExistingIdRef.current = existingRecord.id;
-      }
+    const match = records.find((r) => isWeekMatch(r, selectedWeek));
+    if (match) {
+      const note = match.rawNote || match.raw_memo || "";
+      setMemo(note);
     } else {
-      prevExistingIdRef.current = undefined;
       const savedDraft = localStorage.getItem(STORAGE_KEY_DRAFT);
       setMemo(savedDraft || "");
     }
-  }, [selectedWeek, existingRecord]);
+  }, [selectedWeek, records]);
   // 4. Draft memo change handler
   const handleMemoChange = (newText: string) => {
     setMemo(newText);
@@ -377,6 +379,44 @@ export default function App() {
         return;
       }
 
+      const recordId = existingRecord ? existingRecord.id : `rec-${Date.now()}`;
+      const preliminaryRecord: CareerRecord = {
+        id: recordId,
+        createdAt: existingRecord?.createdAt || new Date().toISOString(),
+        target_week: selectedWeek,
+        raw_memo: memo.trim(),
+        rawNote: memo.trim(),
+        weekly_report: existingRecord?.weekly_report || {
+          done: [memo.trim()],
+          in_progress: [],
+          next_week: [],
+        },
+        brag_sheet_item: existingRecord?.brag_sheet_item || {
+          metric_summary: memo.trim().slice(0, 80),
+          business_impact: "Updated via WinStash Quick Log",
+          quarter: `${selectedWeek.year}-Q${Math.ceil(selectedWeek.month / 3)}`,
+        },
+        star_portfolio: existingRecord?.star_portfolio || {
+          title: `${selectedWeek.label} Record`,
+          situation: memo.trim(),
+          task: "Execution",
+          action: memo.trim(),
+          result: "Completed",
+          nda_tags: ["#CareerRecord"],
+        },
+        jobRole: "engineering",
+        toneManner: "impact",
+        source: "chrome_extension",
+      };
+
+      // 1. Direct Firestore save (Immediate persistence in cloud DB)
+      try {
+        await saveRecordToFirestore(currentUser.uid, preliminaryRecord);
+      } catch (fsErr) {
+        console.warn("[Extension] Direct Firestore save notice:", fsErr);
+      }
+
+      // 2. Call backend for server-side AI 3-Way synthesis
       const baseUrl = await getApiBaseUrl();
       const res = await fetch(`${baseUrl}/api/extension/submit`, {
         method: "POST",
@@ -386,6 +426,7 @@ export default function App() {
         },
         body: JSON.stringify({
           raw_memo: memo.trim(),
+          rawNote: memo.trim(),
           target_week: selectedWeek,
           existingRecordId: existingRecord?.id,
           existingCreatedAt: existingRecord?.createdAt,
@@ -404,7 +445,12 @@ export default function App() {
         // 1. Update records in state with full AI-synthesized record
         setRecords((prev) => [json.record, ...prev.filter((r) => r.id !== json.record.id)]);
 
-        // 2. Update credits locally and synchronously
+        // 2. Direct Firestore save of the full AI-synthesized record
+        try {
+          await saveRecordToFirestore(currentUser.uid, json.record);
+        } catch {}
+
+        // 3. Update credits locally and synchronously
         const shouldDeduct = Boolean(existingRecord && !isUserPro);
         if (shouldDeduct) {
           const nextRemaining = Math.max(0, creditStatus.remainingCredits - 1);
@@ -430,33 +476,16 @@ export default function App() {
           }
         }
 
-        // 3. Clear draft memo
+        // 4. Clear draft memo
         try {
           localStorage.removeItem(STORAGE_KEY_DRAFT);
         } catch {}
-
-        // 4. Notify open web tabs to update their live dashboard AND deduct credit
-        if (typeof chrome !== "undefined" && chrome.tabs) {
-          chrome.tabs.query({}, (tabs: any[]) => {
-            tabs?.forEach((tab) => {
-              if (tab.id && (tab.url?.includes("winstash") || tab.url?.includes("localhost:3000"))) {
-                try {
-                  chrome.tabs.sendMessage(tab.id, {
-                    type: "SAVE_RECORD_TO_WEB",
-                    record: json.record,
-                    deductCredit: shouldDeduct,
-                  });
-                } catch {}
-              }
-            });
-          });
-        }
 
         setIsModalOpen(false);
         const actionVerb = existingRecord ? "updated" : "saved";
         setStatusFeedback({
           type: "success",
-          message: `Successfully ${actionVerb} & synthesized with AI!`,
+          message: `Successfully ${actionVerb} & synced to Firestore!`,
         });
         setTimeout(() => setStatusFeedback(null), 3000);
       }

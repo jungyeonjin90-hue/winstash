@@ -45,7 +45,7 @@ export function subscribeUserRecords(
             id: docSnap.id,
             createdAt: data.createdAt,
             target_week: data.target_week,
-            raw_memo: data.raw_memo,
+            raw_memo: data.raw_memo || data.rawNote || "",
             weekly_report: data.weekly_report,
             brag_sheet_item: data.brag_sheet_item,
             star_portfolio: data.star_portfolio,

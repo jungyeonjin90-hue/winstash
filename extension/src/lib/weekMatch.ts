@@ -7,13 +7,16 @@ import { WeekSpan, CareerRecord } from "../types/career";
  * 2. Exact startDate & endDate
  * 3. Overlapping date range via record createdAt or startDate
  */
-export function isWeekMatch(rec: CareerRecord, week: WeekSpan): boolean {
-  if (!rec) return false;
+export function isWeekMatch(recOrWeek: any, week: WeekSpan): boolean {
+  if (!recOrWeek || !week) return false;
 
-  if (rec.target_week) {
-    const rY = Number(rec.target_week.year);
-    const rM = Number(rec.target_week.month);
-    const rW = Number(rec.target_week.weekOfMonth);
+  // Normalize: if passed CareerRecord with target_week, or a WeekSpan directly
+  const target: WeekSpan | null = recOrWeek.target_week || (recOrWeek.year && recOrWeek.weekOfMonth ? recOrWeek : null);
+
+  if (target) {
+    const rY = Number(target.year);
+    const rM = Number(target.month);
+    const rW = Number(target.weekOfMonth);
 
     const wY = Number(week.year);
     const wM = Number(week.month);
@@ -25,16 +28,17 @@ export function isWeekMatch(rec: CareerRecord, week: WeekSpan): boolean {
     }
 
     // 2. Date range exact match
-    if (rec.target_week.startDate && week.startDate) {
-      if (rec.target_week.startDate === week.startDate) {
+    if (target.startDate && week.startDate) {
+      if (target.startDate === week.startDate) {
         return true;
       }
     }
   }
 
   // 3. Fallback to createdAt within target week range
-  if (rec.createdAt && week.startDate && week.endDate) {
-    const recDate = rec.createdAt.slice(0, 10);
+  const createdAt = recOrWeek.createdAt;
+  if (createdAt && week.startDate && week.endDate) {
+    const recDate = String(createdAt).slice(0, 10);
     if (recDate >= week.startDate && recDate <= week.endDate) {
       return true;
     }

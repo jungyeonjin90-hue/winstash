@@ -247,9 +247,13 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
                           Weekly Snippets:
                         </span>
                         <ul className="list-disc list-inside text-[11px] sm:text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-                          {record.weekly_report.done.map((d, i) => (
-                            <li key={i}>{d}</li>
-                          ))}
+                          {record.weekly_report?.done && Array.isArray(record.weekly_report.done) && record.weekly_report.done.length > 0 ? (
+                            record.weekly_report.done.map((d, i) => (
+                              <li key={i}>{d}</li>
+                            ))
+                          ) : (
+                            <li className="italic text-zinc-400">No completed tasks recorded yet</li>
+                          )}
                         </ul>
                       </div>
 
@@ -258,7 +262,7 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
                           Brag Metric:
                         </span>
                         <p className="text-[11px] sm:text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-                          {record.brag_sheet_item.metric_summary}
+                          {record.brag_sheet_item?.metric_summary || "No metric summary available"}
                         </p>
                       </div>
 
@@ -267,11 +271,13 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
                           STAR Case Study:
                         </span>
                         <p className="text-[11px] sm:text-xs leading-relaxed text-zinc-600 dark:text-zinc-300 font-semibold">
-                          {record.star_portfolio.title}
+                          {record.star_portfolio?.title || "Project Record"}
                         </p>
-                        <p className="text-[10px] sm:text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400 mt-0.5">
-                          {record.star_portfolio.result}
-                        </p>
+                        {record.star_portfolio?.result && (
+                          <p className="text-[10px] sm:text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400 mt-0.5">
+                            {record.star_portfolio.result}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

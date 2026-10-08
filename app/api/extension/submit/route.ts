@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     // 2. Parse Request Body
     const body = await req.json();
+    const memoText = typeof body.rawNote === "string" && body.rawNote.trim() ? body.rawNote : body.raw_memo;
     const {
-      raw_memo,
       target_week,
       existingRecordId,
       existingCreatedAt,
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       tone_manner = "impact",
     } = body;
 
-    if (!raw_memo || typeof raw_memo !== "string" || raw_memo.trim().length === 0) {
+    if (!memoText || typeof memoText !== "string" || memoText.trim().length === 0) {
       return NextResponse.json(
         { success: false, error: "Memo content is required" },
         { status: 400, headers: CORS_HEADERS }
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Server-Side AI 3-Way Transformation (Weekly Report, Brag Sheet, STAR Portfolio)
     const transformation = await executeAiTransformation(
-      raw_memo.trim(),
+      memoText.trim(),
       job_role as JobRole,
       tone_manner as ToneManner
     );
@@ -100,14 +100,15 @@ export async function POST(req: NextRequest) {
       id: recordId,
       createdAt: existingCreatedAt || new Date().toISOString(),
       target_week: target_week || undefined,
-      raw_memo: raw_memo.trim(),
+      raw_memo: memoText.trim(),
+      rawNote: memoText.trim(),
       weekly_report: transformation.weekly_report,
       brag_sheet_item: transformation.brag_sheet_item,
       star_portfolio: transformation.star_portfolio,
       jobRole: job_role,
       toneManner: tone_manner,
       source: "chrome_extension",
-    };
+    } as any;
 
     // 6. Save to Firestore (adminDb primary, client SDK fallback)
     let saved = false;
@@ -132,6 +133,38 @@ export async function POST(req: NextRequest) {
     // 7. Deduct Credit if applicable
     let updatedCredits = currentCredit;
     if (shouldDeduct) {
+      if (adminDb) {
+        try {
+          const { FieldValue } = await import("firebase-admin/firestore");
+          await Promise.allSettled([
+            adminDb
+              .collection("users")
+              .doc(userId)
+              .set(
+                {
+                  freeUsedCount: FieldValue.increment(1),
+                  updatedAt: new Date().toISOString(),
+                },
+                { merge: true }
+              ),
+            adminDb
+              .collection("users")
+              .doc(userId)
+              .collection("usage")
+              .doc("summary")
+              .set(
+                {
+                  freeUsedCount: FieldValue.increment(1),
+                  lastUsedAt: new Date().toISOString(),
+                },
+                { merge: true }
+              ),
+          ]);
+        } catch (adminErr) {
+          console.warn("[Extension Submit API] adminDb credit increment error:", adminErr);
+        }
+      }
+
       try {
         updatedCredits = await consumeFreeCredit(userId, false, userEmail);
       } catch {}
@@ -139,22 +172,40 @@ export async function POST(req: NextRequest) {
       try {
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "careerpulse-c2213";
         const currentCount = updatedCredits.userUsedCount || 0;
-        await fetch(
-          `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=updatedAt`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              fields: {
-                freeUsedCount: { integerValue: String(currentCount + 1) },
-                updatedAt: { stringValue: new Date().toISOString() },
+        await Promise.allSettled([
+          fetch(
+            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=updatedAt`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
               },
-            }),
-          }
-        );
+              body: JSON.stringify({
+                fields: {
+                  freeUsedCount: { integerValue: String(currentCount + 1) },
+                  updatedAt: { stringValue: new Date().toISOString() },
+                },
+              }),
+            }
+          ),
+          fetch(
+            `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}/usage/summary?updateMask.fieldPaths=freeUsedCount&updateMask.fieldPaths=lastUsedAt`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                fields: {
+                  freeUsedCount: { integerValue: String(currentCount + 1) },
+                  lastUsedAt: { stringValue: new Date().toISOString() },
+                },
+              }),
+            }
+          ),
+        ]);
       } catch {}
     }
 
