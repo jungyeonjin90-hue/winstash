@@ -119,8 +119,9 @@ export async function getCreditStatus(
           planStatus === "paid" ||
           (planStatus === "cancelled" && endsAt > Date.now()));
 
-      // 1-2. 개인 변환 사용량 조회 (서버 경로 및 클라이언트 직기록 경로 모두 합산/최대치 통합)
-      const userDocFreeCount = (userData?.freeUsedCount as number) || 0;
+      // 1-2. 개인 변환 사용량: 서버가 차감·차단에 쓰는 usage/summary 하나만 사용.
+      //      예전 클라이언트가 쓰던 users.freeUsedCount 와 localStorage 카운트를 max()로 섞으면
+      //      화면 숫자가 서버·확장 프로그램과 달라지고 차감이 표시되지 않음
       let usageDocCount = 0;
       try {
         const userUsageRef = doc(db, "users", userId, "usage", "summary");
@@ -130,8 +131,7 @@ export async function getCreditStatus(
           : 0;
       } catch {}
 
-      const localCount = getLocalNumber(`${LOCAL_USER_USAGE_KEY}${userId}`);
-      const userUsedCount = Math.max(usageDocCount, userDocFreeCount, localCount);
+      const userUsedCount = usageDocCount;
 
       // 1-3. 종합(Synthesis) 사용량 조회
       const synUsageRef = doc(db, "users", userId, "usage", "synthesis");
@@ -273,8 +273,9 @@ export async function consumeFreeCredit(
   // 1. 실제 계정의 차감은 서버 API가 usage/summary에 원자적으로 기록함.
   //    freeUsedCount 등 쿼터 필드는 보안 규칙상 클라이언트 쓰기가 금지되어 있음 (감사 C-1)
 
-  // 2. 데모 및 로컬 스토리지 카운트 동기화
-  if (typeof window !== "undefined") {
+  // 2. 데모 / Firebase 미설정 로컬 모드만 로컬 스토리지에 카운트 (실계정은 서버 카운터가 기준)
+  const usesServerCounter = isFirebaseConfigured && db && !isDemo;
+  if (typeof window !== "undefined" && !usesServerCounter) {
     const currentLocal = getLocalNumber(`${LOCAL_USER_USAGE_KEY}${userId}`);
     const nextUser = Math.max(status.userUsedCount + 1, currentLocal + 1);
     const nextGlobal = getLocalNumber(LOCAL_GLOBAL_USAGE_KEY) + 1;

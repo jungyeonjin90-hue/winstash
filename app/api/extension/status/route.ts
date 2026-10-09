@@ -4,8 +4,6 @@ import { extensionCorsHeaders } from "@/lib/extensionCors";
 import { getServerCreditStatus, isProPlan, toExtensionCredits, verifyRequestToken } from "@/lib/serverAuthQuota";
 import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 import { CareerRecord } from "@/types/career";
-import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 
 /** Subset of the Firestore REST document shape read by the records fallback. */
 interface FirestoreRestDocument {
@@ -23,6 +21,28 @@ interface FirestoreRestDocument {
 // No hard-coded fallback: a wrong project would silently read another database (audit M-1).
 const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
+
+/** Latest 30 records via the Admin SDK; null when the Admin SDK is unavailable or the query fails. */
+async function loadRecordsWithAdmin(userId: string): Promise<CareerRecord[] | null> {
+  if (!adminDb) return null;
+  try {
+    const snap = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("records")
+      .orderBy("createdAt", "desc")
+      .limit(30)
+      .get();
+    return snap.docs.map((docSnap) => {
+      const d = docSnap.data();
+      const note = d.rawNote || d.raw_memo || "";
+      return { id: docSnap.id, ...d, rawNote: note, raw_memo: note } as unknown as CareerRecord;
+    });
+  } catch (dbErr) {
+    console.warn("[Extension Status API] adminDb fetch error:", dbErr);
+    return null;
+  }
+}
 
 export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, { status: 204, headers: extensionCorsHeaders(req) });
@@ -61,9 +81,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 2. Credit status from the canonical server counter (users/{uid}/usage/summary),
-    //    the same one /api/extension/submit and /api/transform enforce.
-    let creditStatus = await getServerCreditStatus(userId, isAdmin);
+    // 2+3. Credit status (canonical server counter users/{uid}/usage/summary, the one /api/extension/submit
+    //      and /api/transform enforce) and the latest records, loaded in parallel.
+    const [adminCredits, adminRecords] = await Promise.all([
+      getServerCreditStatus(userId, isAdmin),
+      loadRecordsWithAdmin(userId),
+    ]);
+    let creditStatus = adminCredits;
+    // null = Admin SDK unavailable or failed; an empty array is a valid answer (new account).
+    let records: CareerRecord[] = adminRecords ?? [];
 
     // Admin SDK unavailable: read the same docs via Firestore REST with the user's own token (owner-readable)
     if (!creditStatus && projectId) {
@@ -97,56 +123,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 3. Fetch User Records (Last 30 records)
-    let records: CareerRecord[] = [];
-    if (adminDb) {
-      try {
-        const snap = await adminDb
-          .collection("users")
-          .doc(userId)
-          .collection("records")
-          .orderBy("createdAt", "desc")
-          .limit(30)
-          .get();
-
-        records = (snap.docs.map((docSnap) => {
-          const d = docSnap.data();
-          const note = d.rawNote || d.raw_memo || "";
-          return {
-            id: docSnap.id,
-            ...d,
-            rawNote: note,
-            raw_memo: note,
-          };
-        }) as unknown) as CareerRecord[];
-      } catch (dbErr) {
-        console.warn("[Extension Status API] adminDb fetch error:", dbErr);
-      }
-    }
-
-    // Fallback using client SDK if adminDb is unavailable
-    if (records.length === 0 && isFirebaseConfigured && db) {
-      try {
-        const recordsRef = collection(db, "users", userId, "records");
-        const q = query(recordsRef, orderBy("createdAt", "desc"), limit(30));
-        const snap = await getDocs(q);
-        records = (snap.docs.map((docSnap) => {
-          const d = docSnap.data();
-          const note = d.rawNote || d.raw_memo || "";
-          return {
-            id: docSnap.id,
-            ...d,
-            rawNote: note,
-            raw_memo: note,
-          };
-        }) as unknown) as CareerRecord[];
-      } catch (clientErr) {
-        console.warn("[Extension Status API] clientDb fetch error:", clientErr);
-      }
-    }
-
-    // Secondary fallback using Firestore REST API with Bearer token
-    if (records.length === 0 && projectId) {
+    // Records fallback only when the Admin SDK could not answer (not when the account has no records)
+    if (adminRecords === null && projectId) {
       try {
         const recordsRestRes = await fetch(
           `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${userId}/records?pageSize=30`,
