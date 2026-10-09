@@ -4,7 +4,7 @@ import { extensionCorsHeaders } from "@/lib/extensionCors";
 import { getServerCreditStatus, toExtensionCredits, verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
 import { CareerRecord, JobRole, ToneManner } from "@/types/career";
-import { executeAiTransformation } from "@/lib/transformService";
+import { detectMemoLanguage, executeAiTransformation, type TransformLanguage } from "@/lib/transformService";
 
 
 const DEMO_USER_ID = "demo-user-1234";
@@ -90,7 +90,13 @@ export async function POST(req: NextRequest) {
     refundQuota = reservation.refund;
 
     // 5. AI 3-way transformation (weekly report, brag sheet, STAR portfolio)
-    const { output: transformation, aiFallback } = await executeAiTransformation(memoText, jobRole, toneManner);
+    // Output language: explicit request from the client, otherwise the memo's own language, so an
+    // English note is never turned into Korean results (and vice versa).
+    const language: TransformLanguage =
+      body.language === "en" || body.language === "ko" ? body.language : detectMemoLanguage(memoText);
+    const { output: transformation, aiFallback } = await executeAiTransformation(memoText, jobRole, toneManner, {
+      language,
+    });
 
     const recordId = existingRecordId || `rec-${Date.now()}`;
     const cleanRecord = {

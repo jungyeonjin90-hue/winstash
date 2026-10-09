@@ -1,4 +1,5 @@
-import { TransformationOutput, JobRole, ToneManner } from "@/types/career";
+import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode } from "@/types/career";
+import { buildSystemPromptEn, generateFallbackOutputEn } from "@/lib/transformPromptEn";
 import { generateGeminiJson, isTransformationOutput, TRANSFORM_MODELS, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
 
 function getCurrentQuarter(): string {
@@ -175,28 +176,72 @@ export function generateFallbackOutput(
   };
 }
 
+export type TransformLanguage = "en" | "ko";
+
+export interface TransformOptions {
+  /** Output language. Defaults to Korean for backwards compatibility with existing callers. */
+  language?: TransformLanguage;
+  /** English prompt only: profile hints from the user's persona. */
+  seniorityLevel?: SeniorityLevel;
+  industry?: string;
+  region?: RegionCode;
+}
+
 /**
- * Runs the 3-way transformation. `aiFallback` is true when Gemini was unavailable and the
- * heuristic generator produced the output (callers must not charge for it, audit M-3).
+ * Picks the output language from the memo itself: Korean when Hangul outweighs Latin letters,
+ * English otherwise. Used where the UI language does not determine it (the Chrome extension).
+ */
+export function detectMemoLanguage(text: string): TransformLanguage {
+  const hangul = (text.match(/[가-힣ㄱ-ㆎ]/g) || []).length;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  return hangul > latin ? "ko" : "en";
+}
+
+/**
+ * Runs the 3-way transformation in the requested language. `aiFallback` is true when Gemini was
+ * unavailable and the heuristic generator produced the output (callers must not charge for it, audit M-3).
  */
 export async function executeAiTransformation(
   rawMemo: string,
   jobRole: JobRole = "engineering",
-  toneManner: ToneManner = "impact"
+  toneManner: ToneManner = "impact",
+  options: TransformOptions = {}
 ): Promise<{ output: TransformationOutput; aiFallback: boolean }> {
-  const aiOutput = await generateGeminiJson({
-    label: "executeAiTransformation",
-    models: TRANSFORM_MODELS,
-    systemInstruction: buildSystemPromptKo(jobRole, toneManner),
-    userText: `<user_raw_notes>\n${rawMemo}\n</user_raw_notes>`,
-    temperature: 0.2,
-    validate: isTransformationOutput,
-    ...TRANSFORM_TIMEOUTS,
-  });
+  const language = options.language ?? "ko";
+
+  const aiOutput =
+    language === "en"
+      ? await generateGeminiJson({
+          label: "Transform EN",
+          models: TRANSFORM_MODELS,
+          systemInstruction: buildSystemPromptEn(
+            jobRole,
+            toneManner,
+            options.seniorityLevel,
+            options.industry,
+            options.region
+          ),
+          userText: `[User's Friday Raw Brain Dump Notes]:\n<user_raw_notes>\n${rawMemo}\n</user_raw_notes>`,
+          validate: isTransformationOutput,
+          ...TRANSFORM_TIMEOUTS,
+        })
+      : await generateGeminiJson({
+          label: "Transform KO",
+          models: TRANSFORM_MODELS,
+          systemInstruction: buildSystemPromptKo(jobRole, toneManner),
+          userText: `<user_raw_notes>\n${rawMemo}\n</user_raw_notes>`,
+          temperature: 0.2,
+          validate: isTransformationOutput,
+          ...TRANSFORM_TIMEOUTS,
+        });
   if (aiOutput) {
     return { output: aiOutput as TransformationOutput, aiFallback: false };
   }
 
   // Fallback if AI call failed or key absent
-  return { output: generateFallbackOutput(rawMemo, jobRole, toneManner), aiFallback: true };
+  const fallback =
+    language === "en"
+      ? generateFallbackOutputEn(rawMemo, jobRole, toneManner)
+      : generateFallbackOutput(rawMemo, jobRole, toneManner);
+  return { output: fallback, aiFallback: true };
 }
