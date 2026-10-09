@@ -137,6 +137,22 @@ test.describe("GET /api/extension/status credits (C-3)", () => {
     });
   });
 
+  test("a new account with no records gets an empty list without slow fallbacks", async ({ request }) => {
+    const user = await createTestUser();
+    const call = () =>
+      request.get("/api/extension/status", { headers: { Authorization: `Bearer ${user.idToken}` } });
+    await call(); // warm-up (dev server compiles the route on first use)
+
+    const started = Date.now();
+    const res = await call();
+    const elapsed = Date.now() - started;
+    expect(res.status()).toBe(200);
+    const json = await res.json();
+    expect(json.records).toEqual([]);
+    expect(json.credits).toMatchObject({ totalGeneratedCount: 0, remainingCredits: 10 });
+    expect(elapsed).toBeLessThan(1500);
+  });
+
   test("an exhausted user is reported as exhausted", async ({ request }) => {
     const user = await createTestUser();
     await seedDoc(`users/${user.uid}/usage/summary`, { freeUsedCount: 10 });
