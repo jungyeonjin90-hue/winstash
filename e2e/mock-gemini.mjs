@@ -6,30 +6,33 @@
  *   [mock:fail]  -> HTTP 500 for every model (route must fall back to its heuristic)
  *   [mock:slow]  -> never answers (route must time out per attempt and within its total budget)
  * Requests that put the API key in the URL instead of the x-goog-api-key header are rejected.
+ * Transformation output is tagged `[mock-ai][en]` or `[mock-ai][ko]` after the system prompt's language.
  */
 import http from "node:http";
 
 const PORT = Number(process.env.MOCK_GEMINI_PORT || 3199);
 const EXPECTED_KEY = process.env.MOCK_GEMINI_KEY || "e2e-fake-key";
 
-function transformationOutput() {
+/** `lang` is the language of the system prompt received, so tests can tell which prompt was used. */
+function transformationOutput(lang) {
+  const tag = `[mock-ai][${lang}]`;
   return {
     weekly_report: {
-      done: ["[mock-ai] Shipped Redis caching for the payment gateway"],
-      in_progress: ["[mock-ai] Rolling out Grafana alerts"],
-      next_week: ["[mock-ai] Load-test the checkout flow"],
+      done: [`${tag} Shipped Redis caching for the payment gateway`],
+      in_progress: [`${tag} Rolling out Grafana alerts`],
+      next_week: [`${tag} Load-test the checkout flow`],
     },
     brag_sheet_item: {
-      metric_summary: "[mock-ai] Cut p99 latency 93% (1.2s -> 85ms)",
-      business_impact: "[mock-ai] Zero dropped transactions during peak sale",
+      metric_summary: `${tag} Cut p99 latency 93% (1.2s -> 85ms)`,
+      business_impact: `${tag} Zero dropped transactions during peak sale`,
       quarter: "2026-Q4",
     },
     star_portfolio: {
-      title: "[mock-ai] Payment Gateway Latency Overhaul",
-      situation: "[mock-ai] Checkout timeouts at peak traffic",
-      task: "[mock-ai] Stabilise the payment path",
-      action: "[mock-ai] Tuned the pool and added Redis caching",
-      result: "[mock-ai] p99 from 1.2s to 85ms",
+      title: `${tag} Payment Gateway Latency Overhaul`,
+      situation: `${tag} Checkout timeouts at peak traffic`,
+      task: `${tag} Stabilise the payment path`,
+      action: `${tag} Tuned the pool and added Redis caching`,
+      result: `${tag} p99 from 1.2s to 85ms`,
       nda_tags: ["#Performance", "#Reliability"],
       impactCategory: "efficiency",
       impactMagnitude: "large",
@@ -97,7 +100,9 @@ const server = http.createServer((req, res) => {
     }
 
     const isSynthesis = systemText.includes('"items"');
-    const payload = isSynthesis ? synthesisOutput() : transformationOutput();
+    // The English prompt contains Korean few-shot memos, so only its opening line tells them apart.
+    const lang = /[가-힣]/.test(systemText.slice(0, 120)) ? "ko" : "en";
+    const payload = isSynthesis ? synthesisOutput() : transformationOutput(lang);
     res.writeHead(200, { "content-type": "application/json" }).end(
       JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(payload) }] } }] })
     );
