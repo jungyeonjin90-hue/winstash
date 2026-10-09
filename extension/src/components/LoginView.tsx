@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { WinStashBrandBadge } from "./WinStashLogo";
 import { loginWithGoogle } from "../lib/firebase";
+import { WEB_BASE_URL } from "../lib/webBase";
 
 /** What LoginView reports once the user is signed in (directly or via the web bridge). */
 export interface LoginResult {
@@ -112,39 +113,32 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
   }, [isLoading, onLoginSuccess]);
 
   const openConnectWindow = () => {
-    if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.query({}, (allTabs: chrome.tabs.Tab[]) => {
-        const isLocalDev = allTabs?.some((t) => t.url && t.url.includes("localhost:3000"));
-        const base = isLocalDev ? "http://localhost:3000" : "https://winstash.net";
-        const connectUrl = `${base}/auth/extension-connect?auto=true`;
-
-        if (chrome.windows && chrome.windows.create) {
-          chrome.windows.create(
-            {
-              url: connectUrl,
-              type: "popup",
-              width: 500,
-              height: 650,
-              focused: true,
-            },
-            (win?: chrome.windows.Window) => {
-              if (win?.id) {
-                authWindowIdRef.current = win.id;
-                try {
-                  chrome.storage.local.set({ winstash_auth_window_id: win.id });
-                } catch {}
-              }
-              setStatusMsg("Select your Google account...");
-            }
-          );
-        } else {
-          chrome.tabs.create({ url: connectUrl }, () => {
-            setStatusMsg("Select your Google account...");
-          });
+    const connectUrl = `${WEB_BASE_URL}/auth/extension-connect?auto=true`;
+    if (typeof chrome !== "undefined" && chrome.windows?.create) {
+      chrome.windows.create(
+        {
+          url: connectUrl,
+          type: "popup",
+          width: 500,
+          height: 650,
+          focused: true,
+        },
+        (win?: chrome.windows.Window) => {
+          if (win?.id) {
+            authWindowIdRef.current = win.id;
+            try {
+              chrome.storage.local.set({ winstash_auth_window_id: win.id });
+            } catch {}
+          }
+          setStatusMsg("Select your Google account...");
         }
+      );
+    } else if (typeof chrome !== "undefined" && chrome.tabs) {
+      chrome.tabs.create({ url: connectUrl }, () => {
+        setStatusMsg("Select your Google account...");
       });
     } else {
-      window.open("https://winstash.net/auth/extension-connect?auto=true", "_blank");
+      window.open(connectUrl, "_blank");
     }
   };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Sparkles, CornerDownLeft, RotateCcw, ExternalLink, Zap, CheckCircle2, Info, LogOut, Loader2, AlertCircle } from "lucide-react";
 import { WeekSpan, CareerRecord, CreditStatus } from "./types/career";
 import { getCurrentWeekSpanEn } from "./lib/weekUtilsEn";
@@ -14,6 +14,7 @@ import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
 import { WinStashBrandBadge } from "./components/WinStashLogo";
 import { LoginView, type LoginResult } from "./components/LoginView";
+import { WEB_BASE_URL } from "./lib/webBase";
 
 /** Session data the web app's content script bridges into chrome.storage.local. */
 interface BridgedSession {
@@ -24,25 +25,8 @@ interface BridgedSession {
 const STORAGE_KEY_USER = "winstash_ext_user";
 const STORAGE_KEY_LOGGED_OUT = "winstash_ext_logged_out";
 const STORAGE_KEY_DRAFT = "winstash_draft_memo";
-
-async function getApiBaseUrl(): Promise<string> {
-  if (typeof chrome !== "undefined" && chrome.tabs) {
-    try {
-      const allTabs = await new Promise<chrome.tabs.Tab[]>((resolve) => chrome.tabs.query({}, resolve));
-      const localTab = allTabs?.find(
-        (t) =>
-          t.url?.includes("localhost:3000") ||
-          t.url?.includes("127.0.0.1:3000") ||
-          t.url?.includes("winstash.test")
-      );
-      if (localTab && localTab.url) {
-        const u = new URL(localTab.url);
-        return `${u.protocol}//${u.host}`;
-      }
-    } catch {}
-  }
-  return "https://winstash.net";
-}
+// Generous enough for a cold serverless start + token refresh, short enough to never spin forever.
+const STATUS_TIMEOUT_MS = 10_000;
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<{ uid: string; email: string } | null>(null);
@@ -71,15 +55,20 @@ export default function App() {
     return records.find((r) => isWeekMatch(r, selectedWeek));
   }, [records, selectedWeek]);
 
-  // 1. Single Unified Backend API Loader (GET /api/extension/status with 2s timeout)
+  // 1. Single Unified Backend API Loader (GET /api/extension/status with a timeout).
+  //    It can be triggered twice on open (bridged session + Firebase auth restore); only the latest
+  //    request may update the UI, so an older timeout or response cannot overwrite a newer result.
+  const latestStatusRequestRef = useRef(0);
   const fetchStatusAndRecords = useCallback(async () => {
+    const requestId = ++latestStatusRequestRef.current;
+    const isLatest = () => requestId === latestStatusRequestRef.current;
     setIsLoadingData(true);
     setDataFetchError(null);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
-    }, 2000); // 2-second strict timeout to eliminate infinite spinning!
+    }, STATUS_TIMEOUT_MS);
 
     try {
       const token = await getAuthToken();
@@ -89,8 +78,7 @@ export default function App() {
         return;
       }
 
-      const baseUrl = await getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/api/extension/status`, {
+      const res = await fetch(`${WEB_BASE_URL}/api/extension/status`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -98,9 +86,11 @@ export default function App() {
       });
 
       clearTimeout(timeoutId);
+      if (!isLatest()) return;
 
       if (res.ok) {
         const json = await res.json();
+        if (!isLatest()) return;
         if (json.success) {
           // 1. Bind Credits immediately
           if (json.credits) {
@@ -126,17 +116,20 @@ export default function App() {
         setDataFetchError("Server busy. You can still type notes offline.");
       }
     } catch (err) {
+      if (!isLatest()) return;
       if ((err as Error | null)?.name === "AbortError") {
-        console.warn("[WinStash Extension] API timeout after 2000ms. Released loading.");
-        setDataFetchError("Sync timed out (2s). You can still write and save notes.");
+        console.warn(`[WinStash Extension] API timeout after ${STATUS_TIMEOUT_MS}ms. Released loading.`);
+        setDataFetchError("Sync is taking longer than usual. You can still write and save notes.");
       } else {
         console.warn("[WinStash Extension] API fetch notice:", err);
         setDataFetchError("Network notice. You can still write and save notes.");
       }
     } finally {
       clearTimeout(timeoutId);
-      setIsLoadingData(false);
-      setIsAuthChecking(false);
+      if (isLatest()) {
+        setIsLoadingData(false);
+        setIsAuthChecking(false);
+      }
     }
   }, [selectedWeek]);
 
@@ -248,7 +241,7 @@ export default function App() {
   };
 
   const handleOpenWebApp = (path: string = "/") => {
-    const url = `https://winstash.net${path}`;
+    const url = `${WEB_BASE_URL}${path}`;
     if (typeof chrome !== "undefined" && chrome.tabs) {
       chrome.tabs.create({ url });
     } else {
@@ -323,8 +316,7 @@ export default function App() {
         return;
       }
 
-      const baseUrl = await getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/api/extension/submit`, {
+      const res = await fetch(`${WEB_BASE_URL}/api/extension/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
