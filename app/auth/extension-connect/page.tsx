@@ -12,7 +12,10 @@ import { signInWithRedirect, getRedirectResult } from "firebase/auth";
 // token to the extension background and acknowledges receipt.
 const SIGN_IN_MESSAGE = "WINSTASH_EXTENSION_SIGN_IN";
 const SIGN_IN_ACK = "WINSTASH_EXTENSION_SIGN_IN_ACK";
-const ACK_TIMEOUT_MS = 4000;
+// The content script may attach after this page has hydrated (it runs once the document is loaded), so
+// the message is re-posted until it is acknowledged. The background just keeps the latest token.
+const ACK_TIMEOUT_MS = 8000;
+const RESEND_INTERVAL_MS = 400;
 
 type ConnectStatus = "connecting" | "success" | "need_login" | "no_extension" | "error";
 
@@ -32,19 +35,22 @@ async function handOffToExtension(): Promise<"success" | "no_extension" | "error
   if (!customToken) return "error";
 
   return new Promise((resolve) => {
-    const timer = setTimeout(() => {
+    const send = () => window.postMessage({ type: SIGN_IN_MESSAGE, customToken }, window.location.origin);
+    const finish = (result: "success" | "no_extension") => {
+      clearTimeout(timer);
+      clearInterval(resend);
       window.removeEventListener("message", onAck);
-      resolve("no_extension");
-    }, ACK_TIMEOUT_MS);
+      resolve(result);
+    };
+    const timer = setTimeout(() => finish("no_extension"), ACK_TIMEOUT_MS);
+    const resend = setInterval(send, RESEND_INTERVAL_MS);
     function onAck(event: MessageEvent) {
       if (event.source !== window || event.origin !== window.location.origin) return;
       if (event.data?.type !== SIGN_IN_ACK) return;
-      clearTimeout(timer);
-      window.removeEventListener("message", onAck);
-      resolve("success");
+      finish("success");
     }
     window.addEventListener("message", onAck);
-    window.postMessage({ type: SIGN_IN_MESSAGE, customToken }, window.location.origin);
+    send();
   });
 }
 
