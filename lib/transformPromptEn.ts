@@ -76,13 +76,13 @@ ${seniorityLevel ? `[Target Seniority Level]: ${seniorityDescriptions[seniorityL
      * Launches & Deployments: Shipped, Spearheaded, Deployed, Piloted
 
 3. NON-HALLUCINATORY IMPACT (STRICT TRUTH GUARDRAIL - HIGHEST PRIORITY, OVERRIDES ALL STYLE RULES):
-   - Every number in the output must come from the user's notes or be simple arithmetic on numbers in the notes (e.g. 45m -> 12m is a 73% reduction). Unit conversions are fine (1 day = 24h, 2.4s = 2400ms).
+   - Every number in the output must come from the user's notes or be simple arithmetic on numbers in the notes. Compute reductions as (before - after) / before and convert units first: 45m -> 12m is a 73% reduction; 1 day -> 4 hours is 24h -> 4h, an 83% reduction. If unsure of the arithmetic, state the before/after values without a percentage.
    - When explicit metrics exist in user notes: Feature them prominently with before/after contrast (e.g., "from 45m to 12m", "-93% error rate").
    - When NO metrics are provided in user notes: DO NOT write any number that is not in the notes. That includes percentages, money, counts ("5 code reviews"), durations, and absolute claims such as "100%", "zero", "0 incidents", "all bugs", "full compliance". Instead, describe the scope and the friction removed in words (e.g., "eliminated cross-team release bottlenecks", "standardized delivery tracking across all external partners").
    - Do not claim outcomes the notes do not state. Work that is planned, pending review, or not yet deployed must be described as such (e.g. "fix ready, deploying Tuesday"), never as achieved results like "eliminated bug reports".
 
 4. NO INVENTED SPECIFICS:
-   - Do not add tools, technologies, vendors, methods, team sizes, or analyses that are not in the notes. If the notes say "added caching", write "caching", not "Redis caching". If the notes say "fixed the tests", do not add "via test parallelization".
+   - Do not add tools, technologies, vendors, methods, metric names, timelines, team sizes, or analyses that are not in the notes. If the notes say "added caching", write "caching", not "Redis caching". If the notes say "fixed the tests", do not add "via test parallelization". Do not mention p99/p95 latency, quarters like "Q1", or executive sign-offs unless the notes do.
    - Generic professional wording is fine; new concrete facts are not.
 
 5. CURRENCY & UNITS:
@@ -92,6 +92,7 @@ ${seniorityLevel ? `[Target Seniority Level]: ${seniorityDescriptions[seniorityL
 6. PROPORTIONAL SCOPE:
    - Match the size of the claims to the size of the work. A short or routine memo (meetings, small fixes, onboarding, reviews) gets modest, plain output and impactMagnitude "small".
    - Never pad the output with work that is not in the notes. If the notes only support one "done" item, write one; do not invent a second.
+   - "in_progress" and "next_week" must each contain at least 1 item, even for thin notes. When the notes name nothing ongoing or upcoming, write a plain, natural follow-up of the done work phrased as a plan (e.g. "Share the published posts with the team", "Gather feedback on the updated doc"), with no new facts or numbers.
 
 7. BUSINESS PILLAR MAPPING:
    - Where the notes support it, connect an accomplishment to one of the 4 core business pillars (never invent a business effect to make the connection):
@@ -115,8 +116,8 @@ ${seniorityLevel ? `[Target Seniority Level]: ${seniorityDescriptions[seniorityL
    - Fast, clear, executive-ready bullets for Monday manager syncs and team 1:1s.
    - Action-first phrasing with high-agency verbs (not bloated X-Y-Z clauses).
    - done: 2-3 accomplishments with clear outcomes (fewer if the notes only support fewer; see rule 6).
-   - in_progress: 1-2 active initiatives or bottlenecks being tracked.
-   - next_week: 1-2 key upcoming priorities.
+   - in_progress: 1-2 active initiatives or bottlenecks being tracked (always at least 1; see rule 6).
+   - next_week: 1-2 key upcoming priorities (always at least 1; see rule 6).
 
 2. brag_sheet_item (Brag Document for Performance Reviews & Comp Negotiations):
    - PURE GOOGLE X-Y-Z FORMULA.

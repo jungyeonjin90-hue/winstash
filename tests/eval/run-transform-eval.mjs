@@ -22,11 +22,13 @@ function parseArgs(argv) {
   const args = { runs: 1, only: null, label: "run", concurrency: 2 };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
-    const value = argv[i + 1];
-    if (flag === "--runs") (args.runs = Math.max(1, Number(value) || 1)), i++;
-    else if (flag === "--only") (args.only = value.split(",").map((s) => s.trim())), i++;
-    else if (flag === "--label") (args.label = value.replace(/[^A-Za-z0-9_-]/g, "_")), i++;
-    else if (flag === "--concurrency") (args.concurrency = Math.max(1, Number(value) || 1)), i++;
+    const value = argv[i + 1] ?? "";
+    if (flag === "--runs") args.runs = Math.max(1, Number(value) || 1);
+    else if (flag === "--only") args.only = value.split(",").map((s) => s.trim());
+    else if (flag === "--label") args.label = value.replace(/[^A-Za-z0-9_-]/g, "_");
+    else if (flag === "--concurrency") args.concurrency = Math.max(1, Number(value) || 1);
+    else continue;
+    i++; // skip the flag's value
   }
   return args;
 }
