@@ -12,31 +12,19 @@
   },
   "permissions": [
     "storage",
-    "activeTab",
-    "scripting",
     "tabs"
   ],
   "host_permissions": [
-    "http://localhost/*",
-    "http://127.0.0.1/*",
-    "https://winstash.net/*",
-    "http://*.winstash.test/*",
-    "https://*.winstash.test/*",
-    "http://winstash.test/*",
-    "https://winstash.test/*"
+    "https://winstash.net/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "http://localhost/*",
-        "http://127.0.0.1/*",
-        "https://winstash.net/*",
-        "http://*.winstash.test/*",
-        "https://*.winstash.test/*",
-        "http://winstash.test/*",
-        "https://winstash.test/*"
+        "https://winstash.net/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],

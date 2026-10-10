@@ -9,6 +9,8 @@ import {
   onAuthStateChanged,
   logoutUser,
   getAuthToken,
+  consumePendingSignIn,
+  PENDING_SIGN_IN_KEY,
 } from "./lib/firebase";
 import { WeekPickerEn } from "./components/WeekPickerEn";
 import { CreditConfirmModalEn } from "./components/CreditConfirmModalEn";
@@ -16,14 +18,14 @@ import { WinStashBrandBadge } from "./components/WinStashLogo";
 import { LoginView, type LoginResult } from "./components/LoginView";
 import { WEB_BASE_URL } from "./lib/webBase";
 
-/** Session data the web app's content script bridges into chrome.storage.local. */
-interface BridgedSession {
-  winstash_ext_logged_out?: boolean;
-  winstash_ext_user?: { uid: string; email: string };
-}
-
-const STORAGE_KEY_USER = "winstash_ext_user";
-const STORAGE_KEY_LOGGED_OUT = "winstash_ext_logged_out";
+// Values older versions copied from the web app (ID token, user, records); removed on startup.
+const LEGACY_BRIDGE_KEYS = [
+  "winstash_ext_user",
+  "winstash_ext_token",
+  "winstash_ext_records",
+  "winstash_ext_credits",
+  "winstash_ext_logged_out",
+];
 const STORAGE_KEY_DRAFT = "winstash_draft_memo";
 // Generous enough for a cold serverless start + token refresh, short enough to never spin forever.
 const STATUS_TIMEOUT_MS = 10_000;
@@ -133,50 +135,36 @@ export default function App() {
     }
   }, [selectedWeek]);
 
-  // 2. Initial Auth Setup & Single API Call
+  // 2. Auth: the extension's own Firebase session is the only source of truth (audit H-6).
+  //    A sign-in started on winstash.net arrives as a one-time custom token parked by background.js.
   useEffect(() => {
     let isMounted = true;
+    let unsubAuth: (() => void) | undefined;
+    const hasChromeStorage = typeof chrome !== "undefined" && Boolean(chrome.storage);
 
-    // Check chrome.storage.local bridge session first
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: BridgedSession) => {
+    if (hasChromeStorage) chrome.storage.local.remove(LEGACY_BRIDGE_KEYS);
+
+    // A token can also arrive while the popup is open (user finishes the web sign-in)
+    const handleSessionChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === "session" && changes[PENDING_SIGN_IN_KEY]?.newValue) void consumePendingSignIn();
+    };
+    if (hasChromeStorage) chrome.storage.onChanged.addListener(handleSessionChange);
+
+    (async () => {
+      // Finish a pending web sign-in first so the popup does not flash the login screen
+      await consumePendingSignIn();
+      if (!isMounted) return;
+      unsubAuth = onAuthStateChanged(auth, (fbUser) => {
         if (!isMounted) return;
-        if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
-          const bridgedUser = res[STORAGE_KEY_USER];
-          setCurrentUser(bridgedUser);
-          setIsAuthChecking(false);
+        setIsAuthChecking(false);
+        if (fbUser) {
+          setCurrentUser({ uid: fbUser.uid, email: fbUser.email || "" });
           fetchStatusAndRecords();
+        } else {
+          setCurrentUser(null);
         }
       });
-    }
-
-    // Listen to Firebase Auth state
-    const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
-      if (!isMounted) return;
-      if (fbUser) {
-        const userData = { uid: fbUser.uid, email: fbUser.email || "" };
-        setCurrentUser(userData);
-        setIsAuthChecking(false);
-        fetchStatusAndRecords();
-      } else {
-        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.get([STORAGE_KEY_LOGGED_OUT, STORAGE_KEY_USER], (res: BridgedSession) => {
-            if (!isMounted) return;
-            if (!res?.[STORAGE_KEY_LOGGED_OUT] && res?.[STORAGE_KEY_USER]?.uid) {
-              const bridgedUser = res[STORAGE_KEY_USER];
-              setCurrentUser(bridgedUser);
-              setIsAuthChecking(false);
-              fetchStatusAndRecords();
-            } else {
-              setCurrentUser(null);
-              setIsAuthChecking(false);
-            }
-          });
-        } else {
-          setIsAuthChecking(false);
-        }
-      }
-    });
+    })();
 
     // Auto-close leftover extension-connect tabs
     if (typeof chrome !== "undefined" && chrome.tabs) {
@@ -193,27 +181,21 @@ export default function App() {
 
     return () => {
       isMounted = false;
-      unsubAuth();
+      unsubAuth?.();
+      if (hasChromeStorage) chrome.storage.onChanged.removeListener(handleSessionChange);
     };
   }, [fetchStatusAndRecords]);
 
-  // 3. Login callback
+  // 3. Login callback (the auth listener above loads the data; this only confirms it to the user)
   const handleLoginSuccess = useCallback((authData: LoginResult) => {
-    if (authData?.uid) {
-      const user = { uid: authData.uid, email: authData.email || "" };
-      setCurrentUser(user);
-      if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.remove([STORAGE_KEY_LOGGED_OUT]);
-        chrome.storage.local.set({ [STORAGE_KEY_USER]: user });
-      }
-      fetchStatusAndRecords();
+    if (authData?.email) {
       setStatusFeedback({
         type: "success",
-        message: `Connected as ${user.email}!`,
+        message: `Connected as ${authData.email}!`,
       });
       setTimeout(() => setStatusFeedback(null), 3000);
     }
-  }, [fetchStatusAndRecords]);
+  }, []);
 
   // 4. Update textarea content when selectedWeek or records change (adjusted during render; the
   //    initial null makes the first render load it, like the former mount effect did)
@@ -263,16 +245,9 @@ export default function App() {
     try {
       localStorage.removeItem(STORAGE_KEY_DRAFT);
     } catch {}
-
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ [STORAGE_KEY_LOGGED_OUT]: true }, () => {
-        chrome.storage.local.remove([
-          STORAGE_KEY_USER,
-          "winstash_ext_token",
-          "winstash_ext_records",
-          "winstash_ext_credits",
-        ]);
-      });
+    if (typeof chrome !== "undefined" && chrome.storage) {
+      chrome.storage.local.remove(LEGACY_BRIDGE_KEYS);
+      chrome.storage.session.remove(PENDING_SIGN_IN_KEY);
     }
   };
 

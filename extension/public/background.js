@@ -1,58 +1,49 @@
 // WinStash Chrome Extension Background Service Worker
-// Handles background tasks, window lifecycle, and reliable closure of auth connect windows
+//
+// Receives the one-time Firebase custom token relayed by the content script on the WinStash
+// /auth/extension-connect page and parks it in chrome.storage.session (memory only, not readable by
+// content scripts). The popup signs in with it (signInWithCustomToken) and deletes it, after which the
+// popup keeps its own Firebase session and refreshes ID tokens by itself.
 
-// 1. Listen for explicit close request from content script or web app
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "CLOSE_EXTENSION_CONNECT_WINDOW") {
-    console.log("[WinStash Background] Received request to close auth connect window");
-    
-    // If sent from a tab, close that specific tab immediately
-    if (sender && sender.tab && sender.tab.id) {
-      chrome.tabs.remove(sender.tab.id, () => {
-        if (chrome.runtime.lastError) {
-          console.warn("[WinStash Background] Tab close error:", chrome.runtime.lastError);
-        }
-      });
-    }
+const PENDING_KEY = "winstash_pending_custom_token";
 
-    // Query and close any remaining extension-connect tabs
-    chrome.tabs.query({}, (tabs) => {
-      tabs?.forEach((tab) => {
-        if (tab.id && tab.url && tab.url.includes("/auth/extension-connect")) {
-          chrome.tabs.remove(tab.id, () => {});
-        }
-      });
-    });
+// chrome.storage.session defaults to trusted contexts only; make that explicit.
+chrome.storage.session.setAccessLevel?.({ accessLevel: "TRUSTED_CONTEXTS" });
 
-    sendResponse({ success: true });
-    return true;
-  }
-});
-
-// 2. Monitor storage changes: when user successfully authenticates, close any open auth-connect tabs and windows
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === "local" && changes["winstash_ext_user"]?.newValue?.uid) {
-    console.log("[WinStash Background] User login detected in storage, cleaning up connect tabs and windows");
-    setTimeout(() => {
-      // Check stored window ID
-      chrome.storage.local.get(["winstash_auth_window_id"], (res) => {
-        if (res && res.winstash_auth_window_id) {
-          try {
-            chrome.windows.remove(res.winstash_auth_window_id, () => {
-              chrome.storage.local.remove(["winstash_auth_window_id"]);
-            });
-          } catch {}
-        }
-      });
-
-      // Also scan all open tabs for extension-connect
-      chrome.tabs.query({}, (tabs) => {
-        tabs?.forEach((tab) => {
-          if (tab.id && tab.url && tab.url.includes("/auth/extension-connect")) {
-            chrome.tabs.remove(tab.id, () => {});
-          }
+function closeConnectTabs() {
+  chrome.storage.local.get(["winstash_auth_window_id"], (res) => {
+    if (res && res.winstash_auth_window_id) {
+      try {
+        chrome.windows.remove(res.winstash_auth_window_id, () => {
+          chrome.storage.local.remove(["winstash_auth_window_id"]);
         });
-      });
-    }, 400);
+      } catch {}
+    }
+  });
+  chrome.tabs.query({}, (tabs) => {
+    tabs?.forEach((tab) => {
+      if (tab.id && tab.url && tab.url.includes("/auth/extension-connect")) {
+        chrome.tabs.remove(tab.id, () => void chrome.runtime.lastError);
+      }
+    });
+  });
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== "WINSTASH_SIGN_IN_TOKEN") return false;
+
+  // Must come from our own content script running on a page this extension is installed for
+  // (content scripts only run on the manifest's matches).
+  const fromOwnContentScript = sender.id === chrome.runtime.id && Boolean(sender.tab) && Boolean(sender.url);
+  if (!fromOwnContentScript || typeof message.customToken !== "string") {
+    sendResponse({ ok: false });
+    return false;
   }
+
+  chrome.storage.session.set({ [PENDING_KEY]: { token: message.customToken, at: Date.now() } }, () => {
+    sendResponse({ ok: true });
+    // Give the page a moment to show "connected" before closing it
+    setTimeout(closeConnectTabs, 800);
+  });
+  return true; // async sendResponse
 });
