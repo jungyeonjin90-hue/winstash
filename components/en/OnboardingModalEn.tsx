@@ -11,17 +11,11 @@ interface OnboardingModalEnProps {
 
 export function OnboardingModalEn({ isOpen, onSave }: OnboardingModalEnProps) {
   const [selectedRole, setSelectedRole] = useState<JobRole>("engineering");
-  const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    setIsSaving(true);
-    // Simulate a slight delay for UX
-    setTimeout(() => {
-      onSave(selectedRole);
-      setIsSaving(false);
-    }, 600);
+    onSave(selectedRole);
   };
 
   const JOB_ROLES: { id: JobRole; label: string; desc: string }[] = [
@@ -86,10 +80,9 @@ export function OnboardingModalEn({ isOpen, onSave }: OnboardingModalEnProps) {
 
         <button
           onClick={handleSave}
-          disabled={isSaving}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-70 disabled:cursor-wait cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md transition-all cursor-pointer"
         >
-          {isSaving ? "Configuring AI Engine..." : "Start Using WinStash"}
+          Write my first note
         </button>
 
       </div>

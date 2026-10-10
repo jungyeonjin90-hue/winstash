@@ -11,7 +11,7 @@ import { FIXED_NOW, SEED_RECORDS, seedDemo } from "./fixtures";
 
 test.skip(!!process.env.E2E_BASE_URL, "Demo session restore is disabled in production builds");
 
-const memoBox = (page: Page) => page.getByPlaceholder(/Hotfixed payment gateway timeouts/);
+const memoBox = (page: Page) => page.locator("#quick-logger-textarea");
 const loggerSelect = (page: Page, i: 0 | 1 | 2) => page.locator("select").nth(i);
 const activePanel = (page: Page) => page.locator("#dashboard-section div.block").first();
 const tabButton = (page: Page, name: RegExp) =>
@@ -105,6 +105,17 @@ test("Performance Review: year follows the records when they only exist in an ol
   await open(page, "/", [SEED_RECORDS[2]]); // only Aug 2025
   await tabButton(page, /Performance Review/).click();
   await expect(activePanel(page).locator("select").first()).toHaveValue("2025");
+});
+
+test("Performance Review / Career Portfolio: with one record, Generate is secondary", async ({ page }) => {
+  await open(page, "/", [SEED_RECORDS[0]]);
+  await tabButton(page, /Performance Review/).click();
+  await expect(activePanel(page).getByText("Memo Oct W1 metric")).toBeVisible();
+  await expect(activePanel(page).getByText(/Add a few more weekly notes/)).toBeVisible();
+  await expect(activePanel(page).getByRole("button", { name: "Generate from 1 note anyway" })).toBeEnabled();
+  await tabButton(page, /Career Portfolio/).click();
+  await expect(activePanel(page).getByText("Memo Oct W1 title")).toBeVisible();
+  await expect(activePanel(page).getByRole("button", { name: "Generate from 1 note anyway" })).toBeEnabled();
 });
 
 test("Feedback modal: fields are reset when it is reopened", async ({ page }) => {

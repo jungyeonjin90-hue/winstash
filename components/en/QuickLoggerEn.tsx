@@ -21,22 +21,21 @@ interface QuickLoggerEnProps {
   onUpgradeClick?: () => void;
   selectedWeek?: WeekSpan;
   onWeekChange?: (week: WeekSpan) => void;
+  jobRole?: JobRole;
+  /** True once records have loaded and the user has none yet. */
+  isFirstNote?: boolean;
+  /** Fired once when a user with no records starts typing their first note. */
+  onFirstMemoStarted?: () => void;
 }
 
-const PRESET_MEMOS_EN = [
-  {
-    label: "⚡ Payment P99 Latency -93% (Engineering)",
-    text: "Resolved critical payment gateway timeout spikes (50+ errors/min) by tuning HikariCP connection pool parameters and adding Redis multi-tier caching. Slashed p99 latency from 1,200ms to 85ms (93% reduction) and eliminated transaction failures to 0%. Next week: Grafana executive dashboard.",
-  },
-  {
-    label: "📈 3-Step Funnel & +24% CVR (Product)",
-    text: "Shipped 3-step streamlined onboarding experiment to 100% of global mobile traffic with 1-click social auth. Monitored telemetry for 7 days: drop-off dropped from 38% to 19%, overall signup conversion rate (CVR) surged by +24%.",
-  },
-  {
-    label: "🎨 Design System & +18% Checkout (Design)",
-    text: "Unified mobile checkout design system tokens and conducted 12 moderated usability sessions on payment friction. Rolled out redesigned 1-screen payment sheet, lifting mobile completion rate by +18% and cutting user input errors by 35%.",
-  },
-];
+const PLACEHOLDER_BY_ROLE_EN: Record<JobRole, string> = {
+  engineering: "Fixed the login timeout bug. Fewer error reports since Wednesday.",
+  product: "Shipped the new signup screen to 10% of users. Watching drop-off next week.",
+  design: "Finished the checkout redesign review with the team. Two flows still need testing.",
+  marketing: "Launched the October newsletter. Open rate looked better than last month.",
+  sales: "Closed the renewal with Acme. Next: pricing call with their finance team.",
+  operations: "Cleaned up the vendor invoice backlog. Month-end close should be faster.",
+};
 
 const LOADING_MESSAGES_EN = [
   "AI is analyzing your raw memo...",
@@ -72,8 +71,20 @@ export function QuickLoggerEn({
   onUpgradeClick,
   selectedWeek: controlledWeek,
   onWeekChange,
+  jobRole = "engineering",
+  isFirstNote = false,
+  onFirstMemoStarted,
 }: QuickLoggerEnProps) {
   const [memo, setMemo] = useState("");
+  const [hasReportedFirstMemo, setHasReportedFirstMemo] = useState(false);
+
+  const handleMemoChange = (value: string) => {
+    if (isFirstNote && !hasReportedFirstMemo && memo.length === 0 && value.length > 0) {
+      setHasReportedFirstMemo(true);
+      onFirstMemoStarted?.();
+    }
+    setMemo(value);
+  };
   const [internalWeek, setInternalWeek] = useState<WeekSpan>(getCurrentWeekSpanEn());
   const selectedWeek = controlledWeek || internalWeek;
 
@@ -172,36 +183,27 @@ export function QuickLoggerEn({
         existingRecords={existingRecords}
       />
 
-      {/* Preset Chips */}
-      <div className="flex flex-wrap items-center gap-2 pt-0.5">
-        <span className="text-[11px] text-zinc-400 dark:text-zinc-500 flex items-center gap-1 font-medium">
-          <Lightbulb className="w-3 h-3 text-amber-500" />
-          Quick Examples:
-        </span>
-        {PRESET_MEMOS_EN.map((preset, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => setMemo(preset.text)}
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-colors font-medium cursor-pointer"
-          >
-            {preset.label}
-          </button>
-        ))}
-      </div>
+      {/* First-note hint */}
+      {isFirstNote && (
+        <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+          Write one line about what you did this week. AI turns it into three drafts.
+        </p>
+      )}
 
       {/* Textarea Box */}
       <div className="relative border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all bg-zinc-50/50 dark:bg-zinc-950/50">
         <textarea
+          id="quick-logger-textarea"
+          aria-label="Weekly note"
           value={memo}
-          onChange={(e) => setMemo(e.target.value)}
+          onChange={(e) => handleMemoChange(e.target.value)}
           maxLength={5000}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
               handleSubmit();
             }
           }}
-          placeholder="e.g. Hotfixed payment gateway timeouts by tuning HikariCP connection pool and deploying Redis caching. Cut p99 latency from 1.2s to 85ms (-93%). Zero dropped transactions during peak sale. Next week: Grafana alerts."
+          placeholder={PLACEHOLDER_BY_ROLE_EN[jobRole] ?? PLACEHOLDER_BY_ROLE_EN.engineering}
           className="w-full h-32 sm:h-36 p-4 text-base sm:text-sm bg-transparent placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none resize-none leading-relaxed text-zinc-900 dark:text-zinc-100"
         />
 
@@ -262,13 +264,15 @@ export function QuickLoggerEn({
         </div>
       </div>
 
-      {/* Helper Pro-Tip Banner (Nudge for quantifiable results & user feedback) */}
-      <div className="flex items-start sm:items-center gap-2 px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/60 dark:border-amber-900/40 text-[11px] sm:text-xs text-amber-800 dark:text-amber-300/90">
-        <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5 sm:mt-0" />
-        <p className="leading-snug">
-          <strong className="font-semibold">Pro-tip:</strong> Mention quantifiable results (e.g. <em>+24% CVR, -30% latency, 4h saved</em>) or user feedback if available. It powers significantly stronger STAR bullets! <span className="opacity-75">(Optional: directional impact is fine if metrics aren&apos;t ready)</span>
-        </p>
-      </div>
+      {/* Helper Pro-Tip Banner (Nudge for quantifiable results & user feedback); hidden for the first note */}
+      {!isFirstNote && (
+        <div className="flex items-start sm:items-center gap-2 px-3 py-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/25 border border-amber-200/60 dark:border-amber-900/40 text-[11px] sm:text-xs text-amber-800 dark:text-amber-300/90">
+          <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5 sm:mt-0" />
+          <p className="leading-snug">
+            <strong className="font-semibold">Pro-tip:</strong> Mention quantifiable results (e.g. <em>+24% CVR, -30% latency, 4h saved</em>) or user feedback if available. It powers significantly stronger STAR bullets! <span className="opacity-75">(Optional: directional impact is fine if metrics aren&apos;t ready)</span>
+          </p>
+        </div>
+      )}
 
       {/* Sensitive Data Warning Caption */}
       <div className="flex items-center gap-1.5 px-2 text-[11px] text-zinc-400 dark:text-zinc-500">

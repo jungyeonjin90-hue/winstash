@@ -212,6 +212,9 @@ export function BragDocumentTab({
   }, [cachedEntry, currentRecordIds]);
 
   const needsGeneration = !cachedEntry || !isValid || isStale;
+  // With a single weekly note, a combined review adds little; keep Generate secondary so new
+  // users don't spend a free synthesis on one note.
+  const isSingleRecord = records.length === 1 && filteredRecords.length === 1;
 
   // 5. Trigger AI Synthesis on-demand (costs 1 API call, then cached permanently)
   const handleSynthesizeWithAi = async () => {
@@ -421,7 +424,9 @@ export function BragDocumentTab({
               onClick={handleSynthesizeWithAi}
               disabled={isSynthesizing || filteredRecords.length === 0}
               className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${
-                filteredRecords.length > 0
+                isSingleRecord
+                  ? "bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-none cursor-pointer"
+                  : filteredRecords.length > 0
                   ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/25 ring-2 ring-emerald-500/30 animate-pulse cursor-pointer"
                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 border border-zinc-200 dark:border-zinc-800 cursor-not-allowed"
               } disabled:opacity-50`}
@@ -430,7 +435,7 @@ export function BragDocumentTab({
                 <BragSynthesizingMessage />
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-white" />
+                  <Sparkles className={`w-4 h-4 ${isSingleRecord ? "text-emerald-500" : "text-white"}`} />
                   <span>
                     {filteredRecords.length === 0
                       ? "No Weekly Logs in this Period"
@@ -626,6 +631,39 @@ export function BragDocumentTab({
                   Log your weekly accomplishments in the Weekly Snippets drawer first, or adjust your year/quarter filters.
                 </p>
               </>
+            ) : isSingleRecord ? (
+              <div className="space-y-4 text-left max-w-xl mx-auto">
+                <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                    From your first note
+                  </span>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-relaxed">
+                    {records[0].brag_sheet_item?.metric_summary}
+                  </p>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {records[0].brag_sheet_item?.business_impact}
+                  </p>
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+                  Add a few more weekly notes, then generate a combined review.
+                </p>
+                <div className="text-center">
+                  <button
+                    onClick={handleSynthesizeWithAi}
+                    disabled={isSynthesizing}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSynthesizing ? (
+                      <BragSynthesizingMessage />
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Generate from 1 note anyway</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 shadow-xs">
