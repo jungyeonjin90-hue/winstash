@@ -22,6 +22,11 @@ import { useAuth } from "@/context/AuthContext";
 import { trackEvent } from "@/lib/analytics";
 import { FeedbackModalEn } from "./FeedbackModalEn";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
+import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
+
+const PRICING_NOTE = IS_PAYMENT_GATEWAY_LIVE
+  ? "Free to start · Pro ($5.99/mo) for unlimited AI syntheses"
+  : "Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch";
 
 function GoogleIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -247,9 +252,11 @@ export function LandingPageEn() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg tracking-tight">WinStash</span>
-                <span className="text-[9px] font-extrabold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/70">
-                  Beta
-                </span>
+                {!IS_PAYMENT_GATEWAY_LIVE && (
+                  <span className="text-[9px] font-extrabold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/70">
+                    Beta
+                  </span>
+                )}
                 <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 hidden sm:inline-block">
                   Career Memory Vault
                 </span>
@@ -291,34 +298,34 @@ export function LandingPageEn() {
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm font-semibold shadow-xs">
             <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
-            <span>100% Free Public Beta · 1-Click Google Setup</span>
+            <span>Performance review season · Free to start</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50 text-balance">
             <span className="block">
-              Stop scrambling before reviews &amp; 1:1s.
+              Can&apos;t remember what you did this year?
             </span>
             <span className="block mt-2 sm:mt-3 text-indigo-600 dark:text-indigo-400">
-              Dump 1 min on Friday. AI does the rest.
+              Turn rough notes into a review-ready self-evaluation.
             </span>
           </h1>
 
           <div className="max-w-3xl mx-auto space-y-4">
             <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal text-pretty max-w-2xl mx-auto">
-              Built for engineers, product managers, business planners, and anyone who owes their manager an update. <br className="hidden sm:inline" />
-              Write what you shipped, solved, or led—no formatting required. WinStash automatically turns raw Friday notes into 3 ready-to-use career assets:
+              For anyone who owes their manager a self-review: PMs, marketers, sales, customer success, designers, and engineers. <br className="hidden sm:inline" />
+              Pick the weeks you remember, jot a few lines for each—no formatting required—and WinStash turns them into 3 ready-to-use career assets:
             </p>
 
             {/* 3단 가로 나열 태그 형태 (1줄 정렬 유지) */}
             <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 sm:gap-3 pt-1">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
-                <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>Manager-ready weekly updates</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>Review-ready brag sheet</span>
               </span>
 
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Promotion-ready reviews</span>
+                <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span>Manager-ready weekly updates</span>
               </span>
 
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
@@ -338,11 +345,11 @@ export function LandingPageEn() {
               <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shrink-0 p-0.5 shadow-xs">
                 <GoogleIcon className="w-3.5 h-3.5" />
               </div>
-              <span>Start Stashing in 60s — It&apos;s Free</span>
+              <span>Start My Self-Review — It&apos;s Free</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold text-pretty text-center px-4">
-              Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch
+              {PRICING_NOTE}
             </p>
           </div>
 
@@ -359,6 +366,38 @@ export function LandingPageEn() {
             <div className="flex items-center gap-1.5 whitespace-nowrap">
               <Check className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>1-click Google setup</span>
+            </div>
+          </div>
+
+          {/* Review-season catch-up steps */}
+          <div className="max-w-3xl mx-auto pt-6 text-left">
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-xs space-y-4">
+              <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 text-center">
+                Self-review due soon? Catch up in 3 steps.
+              </h2>
+              <ol className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  ["Pick a past week", "Choose any week or month from the year in the week picker."],
+                  ["Write what you remember", "A few rough lines per project is enough. No formatting."],
+                  ["Generate your brag sheet", "Synthesize the year, half, or quarter into review-ready bullets."],
+                ].map(([title, body], i) => (
+                  <li key={title} className="flex gap-3">
+                    <span className="w-7 h-7 shrink-0 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
+                      {i + 1}
+                    </span>
+                    <div className="space-y-0.5">
+                      <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{title}</div>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">{body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center text-pretty">
+                Then keep it going with a 1-minute note every Friday, so next year&apos;s review is already written.{" "}
+                <Link href="/resources" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                  See self-evaluation examples by role →
+                </Link>
+              </p>
             </div>
           </div>
         </section>
@@ -876,12 +915,18 @@ export function LandingPageEn() {
                 a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 10 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
               },
               {
+                q: "My self-review is due soon. Can WinStash still help?",
+                a: "Yes. In the week picker, choose any past week, write a few lines about what you worked on, and save. Repeat for the projects you remember, then generate a Brag Sheet for the year, half, or quarter. The free plan's 10 AI transformations are enough to cover your biggest projects. For wording ideas, see our free self-evaluation examples by role in Resources.",
+              },
+              {
                 q: "How is WinStash different from just using a general AI chatbot?",
                 a: "Fair question. WinStash uses AI too, and if you're happy to write a good prompt and paste your notes every week, a general chatbot can do a lot of this. WinStash takes care of everything around the AI: (1) A habit, not a blank prompt—write a rough one-minute note on Friday with zero prompt tweaking. (2) Three outputs from one note—a weekly manager sync, an XYZ-style brag sheet, and STAR stories in consistent formats. (3) A record that builds up—your notes stay in one place, so your brag sheet draws on months of entries instead of whatever you remembered to paste in. (4) Confidentiality help—the NDA tool helps mask client names, tools, and metrics before export. If you already have a prompt and routine that works for you, keep using it. WinStash is for people who want the habit to be easy enough to actually stick.",
               },
               {
                 q: "What happens after I use my free AI credits?",
-                a: "You can continue logging and storing your weekly notes for free forever. During our public beta, active users who share feedback can get credits topped up anytime. When we launch, WinStash Pro ($5.99/mo) will unlock unlimited syntheses.",
+                a: IS_PAYMENT_GATEWAY_LIVE
+                  ? "You can continue logging and storing your weekly notes for free forever. To keep generating weekly updates, Brag Sheets, and STAR stories, upgrade to WinStash Pro ($5.99/mo) for unlimited AI syntheses. Cancel anytime."
+                  : "You can continue logging and storing your weekly notes for free forever. During our public beta, active users who share feedback can get credits topped up anytime. When we launch, WinStash Pro ($5.99/mo) will unlock unlimited syntheses.",
               },
               {
                 q: "Can I use WinStash if I am not a Software Engineer?",
@@ -934,7 +979,7 @@ export function LandingPageEn() {
               <span className="block mt-1 sm:mt-2 text-zinc-300">Never lose another promotion-worthy win.</span>
             </h3>
             <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed text-pretty">
-              Built for engineers, product managers, and anyone who reports to someone. Take command of your career story in 1 minute a week.
+              Catch up on this year&apos;s review today, then take command of your career story in 1 minute a week.
             </p>
             <div className="pt-2 flex flex-col items-center justify-center gap-2.5">
               <button
@@ -949,7 +994,7 @@ export function LandingPageEn() {
                 <ArrowRight className="w-4 h-4" />
               </button>
               <p className="text-xs text-zinc-400 font-medium text-pretty text-center px-4">
-                Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch
+                {PRICING_NOTE}
               </p>
             </div>
           </div>

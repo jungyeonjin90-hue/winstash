@@ -43,7 +43,7 @@ export function PricingWaitlistButton() {
 
     return (
       <Link
-        href="/en?utm_source=pricing_card&utm_medium=pricing&utm_campaign=upgrade_pro"
+        href="/?utm_source=pricing_card&utm_medium=pricing&utm_campaign=upgrade_pro"
         className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
       >
         <Zap className="w-4 h-4 fill-white" />

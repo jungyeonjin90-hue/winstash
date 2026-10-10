@@ -171,7 +171,7 @@ export default function BragDocTemplatePage() {
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link
-            href="/en"
+            href="/"
             className="flex items-center gap-2.5 group cursor-pointer"
             aria-label="WinStash Home"
           >
@@ -186,7 +186,7 @@ export default function BragDocTemplatePage() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="https://winstash.net/en?utm_source=resources&utm_medium=seo&utm_campaign=brag-doc-swe-nav"
+              href="https://winstash.net/?utm_source=resources&utm_medium=seo&utm_campaign=brag-doc-swe-nav"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 transition-all shadow-xs"
             >
               <span>Try WinStash Free</span>
@@ -201,7 +201,7 @@ export default function BragDocTemplatePage() {
         {/* Breadcrumb & Title */}
         <div className="space-y-4">
           <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            <Link href="/en" className="hover:underline">
+            <Link href="/" className="hover:underline">
               Home
             </Link>
             <ChevronRight className="w-3 h-3 text-zinc-400" />
@@ -540,7 +540,7 @@ export default function BragDocTemplatePage() {
 
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-4">
               <Link
-                href="https://winstash.net/en?utm_source=resources&utm_medium=seo&utm_campaign=brag-doc-swe"
+                href="https://winstash.net/?utm_source=resources&utm_medium=seo&utm_campaign=brag-doc-swe"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm bg-white text-zinc-950 hover:bg-zinc-100 transition-all shadow-lg hover:shadow-indigo-500/20 active:scale-98 cursor-pointer"
               >
                 <span>Try WinStash Free</span>
@@ -613,7 +613,7 @@ export default function BragDocTemplatePage() {
             <Link href="/terms" className="hover:underline">
               Terms of Service
             </Link>
-            <Link href="/en" className="hover:underline text-indigo-600 dark:text-indigo-400 font-medium">
+            <Link href="/" className="hover:underline text-indigo-600 dark:text-indigo-400 font-medium">
               App Home →
             </Link>
           </div>
