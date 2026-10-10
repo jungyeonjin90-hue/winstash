@@ -74,6 +74,7 @@ test("first-time demo user: onboarding -> save memo -> record appears in dashboa
   await expect(firstResult.getByText("Weekly Snippet", { exact: true })).toBeVisible();
   await expect(firstResult.getByText("Performance Review", { exact: true })).toBeVisible();
   await expect(firstResult.getByText("Career Portfolio", { exact: true })).toBeVisible();
+  await expect(firstResult.getByText(/Tip: add your seniority, industry and region in Settings/)).toBeVisible();
   await firstResult.getByRole("button", { name: "Dismiss" }).click();
   await expect(firstResult).toHaveCount(0);
 

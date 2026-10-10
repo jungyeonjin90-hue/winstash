@@ -109,6 +109,10 @@ export function FirstResultCardEn({ record, onDismiss }: FirstResultCardEnProps)
           AI-generated drafts are designed for reference. Please review and verify factual numbers before official submission or export.
         </span>
       </div>
+
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        Tip: add your seniority, industry and region in Settings for more tailored drafts.
+      </p>
     </div>
   );
 }
