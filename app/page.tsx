@@ -539,7 +539,7 @@ export default function Home() {
         creditStatus={creditStatus}
       />
 
-      <PaymentIssueBanner issue={creditStatus?.paymentIssue} lang="en" />
+      <PaymentIssueBanner issue={creditStatus?.paymentIssue} />
 
       {/* Main Container */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 sm:space-y-12">

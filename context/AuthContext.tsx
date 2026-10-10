@@ -178,14 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem(LAST_ACTIVITY_KEY);
         }
         signOutRef.current?.();
-        const isKorean =
-          typeof window !== "undefined" && window.location.pathname.startsWith("/ko");
-
-        alert(
-          isKorean
-            ? "보안을 위해 30분 동안 활동이 없어 자동으로 안전하게 로그아웃되었습니다."
-            : "You have been automatically signed out due to 30 minutes of inactivity for your security."
-        );
+        alert("You have been automatically signed out due to 30 minutes of inactivity for your security.");
       }
     };
 

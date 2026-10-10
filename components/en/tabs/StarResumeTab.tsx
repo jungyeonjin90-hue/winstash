@@ -346,7 +346,7 @@ export function StarResumeTab({
         : baseItems.filter((i) => i.nda_tags.includes(selectedTag));
 
     if (isNdaMasked) {
-      return list.map((item) => maskSynthesizedStarItem(item, "en"));
+      return list.map((item) => maskSynthesizedStarItem(item));
     }
     return list;
   }, [baseItems, selectedTag, isNdaMasked]);

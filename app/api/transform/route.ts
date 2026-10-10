@@ -192,7 +192,6 @@ export async function POST(req: NextRequest) {
       job_role as JobRole,
       tone_manner as ToneManner,
       {
-        language: "en",
         seniorityLevel: seniority_level as SeniorityLevel | undefined,
         // Free-text profile field that lands in the system prompt: keep it a short string.
         industry: typeof industry === "string" ? industry.slice(0, 100) : undefined,

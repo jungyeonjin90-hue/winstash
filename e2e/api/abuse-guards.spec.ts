@@ -60,16 +60,6 @@ test.describe("Demo-mode transform (dev only)", () => {
     expect(json.record?.source).toBe("web_text");
   });
 
-  test("Korean route returns all three artefacts", async ({ request }) => {
-    const res = await request.post("/api/transform/ko", {
-      headers: demoHeaders(),
-      data: { raw_memo: "결제 게이트웨이 타임아웃 핫픽스, p99 지연 1.2초에서 85ms로 단축" },
-    });
-    expect(res.status()).toBe(200);
-    const json = await res.json();
-    expect(json.weekly_report && json.brag_sheet_item && json.star_portfolio).toBeTruthy();
-  });
-
   test("empty / whitespace memo -> 400", async ({ request }) => {
     for (const raw_memo of ["", "   \n  "]) {
       const res = await request.post("/api/transform", { headers: demoHeaders(), data: { raw_memo } });
@@ -82,8 +72,8 @@ test.describe("Demo-mode transform (dev only)", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("memo over 5,000 chars -> 400 (EN and KO)", async ({ request }) => {
-    for (const route of ["/api/transform", "/api/transform/ko"]) {
+  test("memo over 5,000 chars -> 400", async ({ request }) => {
+    for (const route of ["/api/transform"]) {
       const res = await request.post(route, { headers: demoHeaders(), data: { raw_memo: "a".repeat(5001) } });
       expect(res.status(), route).toBe(400);
     }

@@ -6,7 +6,7 @@
 - **Brag Sheet**: 성과평가·연봉협상용 성과 시트
 - **STAR Portfolio**: 이직·포트폴리오용 STAR 구조 사례
 
-웹앱(영어 `/`, 한국어 `/ko`)과 Chrome 확장 프로그램(`extension/`)으로 구성됩니다.
+영어 전용 웹앱(`/`, 예전 `/ko` 주소는 영어 페이지로 영구 리다이렉트)과 Chrome 확장 프로그램(`extension/`)으로 구성됩니다.
 
 ## 기술 스택
 
@@ -92,12 +92,12 @@ npm run build        # extension/dist 를 chrome://extensions 에서 "압축해�
 
 ```
 app/            페이지와 API 라우트 (app/api/*)
-components/     UI 컴포넌트 (en/ = 영어 버전)
+components/     UI 컴포넌트 (en/ = 대시보드·랜딩 화면)
 context/        AuthContext (로그인·비활성 자동 로그아웃)
 lib/            서버/클라이언트 공용 로직
                   serverAuthQuota.ts  토큰 검증·쿼터 예약/환불·계정별 레이트 리밋
                   gemini.ts           Gemini 호출 (타임아웃·예산)
-                  transformService.ts 3-way 변환 (KO 웹·확장 프로그램 공용)
+                  transformService.ts 3-way 변환 (영어 출력, 웹·확장 프로그램 공용)
 extension/      Chrome 확장 프로그램
 e2e/            Playwright E2E 와 mock Gemini 서버
 tests/          단위 테스트, Firestore 규칙 테스트

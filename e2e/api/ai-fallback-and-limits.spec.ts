@@ -59,17 +59,6 @@ test.describe("M-3: AI success is charged, heuristic fallback is not", () => {
     expect(await readGlobal()).toBe(globalBefore);
   });
 
-  test("KO transform: fallback is not charged", async ({ request }) => {
-    const user = await createTestUser();
-    const res = await request.post("/api/transform/ko", {
-      headers: auth(user),
-      data: { raw_memo: "결제 게이트웨이 지연 85ms로 단축 [mock:fail]" },
-    });
-    expect(res.status()).toBe(200);
-    expect((await res.json()).aiFallback).toBe(true);
-    expect(await readFreeUsedCount(user.uid)).toBe(0);
-  });
-
   test("extension submit: fallback record is saved but not charged", async ({ request }) => {
     const user = await createTestUser();
     const res = await request.post("/api/extension/submit", {

@@ -139,50 +139,6 @@ test("Career Portfolio: range follows records that load for an older span only",
   await expect(range.nth(1)).toHaveValue("2025");
 });
 
-test.describe("Korean app (/ko)", () => {
-  const koMemo = (page: Page) => page.getByPlaceholder(/이번 주 가장 시간 많이 썼거나/);
-  const koTab = (page: Page, label: RegExp) => page.getByRole("button").filter({ hasText: label }).first();
-
-  async function openKo(page: Page, path = "/ko") {
-    await page.clock.setFixedTime(FIXED_NOW);
-    await seedDemo(page);
-    await page.goto(path);
-    await expect(koMemo(page)).toBeVisible();
-  }
-
-  test("?tab=archive restores the timeline tab (legacy alias)", async ({ page }) => {
-    await openKo(page, "/ko?tab=archive");
-    await expect(koTab(page, /Tab D/)).toHaveClass(/bg-zinc-800/);
-    await expect(koTab(page, /Tab A/)).not.toHaveClass(/bg-indigo-600/);
-  });
-
-  test("QuickLogger: selecting a week with a record loads its memo; one without clears it", async ({ page }) => {
-    await openKo(page);
-
-    // The KO week picker is a popover; its week <select> uses startDate as the value.
-    await page.getByRole("button", { name: "주차 변경" }).click();
-    const pickerSelect = (label: string) =>
-      page.locator(`label:text-is("${label}")`).locator("xpath=following-sibling::select");
-    const pickWeek = async (weekPrefix: string) => {
-      const select = pickerSelect("주차 및 날짜 범위 (월~일)");
-      const value = await select.evaluate(
-        (el, prefix) =>
-          Array.from((el as HTMLSelectElement).options).find((o) => o.text.trim().startsWith(prefix))?.value,
-        weekPrefix
-      );
-      await select.selectOption(value!);
-    };
-
-    await pickerSelect("연도").selectOption("2026");
-    await pickerSelect("월").selectOption("9");
-    await pickWeek("3주차");
-    await expect(koMemo(page)).toHaveValue("Memo Sep W3");
-
-    await pickWeek("1주차");
-    await expect(koMemo(page)).toHaveValue("");
-  });
-});
-
 test("saving a memo clears only this user's local summary cache (and legacy keys)", async ({ page }) => {
   await page.addInitScript(() => {
     if (sessionStorage.getItem("__e2e_cache_seeded")) return;
