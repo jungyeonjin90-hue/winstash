@@ -2,15 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  ShieldCheck,
-  Eye,
   Copy,
   Check,
   Briefcase,
   Sparkles,
 } from "lucide-react";
 import { CareerRecord, JobRole, ToneManner, SynthesizedStarItem } from "@/types/career";
-import { maskSynthesizedStarItem } from "@/lib/masking";
 import { PersonaSelectorEn } from "../PersonaSelectorEn";
 import { YearRangeFilterEn } from "../YearRangeFilterEn";
 import { ViewControlsEn, ViewDensity } from "../ViewControlsEn";
@@ -108,8 +105,7 @@ export function StarResumeTab({
   const [scale, setScale] = useState<3 | 5 | 10>(3);
   const [density, setDensity] = useState<ViewDensity>("detailed");
 
-  // Masking & Action states
-  const [isNdaMasked, setIsNdaMasked] = useState(false);
+  // Action states
   // Tag filter UI is not exposed; every tag is shown.
   const [selectedTag] = useState<string>("ALL");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -341,18 +337,14 @@ export function StarResumeTab({
     return [];
   }, [filteredRecords.length, isValid, cachedEntry]);
 
-  // Tag filter & NDA Masking
-  const displayedItems = useMemo(() => {
-    const list =
+  // Tag filter
+  const displayedItems = useMemo(
+    () =>
       selectedTag === "ALL"
         ? baseItems
-        : baseItems.filter((i) => i.nda_tags.includes(selectedTag));
-
-    if (isNdaMasked) {
-      return list.map((item) => maskSynthesizedStarItem(item));
-    }
-    return list;
-  }, [baseItems, selectedTag, isNdaMasked]);
+        : baseItems.filter((i) => i.nda_tags.includes(selectedTag)),
+    [baseItems, selectedTag]
+  );
 
   const activeJobRole = cachedEntry ? cachedEntry.jobRole : jobRole;
 
@@ -512,20 +504,6 @@ export function StarResumeTab({
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto pt-4 xl:pt-0 border-t xl:border-t-0 border-zinc-100 dark:border-zinc-800">
           <span className="text-[11px] font-semibold text-zinc-400 mr-1 hidden sm:inline-block">Options:</span>
           
-          {/* NDA Shield Toggle */}
-          <button
-            onClick={() => setIsNdaMasked(!isNdaMasked)}
-            className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-              isNdaMasked
-                ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 ring-1 ring-amber-500/20"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-transparent hover:text-zinc-800 dark:hover:text-zinc-300"
-            }`}
-            title="Toggle confidential client and company masking"
-          >
-            {isNdaMasked ? <ShieldCheck className="w-3.5 h-3.5 text-amber-500" /> : <Eye className="w-3.5 h-3.5" />}
-            <span>{isNdaMasked ? "NDA Shield: ON" : "NDA Shield: OFF"}</span>
-          </button>
-
           <button
             onClick={copyStarPortfolio}
             disabled={displayedItems.length === 0}

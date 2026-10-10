@@ -242,10 +242,6 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
-                  <span>NDA Confidentiality Shield included</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
                   <span>1-click Markdown export (Slack, Notion, Docs)</span>
                 </li>
                 <li className="flex items-center gap-2.5">
