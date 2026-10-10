@@ -66,7 +66,7 @@ const PRICING_FAQS = [
       : "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or join the waitlist for Pro to unlock unlimited AI syntheses.",
   },
   {
-    q: "When does Pro open?",
+    q: IS_PAYMENT_GATEWAY_LIVE ? "How do I upgrade to Pro?" : "When does Pro open?",
     a: IS_PAYMENT_GATEWAY_LIVE
       ? "WinStash Pro is officially open! You can upgrade instantly with one click using the Upgrade button above to get unlimited AI transformations, brag sheets, and STAR portfolio syntheses."
       : "Very soon. We are putting the finishing touches on our billing integration. Click the 'Notify Me' button on this page to join our early-access waitlist, and we'll send you an email the moment Pro launches.",
