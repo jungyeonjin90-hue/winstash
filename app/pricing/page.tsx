@@ -55,11 +55,15 @@ export const metadata: Metadata = {
 const PRICING_FAQS = [
   {
     q: "Is WinStash really free?",
-    a: "Yes. You can log and stash your raw weekly wins for free forever. During our public beta, every account receives 10 free weekly AI transformations, 3 Brag Sheet syntheses, and 3 STAR portfolio syntheses with zero credit card required.",
+    a: IS_PAYMENT_GATEWAY_LIVE
+      ? "Yes. You can log and stash your raw weekly wins for free forever. Every free account receives 10 weekly AI transformations, 3 Brag Sheet syntheses, and 3 STAR portfolio syntheses with zero credit card required."
+      : "Yes. You can log and stash your raw weekly wins for free forever. During our public beta, every account receives 10 free weekly AI transformations, 3 Brag Sheet syntheses, and 3 STAR portfolio syntheses with zero credit card required.",
   },
   {
     q: "What happens when I use up my free AI credits?",
-    a: "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or join the waitlist for Pro to unlock unlimited AI syntheses.",
+    a: IS_PAYMENT_GATEWAY_LIVE
+      ? "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or upgrade to Pro to unlock unlimited AI syntheses."
+      : "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or join the waitlist for Pro to unlock unlimited AI syntheses.",
   },
   {
     q: "When does Pro open?",
@@ -132,7 +136,7 @@ export default function PricingPage() {
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link
-            href="/en"
+            href="/"
             className="flex items-center gap-2.5 group cursor-pointer"
             aria-label="WinStash Home"
           >
@@ -150,7 +154,7 @@ export default function PricingPage() {
               Resources
             </Link>
             <Link
-              href="https://winstash.net/en?utm_source=pricing_nav&utm_medium=pricing&utm_campaign=nav_start"
+              href="https://winstash.net/?utm_source=pricing_nav&utm_medium=pricing&utm_campaign=nav_start"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 transition-all shadow-xs"
             >
               <span>Start Free</span>
@@ -244,10 +248,10 @@ export default function PricingPage() {
             </div>
 
             <Link
-              href="https://winstash.net/en?utm_source=pricing_card&utm_medium=pricing&utm_campaign=start_free"
+              href="https://winstash.net/?utm_source=pricing_card&utm_medium=pricing&utm_campaign=start_free"
               className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 transition-all shadow-xs cursor-pointer"
             >
-              <span>Start Free (Beta)</span>
+              <span>{IS_PAYMENT_GATEWAY_LIVE ? "Start Free" : "Start Free (Beta)"}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -391,7 +395,7 @@ export default function PricingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
-              href="https://winstash.net/en?utm_source=pricing_bottom&utm_medium=pricing&utm_campaign=bottom_start"
+              href="https://winstash.net/?utm_source=pricing_bottom&utm_medium=pricing&utm_campaign=bottom_start"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-sm sm:text-base bg-white text-zinc-950 hover:bg-zinc-100 transition-all shadow-xl active:scale-98 cursor-pointer"
             >
               <span>Start Free on WinStash</span>
@@ -399,7 +403,9 @@ export default function PricingPage() {
             </Link>
           </div>
           <p className="text-[11px] text-zinc-500">
-            100% Free during open beta • Zero credit card required
+            {IS_PAYMENT_GATEWAY_LIVE
+              ? "Free plan • Zero credit card required"
+              : "100% Free during open beta • Zero credit card required"}
           </p>
         </section>
       </main>
@@ -427,7 +433,7 @@ export default function PricingPage() {
             <Link href="/refund" className="hover:underline">
               Refund Policy
             </Link>
-            <Link href="/en" className="hover:underline text-indigo-600 dark:text-indigo-400 font-medium">
+            <Link href="/" className="hover:underline text-indigo-600 dark:text-indigo-400 font-medium">
               App Home →
             </Link>
           </div>

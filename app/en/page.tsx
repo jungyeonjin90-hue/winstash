@@ -7,7 +7,8 @@ export default function EnRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/");
+    // Keep the query string so utm_* parameters on old /en links still reach analytics.
+    router.replace(`/${window.location.search}`);
   }, [router]);
 
   return (

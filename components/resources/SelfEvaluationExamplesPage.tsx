@@ -28,7 +28,7 @@ function pageUrl(page: SelfEvaluationPage) {
 }
 
 function signupUrl(page: SelfEvaluationPage, placement: string) {
-  return `${BASE_URL}/en?utm_source=resources&utm_medium=seo&utm_campaign=${page.slug}-${placement}`;
+  return `${BASE_URL}/?utm_source=resources&utm_medium=seo&utm_campaign=${page.slug}-${placement}`;
 }
 
 export function buildSelfEvaluationMetadata(page: SelfEvaluationPage): Metadata {
@@ -110,7 +110,7 @@ export function SelfEvaluationExamplesPage({ page }: { page: SelfEvaluationPage 
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/en" className="flex items-center gap-2.5 group cursor-pointer" aria-label="WinStash Home">
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer" aria-label="WinStash Home">
             <WinStashBrandBadge size="sm" />
             <span className="font-extrabold text-lg tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
               WinStash
@@ -133,7 +133,7 @@ export function SelfEvaluationExamplesPage({ page }: { page: SelfEvaluationPage 
         {/* Breadcrumb & title */}
         <div className="space-y-4">
           <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            <Link href="/en" className="hover:underline">Home</Link>
+            <Link href="/" className="hover:underline">Home</Link>
             <ChevronRight className="w-3 h-3 text-zinc-400" />
             <Link href="/resources" className="hover:underline">Resources</Link>
             <ChevronRight className="w-3 h-3 text-zinc-400" />
@@ -411,7 +411,7 @@ export function SelfEvaluationExamplesPage({ page }: { page: SelfEvaluationPage 
             <Link href="/pricing" className="hover:underline text-zinc-600 dark:text-zinc-300">Pricing</Link>
             <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
             <Link href="/terms" className="hover:underline">Terms of Service</Link>
-            <Link href="/en" className="hover:underline text-indigo-600 dark:text-indigo-400 font-medium">App Home →</Link>
+            <Link href="/" className="hover:underline text-indigo-600 dark:text-indigo-400 font-medium">App Home →</Link>
           </div>
         </div>
       </footer>
