@@ -1,28 +1,26 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { WinStashBrandBadge } from "./WinStashLogo";
 import { loginWithGoogle } from "../lib/firebase";
 import { WEB_BASE_URL } from "../lib/webBase";
 
-/** What LoginView reports once the user is signed in (directly or via the web bridge). */
+/** What LoginView reports after a direct (popup) Google sign-in. */
 export interface LoginResult {
   uid: string;
   email: string;
-  records?: unknown[];
-  credits?: unknown;
-}
-
-/** Keys the web app's content script writes into chrome.storage.local after sign-in. */
-interface BridgedLogin {
-  winstash_ext_user?: { uid: string; email: string };
-  winstash_ext_records?: unknown[];
-  winstash_ext_credits?: unknown;
 }
 
 interface LoginViewProps {
   onLoginSuccess: (authData: LoginResult) => void;
 }
 
+/*
+ * Two ways in:
+ * 1. Firebase signInWithPopup directly in the extension.
+ * 2. If that is unavailable, /auth/extension-connect on the web app signs in and hands the extension a
+ *    one-time custom token (content script -> background -> chrome.storage.session). App.tsx picks it
+ *    up and signs in; its auth listener then replaces this view. No session data is polled or copied.
+ */
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
@@ -49,68 +47,6 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       });
     }
   };
-
-  // Listen for storage changes and poll for auth completion
-  useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    const checkStorage = () => {
-      if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.get(
-          ["winstash_ext_user", "winstash_ext_records", "winstash_ext_credits"],
-          (res: BridgedLogin) => {
-            if (res?.winstash_ext_user?.uid) {
-              if (intervalId) clearInterval(intervalId);
-              setIsLoading(false);
-              closeAuthWindow();
-              onLoginSuccess({
-                uid: res.winstash_ext_user.uid,
-                email: res.winstash_ext_user.email,
-                records: res.winstash_ext_records || [],
-                credits: res.winstash_ext_credits || null,
-              });
-            }
-          }
-        );
-      }
-    };
-
-    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
-      if (areaName === "local" && changes["winstash_ext_user"]?.newValue?.uid) {
-        checkStorage();
-      }
-    };
-
-    const handleRuntimeMessage = (msg: { type?: string } | undefined) => {
-      if (msg?.type === "CLOSE_EXTENSION_CONNECT_WINDOW") {
-        closeAuthWindow();
-      }
-    };
-
-    if (isLoading) {
-      intervalId = setInterval(checkStorage, 400);
-      if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
-        chrome.storage.onChanged.addListener(handleStorageChange);
-      }
-      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
-        chrome.runtime.onMessage.addListener(handleRuntimeMessage);
-      }
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-      if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
-        try {
-          chrome.storage.onChanged.removeListener(handleStorageChange);
-        } catch {}
-      }
-      if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
-        try {
-          chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
-        } catch {}
-      }
-    };
-  }, [isLoading, onLoginSuccess]);
 
   const openConnectWindow = () => {
     const connectUrl = `${WEB_BASE_URL}/auth/extension-connect?auto=true`;
@@ -146,34 +82,20 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     setIsLoading(true);
     setStatusMsg("Opening Google account selection...");
 
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.remove(["winstash_ext_logged_out"]);
-    }
-
     // Method 1: Try direct Firebase signInWithPopup in extension
     try {
       const user = await loginWithGoogle();
       if (user && user.uid) {
         setStatusMsg("Connected successfully!");
-        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-          chrome.storage.local.set({
-            winstash_ext_user: { uid: user.uid, email: user.email || "" },
-          });
-        }
         closeAuthWindow();
-        onLoginSuccess({
-          uid: user.uid,
-          email: user.email || "",
-          records: [],
-          credits: null,
-        });
+        onLoginSuccess({ uid: user.uid, email: user.email || "" });
         return;
       }
     } catch (popupErr) {
       console.log("[WinStash Extension] Direct popup fallback:", (popupErr as Error | null)?.message);
     }
 
-    // Method 2: Open dedicated connect window (which redirects directly to Google OAuth)
+    // Method 2: Open the web connect window; it hands a one-time token back to the extension
     openConnectWindow();
   };
 

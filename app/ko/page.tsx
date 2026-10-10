@@ -109,12 +109,6 @@ export default function HomeKo() {
         setRecords(clean);
         setIsClientLoaded(true);
         saveLocalUserRecords(user.uid, clean);
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem("winstash_latest_records_cache", JSON.stringify(clean));
-            window.dispatchEvent(new CustomEvent("winstash_records_updated", { detail: clean }));
-          } catch {}
-        }
       },
       (error) => {
         console.error("Firestore sync error:", error);
@@ -126,36 +120,14 @@ export default function HomeKo() {
       Boolean(user.isDemo),
       (status) => {
         setCreditStatus(status);
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(status));
-            window.dispatchEvent(new CustomEvent("winstash_credits_updated", { detail: status }));
-          } catch {}
-        }
       },
       user.email
     );
 
-    const handleExtSave = async (e: Event) => {
-      const detail = (e as CustomEvent<{ record?: CareerRecord; deductCredit?: boolean }>).detail;
-      if (detail?.record && user) {
-        try {
-          await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), detail.record);
-          if (detail.deductCredit) {
-            const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
-            setCreditStatus(updatedCredit);
-          }
-        } catch (err) {
-          console.error("Failed to save record from extension:", err);
-        }
-      }
-    };
-    window.addEventListener("winstash_save_record_request", handleExtSave);
 
     return () => {
       unsubscribeRecords();
       unsubscribeCredit();
-      window.removeEventListener("winstash_save_record_request", handleExtSave);
     };
   }, [user]);
 

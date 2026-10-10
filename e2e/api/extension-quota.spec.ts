@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { E2E_AUTH_EMULATOR_HOST } from "../constants";
 import { SAMPLE_MEMO, uniqueIp } from "../helpers";
 import {
   createTestUser,
@@ -187,5 +188,31 @@ test.describe("web /api/transform shares the same counter", () => {
 
     const ext = await submit(request, user.idToken, { rawNote: SAMPLE_MEMO });
     expect(ext.status()).toBe(403);
+  });
+});
+
+test.describe("POST /api/extension/session (extension sign-in hand-off, H-6)", () => {
+  test("requires a signed-in web user", async ({ request }) => {
+    const res = await request.post("/api/extension/session");
+    expect(res.status()).toBe(401);
+  });
+
+  test("returns a one-time custom token that signs in as the same user", async ({ request }) => {
+    const user = await createTestUser();
+    const res = await request.post("/api/extension/session", { headers: { Authorization: `Bearer ${user.idToken}` } });
+    expect(res.status()).toBe(200);
+    expect(res.headers()["cache-control"]).toContain("no-store");
+    const { customToken } = await res.json();
+    expect(typeof customToken).toBe("string");
+
+    // What the extension popup does: signInWithCustomToken (here against the Auth emulator)
+    const signIn = await fetch(
+      `http://${E2E_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=e2e-fake-api-key`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: customToken, returnSecureToken: true }) }
+    );
+    expect(signIn.ok).toBe(true);
+    const { idToken } = await signIn.json();
+    const claims = JSON.parse(Buffer.from(idToken.split(".")[1], "base64url").toString());
+    expect(claims.user_id ?? claims.sub).toBe(user.uid);
   });
 });

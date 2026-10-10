@@ -283,16 +283,8 @@ export async function consumeFreeCredit(
     localStorage.setItem(LOCAL_GLOBAL_USAGE_KEY, String(nextGlobal));
   }
 
-  // 3. 최신 크레딧 계산 및 로컬 캐시 / 이벤트 브로드캐스트
-  const nextStatus = await getCreditStatus(userId, isDemo, userEmail);
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(nextStatus));
-      window.dispatchEvent(new CustomEvent("winstash_credits_updated", { detail: nextStatus }));
-    } catch {}
-  }
-
-  return nextStatus;
+  // 3. 최신 크레딧 계산
+  return getCreditStatus(userId, isDemo, userEmail);
 }
 
 /**

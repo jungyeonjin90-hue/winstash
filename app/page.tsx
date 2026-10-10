@@ -21,7 +21,7 @@ import {
 } from "@/lib/firestoreService";
 import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCacheService";
 import { getSettings, saveSettings } from "@/lib/storage";
-import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/creditService";
+import { CreditStatus, subscribeCreditStatus } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
 import { getAuthToken } from "@/lib/firebase";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, SeniorityLevel, RegionCode } from "@/types/career";
@@ -207,12 +207,6 @@ export default function Home() {
         setRecords(cleanRecords);
         setIsClientLoaded(true);
         saveLocalUserRecords(user.uid, cleanRecords);
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem("winstash_latest_records_cache", JSON.stringify(cleanRecords));
-            window.dispatchEvent(new CustomEvent("winstash_records_updated", { detail: cleanRecords }));
-          } catch {}
-        }
       },
       (error) => {
         console.error("Firestore sync error:", error);
@@ -224,36 +218,14 @@ export default function Home() {
       Boolean(user.isDemo),
       (status) => {
         setCreditStatus(status);
-        if (typeof window !== "undefined") {
-          try {
-            localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(status));
-            window.dispatchEvent(new CustomEvent("winstash_credits_updated", { detail: status }));
-          } catch {}
-        }
       },
       user.email
     );
 
-    const handleExtSave = async (e: Event) => {
-      const detail = (e as CustomEvent<{ record?: CareerRecord; deductCredit?: boolean }>).detail;
-      if (detail?.record && user) {
-        try {
-          await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), detail.record);
-          if (detail.deductCredit) {
-            const updatedCredit = await consumeFreeCredit(user.uid, Boolean(user.isDemo), user.email);
-            setCreditStatus(updatedCredit);
-          }
-        } catch (err) {
-          console.error("Failed to save record from extension:", err);
-        }
-      }
-    };
-    window.addEventListener("winstash_save_record_request", handleExtSave);
 
     return () => {
       unsubscribeRecords();
       unsubscribeCredit();
-      window.removeEventListener("winstash_save_record_request", handleExtSave);
     };
   }, [user]);
 

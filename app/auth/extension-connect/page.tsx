@@ -1,19 +1,53 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
-import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
-import { subscribeUserRecords } from "@/lib/firestoreService";
-import { getCreditStatus } from "@/lib/creditService";
-import type { CareerRecord } from "@/types/career";
-import { isAdminEmail } from "@/lib/adminConfig";
-import { auth, googleProvider } from "@/lib/firebase";
+import { CheckCircle2, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { auth, googleProvider, getAuthToken } from "@/lib/firebase";
 import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+
+// Message protocol with the extension's content script (extension/public/content.js).
+// Messages are posted to this page's own origin only; the content script relays the one-time custom
+// token to the extension background and acknowledges receipt.
+const SIGN_IN_MESSAGE = "WINSTASH_EXTENSION_SIGN_IN";
+const SIGN_IN_ACK = "WINSTASH_EXTENSION_SIGN_IN_ACK";
+const ACK_TIMEOUT_MS = 4000;
+
+type ConnectStatus = "connecting" | "success" | "need_login" | "no_extension" | "error";
+
+/** Gets a one-time custom token for the signed-in user and hands it to the extension. */
+async function handOffToExtension(): Promise<"success" | "no_extension" | "error"> {
+  const idToken = await getAuthToken();
+  if (!idToken) return "error";
+  const res = await fetch("/api/extension/session", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
+  if (!res.ok) return "error";
+  const { customToken } = (await res.json()) as { customToken?: string };
+  if (!customToken) return "error";
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      window.removeEventListener("message", onAck);
+      resolve("no_extension");
+    }, ACK_TIMEOUT_MS);
+    function onAck(event: MessageEvent) {
+      if (event.source !== window || event.origin !== window.location.origin) return;
+      if (event.data?.type !== SIGN_IN_ACK) return;
+      clearTimeout(timer);
+      window.removeEventListener("message", onAck);
+      resolve("success");
+    }
+    window.addEventListener("message", onAck);
+    window.postMessage({ type: SIGN_IN_MESSAGE, customToken }, window.location.origin);
+  });
+}
 
 export default function ExtensionConnectPage() {
   const { user, signInWithGoogle, loading } = useAuth();
-  const [status, setStatus] = useState<"connecting" | "success" | "need_login">("connecting");
+  const [status, setStatus] = useState<ConnectStatus>("connecting");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isResolvingRedirect, setIsResolvingRedirect] = useState(true);
 
@@ -35,61 +69,6 @@ export default function ExtensionConnectPage() {
       setIsResolvingRedirect(false);
     });
   }, []);
-
-  const dispatchBridgeData = useCallback(
-    (
-      userData: { uid: string; email: string | null },
-      recordsData: CareerRecord[],
-      // Full CreditStatus or the compact cached/admin shape; only serialised for the extension.
-      creditsData: object | null
-    ) => {
-      const bridgePayload = {
-        uid: userData.uid,
-        email: userData.email,
-        records: recordsData || [],
-        credits: creditsData || null,
-        timestamp: Date.now(),
-      };
-
-      try {
-        if (auth?.currentUser) {
-          auth.currentUser.getIdToken().then((t) => {
-            try {
-              localStorage.setItem("winstash_auth_token", t);
-            } catch {}
-          }).catch(() => {});
-        }
-        localStorage.setItem(
-          "winstash_auth_user",
-          JSON.stringify({ uid: userData.uid, email: userData.email })
-        );
-        localStorage.setItem("winstash_auth_bridge", JSON.stringify(bridgePayload));
-        localStorage.setItem("winstash_latest_records_cache", JSON.stringify(recordsData || []));
-        if (creditsData) {
-          localStorage.setItem("winstash_latest_credit_cache", JSON.stringify(creditsData));
-        }
-        document.documentElement.setAttribute(
-          "data-winstash-auth",
-          JSON.stringify(bridgePayload)
-        );
-        window.postMessage(
-          { type: "WINSTASH_AUTH_BRIDGE_UPDATED", payload: bridgePayload },
-          "*"
-        );
-        window.dispatchEvent(
-          new CustomEvent("winstash_auth_ready", { detail: bridgePayload })
-        );
-        window.dispatchEvent(
-          new CustomEvent("winstash_auth_changed", {
-            detail: { uid: userData.uid, email: userData.email },
-          })
-        );
-      } catch (e) {
-        console.warn("Storage sync error:", e);
-      }
-    },
-    []
-  );
 
   const handleManualLogin = async () => {
     setIsLoggingIn(true);
@@ -138,86 +117,33 @@ export default function ExtensionConnectPage() {
       sessionStorage.removeItem("winstash_ext_redirected");
     }
 
-    // 1. User is authenticated! Read cached records immediately (0ms delay)
-    let cachedRecords: CareerRecord[] = [];
-    try {
-      const rawCache =
-        localStorage.getItem("winstash_latest_records_cache") ||
-        localStorage.getItem(`career_pulse_records_user_${user.uid}`);
-      if (rawCache) {
-        const parsed = JSON.parse(rawCache);
-        if (Array.isArray(parsed)) cachedRecords = parsed;
-      }
-    } catch {}
-
-    const isAdmin = isAdminEmail(user.email);
-    let initialCredits = isAdmin
-      ? {
-          plan: "pro",
-          isPro: true,
-          isAdmin: true,
-          userUsedCount: 0,
-          remainingCredits: 999999,
-          maxUserCredits: 999999,
-          isUserExhausted: false,
-          totalGeneratedCount: 0,
+    // Hand a one-time sign-in token to the extension (no tokens or records are stored in the page)
+    let cancelled = false;
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+    handOffToExtension()
+      .catch((e) => {
+        console.warn("[ExtensionConnect] hand-off failed:", e);
+        return "error" as const;
+      })
+      .then((result) => {
+        if (cancelled) return;
+        setStatus(result);
+        if (result === "success") {
+          // Close window / tab shortly after the extension has the token
+          closeTimer = setTimeout(() => {
+            try {
+              window.open("", "_self");
+              window.close();
+            } catch {}
+          }, 600);
         }
-      : null;
-
-    if (!initialCredits) {
-      try {
-        const rawCredit = localStorage.getItem("winstash_latest_credit_cache");
-        if (rawCredit) initialCredits = JSON.parse(rawCredit);
-      } catch {}
-    }
-
-    if (!initialCredits) {
-      initialCredits = {
-        plan: "free",
-        isPro: false,
-        isAdmin: false,
-        userUsedCount: 0,
-        remainingCredits: 10,
-        maxUserCredits: 10,
-        isUserExhausted: false,
-        totalGeneratedCount: 0,
-      };
-    }
-
-    // Broadcast bridge data immediately!
-    dispatchBridgeData(user, cachedRecords, initialCredits);
-    setStatus("success");
-
-    // Close window / tab after 600ms
-    const closeTimer = setTimeout(() => {
-      try {
-        window.open("", "_self");
-        window.close();
-      } catch {}
-    }, 600);
-
-    // Asynchronously fetch fresh records & credits from Firestore in background
-    let isSubscribed = true;
-    const unsub = subscribeUserRecords(
-      user.uid,
-      Boolean(user.isDemo),
-      async (freshRecords) => {
-        if (!isSubscribed) return;
-        try {
-          const freshCredits = await getCreditStatus(user.uid, Boolean(user.isDemo), user.email);
-          dispatchBridgeData(user, freshRecords || cachedRecords, freshCredits || initialCredits);
-        } catch (e) {
-          console.warn("Background bridge update error:", e);
-        }
-      }
-    );
+      });
 
     return () => {
-      isSubscribed = false;
-      clearTimeout(closeTimer);
-      unsub();
+      cancelled = true;
+      if (closeTimer) clearTimeout(closeTimer);
     };
-  }, [user, loading, isResolvingRedirect, isLoggingIn, dispatchBridgeData]);
+  }, [user, loading, isResolvingRedirect, isLoggingIn]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-4">
@@ -267,6 +193,17 @@ export default function ExtensionConnectPage() {
             >
               Close Window
             </button>
+          </div>
+        )}
+
+        {(status === "no_extension" || status === "error") && (
+          <div className="p-5 rounded-2xl bg-amber-950/30 border border-amber-800/60 flex flex-col items-center gap-3 animate-in fade-in duration-300">
+            <AlertCircle className="w-7 h-7 text-amber-400" />
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              {status === "no_extension"
+                ? "The WinStash extension did not respond. Make sure it is installed and enabled, then open it and click Connect again."
+                : "We couldn't connect the extension right now. Please try again in a moment."}
+            </p>
           </div>
         )}
 
