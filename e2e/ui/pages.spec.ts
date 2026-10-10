@@ -70,3 +70,15 @@ test("unknown route returns 404", async ({ request }) => {
   const res = await request.get("/this-page-does-not-exist-e2e");
   expect(res.status()).toBe(404);
 });
+
+test("without NEXT_PUBLIC_POSTHOG_KEY no analytics requests are sent (no built-in fallback key)", async ({ page }) => {
+  const analytics: string[] = [];
+  page.on("request", (req) => {
+    if (/posthog\.com|i\.posthog/.test(req.url())) analytics.push(req.url());
+  });
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page.goto("/pricing");
+  await page.waitForLoadState("networkidle");
+  expect(analytics).toEqual([]);
+});

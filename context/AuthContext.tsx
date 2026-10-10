@@ -115,10 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             photoURL: fbUser.photoURL,
             isDemo: false,
           });
-          identifyUser(fbUser.uid, {
-            email: fbUser.email,
-            displayName: fbUser.displayName,
-          });
+          // Identify by uid only: no email or name in product analytics
+          identifyUser(fbUser.uid);
           trackEvent("user_authenticated", { method: "google" });
         } else {
           try {

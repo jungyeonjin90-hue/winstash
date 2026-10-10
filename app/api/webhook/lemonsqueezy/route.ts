@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { shouldIgnoreTestModeEvent } from "@/lib/webhookPolicy";
 
 // Subscription lifecycle events: payload `data` is the subscription object.
 const SUBSCRIPTION_EVENTS = new Set([
@@ -18,7 +19,7 @@ const REFUND_EVENTS = new Set(["order_refunded", "subscription_payment_refunded"
 
 /** The Lemon Squeezy webhook fields this handler reads (everything else is ignored). */
 interface LemonSqueezyWebhookPayload {
-  meta?: { event_name?: string; custom_data?: { user_id?: unknown } };
+  meta?: { event_name?: string; test_mode?: boolean; custom_data?: { user_id?: unknown } };
   data?: {
     id?: string | number;
     type?: string;
@@ -94,6 +95,12 @@ export async function POST(req: NextRequest) {
     const status = (attributes.status as string) || "inactive";
 
     console.log(`[LemonSqueezy Webhook] Received event: ${eventName}, user: ${userId}, status: ${status}`);
+
+    // Test purchases must not grant real Pro access unless explicitly enabled for testing.
+    if (shouldIgnoreTestModeEvent(payload.meta)) {
+      console.log(`[LemonSqueezy Webhook] Ignored test-mode ${eventName} (LEMON_SQUEEZY_ACCEPT_TEST_EVENTS is off)`);
+      return NextResponse.json({ received: true, ignored: true, note: "Test-mode event ignored" });
+    }
 
     const isSubscriptionEvent = SUBSCRIPTION_EVENTS.has(eventName);
     const isRefundEvent = REFUND_EVENTS.has(eventName);

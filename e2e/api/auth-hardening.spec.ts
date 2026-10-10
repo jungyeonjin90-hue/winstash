@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { SAMPLE_MEMO, uniqueIp } from "../helpers";
 import { E2E_ADMIN_EMAIL } from "../constants";
-import { clearAuthUsers, createTestUser, readFreeUsedCount, requireEmulators, seedDoc } from "../emulator";
+import { clearAuthUsers, createTestUser, readDoc, readFreeUsedCount, requireEmulators, seedDoc } from "../emulator";
 
 /**
  * H-3: per-account rate limit on top of the per-IP limit.
@@ -27,6 +27,19 @@ test.describe("H-3: per-account rate limit", () => {
     }
     expect(statuses.slice(0, 12).every((s) => s === 200)).toBe(true);
     expect(statuses[12]).toBe(429);
+  });
+
+  test("the per-account counter lives in Firestore, shared by all server instances", async ({ request }) => {
+    const user = await createTestUser();
+    await seedDoc(`users/${user.uid}`, { plan: "pro", planStatus: "active" });
+    for (let i = 0; i < 13; i++) {
+      await request.post("/api/transform", {
+        headers: { Authorization: `Bearer ${user.idToken}`, "x-forwarded-for": uniqueIp() },
+        data: { raw_memo: SAMPLE_MEMO },
+      });
+    }
+    const doc = await readDoc(`users/${user.uid}/usage/rate_transform`);
+    expect((doc?.count as { integerValue: string }).integerValue).toBe("12");
   });
 
   test("the limit is per account: another account is unaffected", async ({ request }) => {
