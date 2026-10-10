@@ -213,7 +213,6 @@ export function LandingPageEn() {
   // Interactive Showcase States
   const [selectedPersona, setSelectedPersona] = useState<"engineering" | "product" | "marketing">("engineering");
   const [activeOutputTab, setActiveOutputTab] = useState<"weekly" | "brag" | "star">("weekly");
-  const [isNdaMasked, setIsNdaMasked] = useState(true);
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
 
   // FAQ Accordion State
@@ -675,28 +674,13 @@ export function LandingPageEn() {
                         <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
                           Long-Term · Career Vault & Stories
                         </span>
-                        <span className="text-xs text-zinc-400">STAR Story Method + NDA Shield</span>
+                        <span className="text-xs text-zinc-400">STAR Story Method</span>
                       </div>
-
-                      {/* NDA Toggle Simulation */}
-                      <button
-                        onClick={() => setIsNdaMasked(!isNdaMasked)}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                          isNdaMasked
-                            ? "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800"
-                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-transparent"
-                        }`}
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
-                        <span>{isNdaMasked ? "NDA Shield: ON" : "NDA Shield: OFF"}</span>
-                      </button>
                     </div>
 
                     <div className="space-y-3">
                       <h4 className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-zinc-50">
-                        {isNdaMasked
-                          ? activeData.starResume.title.replace(/Toss/g, "[Fintech Client A]")
-                          : activeData.starResume.title}
+                        {activeData.starResume.title}
                       </h4>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs sm:text-sm">
@@ -826,11 +810,11 @@ export function LandingPageEn() {
                   [Long-Term] Senior Interviews
                 </div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  STAR Career Portfolio & NDA Shield
+                  STAR Career Portfolio
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
-                Elevates accomplishments into complete Situation-Task-Action-Result case studies with automatic client anonymity masking.
+                Elevates accomplishments into complete Situation-Task-Action-Result case studies you can reuse in interviews and promotion packets.
               </p>
               <div className="pt-2 text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
                 <span>1-Click Career Portfolio Copy</span>
@@ -852,7 +836,7 @@ export function LandingPageEn() {
                 Your career notes stay yours.
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed text-pretty max-w-xl">
-                Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash offers client anonymity masking, strict tenant isolation, and encryption at rest &amp; in transit.
+                Logging sensitive internal projects shouldn&apos;t keep you up at night. WinStash keeps each account isolated and encrypts your notes at rest &amp; in transit.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
@@ -867,8 +851,8 @@ export function LandingPageEn() {
                 <div className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-white block font-semibold">NDA De-Identification Engine</strong>
-                    <span className="text-zinc-400 text-pretty block">Helps mask confidential clients, tools, and metrics before export. Always review before sharing.</span>
+                    <strong className="text-white block font-semibold">Private to Your Account</strong>
+                    <span className="text-zinc-400 text-pretty block">Database rules let only your signed-in account read or change your records.</span>
                   </div>
                 </div>
               </div>
@@ -920,7 +904,7 @@ export function LandingPageEn() {
               },
               {
                 q: "How is WinStash different from just using a general AI chatbot?",
-                a: "Fair question. WinStash uses AI too, and if you're happy to write a good prompt and paste your notes every week, a general chatbot can do a lot of this. WinStash takes care of everything around the AI: (1) A habit, not a blank prompt—write a rough one-minute note on Friday with zero prompt tweaking. (2) Three outputs from one note—a weekly manager sync, an XYZ-style brag sheet, and STAR stories in consistent formats. (3) A record that builds up—your notes stay in one place, so your brag sheet draws on months of entries instead of whatever you remembered to paste in. (4) Confidentiality help—the NDA tool helps mask client names, tools, and metrics before export. If you already have a prompt and routine that works for you, keep using it. WinStash is for people who want the habit to be easy enough to actually stick.",
+                a: "Fair question. WinStash uses AI too, and if you're happy to write a good prompt and paste your notes every week, a general chatbot can do a lot of this. WinStash takes care of everything around the AI: (1) A habit, not a blank prompt—write a rough one-minute note on Friday with zero prompt tweaking. (2) Three outputs from one note—a weekly manager sync, an XYZ-style brag sheet, and STAR stories in consistent formats. (3) A record that builds up—your notes stay in one place, so your brag sheet draws on months of entries instead of whatever you remembered to paste in. If you already have a prompt and routine that works for you, keep using it. WinStash is for people who want the habit to be easy enough to actually stick.",
               },
               {
                 q: "What happens after I use my free AI credits?",
@@ -931,10 +915,6 @@ export function LandingPageEn() {
               {
                 q: "Can I use WinStash if I am not a Software Engineer?",
                 a: "Absolutely. WinStash supports 6 dedicated career personas (Engineering, Product Management, Product Design, Growth & Marketing, Sales & BD, BizOps & Finance) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). AI tunes metrics and domain-specific terminology for your exact discipline.",
-              },
-              {
-                q: "How does the NDA Confidentiality Shield protect my company's secrets?",
-                a: "The NDA Shield helps detect internal proprietary code names, client names, and confidential metrics, replacing them with standardized placeholders (e.g. '[Tier-1 Fintech Gateway]') so you can safely prepare external portfolio case studies or resumes. Always review synthesized outputs before external sharing.",
               },
               {
                 q: "How do I export my synthesized career achievements?",
