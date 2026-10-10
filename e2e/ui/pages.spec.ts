@@ -7,7 +7,6 @@ import { test, expect } from "@playwright/test";
 
 const PUBLIC_PAGES = [
   "/",
-  "/ko",
   "/pricing",
   "/privacy",
   "/terms",
@@ -41,19 +40,29 @@ test("security headers are applied", async ({ request }) => {
   expect(h["permissions-policy"]).toBeTruthy();
 });
 
-test("[L-1] Permissions-Policy lets our own pages use the microphone (voice input on /ko)", async ({ page }) => {
-  await page.goto("/ko");
+test("[L-1] Permissions-Policy keeps camera, microphone and geolocation disabled", async ({ page }) => {
+  await page.goto("/");
   const allowed = await page.evaluate(() => {
     const fp = (document as unknown as { featurePolicy?: { allowsFeature(f: string): boolean } }).featurePolicy;
-    return fp ? fp.allowsFeature("microphone") : null;
+    return fp ? ["camera", "microphone", "geolocation"].map((f) => fp.allowsFeature(f)) : null;
   });
-  expect(allowed).toBe(true);
-  // ...while camera and geolocation stay disabled.
-  const others = await page.evaluate(() => {
-    const fp = (document as unknown as { featurePolicy?: { allowsFeature(f: string): boolean } }).featurePolicy;
-    return fp ? [fp.allowsFeature("camera"), fp.allowsFeature("geolocation")] : null;
-  });
-  expect(others).toEqual([false, false]);
+  expect(allowed).toEqual([false, false, false]);
+});
+
+test("old Korean URLs permanently redirect to the English pages", async ({ request }) => {
+  const cases: [string, string][] = [
+    ["/ko", "/"],
+    ["/ko?utm_source=x", "/?utm_source=x"],
+    ["/ko/pricing", "/pricing"],
+    ["/ko/resources/brag-doc-template-software-engineers", "/resources/brag-doc-template-software-engineers"],
+    ["/ko/unknown/page", "/"],
+  ];
+  for (const [from, to] of cases) {
+    const res = await request.get(from, { maxRedirects: 0 });
+    expect(res.status(), from).toBe(308);
+    const location = new URL(res.headers()["location"], "http://localhost");
+    expect(location.pathname + location.search, from).toBe(to);
+  }
 });
 
 test("robots.txt and sitemap.xml are served", async ({ request }) => {

@@ -1,5 +1,12 @@
 import { WeekSpan } from "@/types/career";
-import { formatDateLocal } from "./weekUtils";
+
+/** YYYY-MM-DD in local time (avoids UTC offset errors). */
+export function formatDateLocal(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const date = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${date}`;
+}
 
 const MONTH_NAMES_EN = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",

@@ -19,13 +19,24 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    // microphone=(self): the voice memo input (hooks/useSpeechRecognition.ts) needs it on our own origin
-    value: "camera=(), microphone=(self), geolocation=()",
+    value: "camera=(), microphone=(), geolocation=()",
   },
 ];
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["firebase-admin"],
+  // The Korean service (/ko) was removed: send old links to the matching English page, else home.
+  async redirects() {
+    return [
+      { source: "/ko", destination: "/", permanent: true },
+      {
+        source: "/ko/:page(pricing|privacy|refund|terms|resources)/:rest*",
+        destination: "/:page/:rest*",
+        permanent: true,
+      },
+      { source: "/ko/:path*", destination: "/", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

@@ -56,7 +56,7 @@ export interface WeekSpan {
   weekOfMonth: number;
   startDate: string; // "YYYY-MM-DD"
   endDate: string;   // "YYYY-MM-DD"
-  label: string;     // e.g., "2026년 9월 4주차"
+  label: string;     // e.g., "Week 4"
 }
 
 export interface CareerRecord {

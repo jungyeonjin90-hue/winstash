@@ -6,7 +6,7 @@ import { forgedFirebaseToken, SAMPLE_MEMO, uniqueIp, unsignedToken } from "../he
  * These must hold in every environment; they never reach Gemini or Firestore.
  */
 
-const AI_ROUTES = ["/api/transform", "/api/transform/ko"] as const;
+const AI_ROUTES = ["/api/transform"] as const;
 
 test.describe("AI transform routes reject unauthenticated callers", () => {
   for (const route of AI_ROUTES) {
