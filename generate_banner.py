@@ -80,7 +80,7 @@ def create_stunning_twitter_banner():
 
     # Domain Tag (bottom left)
     draw.text((92, 412), "winstash.net", font=f_url, fill=(165, 180, 252, 255))
-    draw.text((205, 414), "— 100% Free Open Beta", font=f_card_sub, fill=(113, 113, 122, 255))
+    draw.text((205, 414), "— Free to start · Pro $5.99/mo", font=f_card_sub, fill=(113, 113, 122, 255))
 
     # ================= RIGHT SIDE: Precision Glassmorphism UI Mockup =================
     card_x, card_y, card_w, card_h = 820, 60, 600, 380
@@ -152,25 +152,8 @@ def create_stunning_twitter_banner():
         cur_row_y += 42
 
     # Save
-    out_path = os.path.normpath("c:/Project/SP_2/public/x-header.png")
-    tmp_path = os.path.normpath("c:/Project/SP_2/public/x-header-tmp.png")
-    base.save(tmp_path, "PNG", optimize=True)
-    if os.path.exists(out_path):
-        try:
-            os.remove(out_path)
-        except Exception:
-            pass
-    try:
-        os.replace(tmp_path, out_path)
-    except Exception:
-        base.save(out_path, "PNG")
-    
-    # Also copy to artifact dir
-    artifact_path = os.path.normpath("C:/Users/jungy/.gemini/antigravity/brain/6cd2cbab-ec60-4742-accf-0004d9e04fae/x-header.png")
-    try:
-        base.save(artifact_path, "PNG", optimize=True)
-    except Exception:
-        pass
+    root = os.path.dirname(os.path.abspath(__file__))
+    base.save(os.path.join(root, "public", "x-header.png"), "PNG", optimize=True)
     print("Header successfully regenerated with 100% matched service data!")
 
 create_stunning_twitter_banner()
