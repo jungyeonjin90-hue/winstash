@@ -23,7 +23,7 @@ import { clearUserSummaryCache, purgeLegacySummaryCaches } from "@/lib/summaryCa
 import { getSettings, saveSettings } from "@/lib/storage";
 import { CreditStatus, subscribeCreditStatus } from "@/lib/creditService";
 import { isAdminEmail } from "@/lib/adminConfig";
-import { getAuthToken } from "@/lib/firebase";
+import { auth, getAuthToken } from "@/lib/firebase";
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, SeniorityLevel, RegionCode } from "@/types/career";
 import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
@@ -31,6 +31,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { PaymentIssueBanner } from "@/components/PaymentIssueBanner";
 import { UpdateConfirmModalEn } from "@/components/en/UpdateConfirmModalEn";
 import { CareerHeatmapEn } from "@/components/en/CareerHeatmapEn";
+import { FirstResultCardEn } from "@/components/en/FirstResultCardEn";
 
 interface PendingUpdateParams {
   rawMemo: string;
@@ -61,6 +62,8 @@ export default function Home() {
   const [industry, setIndustry] = useState<string | undefined>(undefined);
   const [region, setRegion] = useState<RegionCode | undefined>(undefined);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // Record from the user's very first save (0 -> 1 records); cleared on dismiss
+  const [firstResultRecord, setFirstResultRecord] = useState<CareerRecord | null>(null);
   const hasPriorSession = useHasPriorSession();
 
   // Modal handlers with browser history support (Back button closes modal instead of leaving site)
@@ -146,6 +149,7 @@ export default function Home() {
       setPendingUpdate(null);
       setIsClientLoaded(false);
       setShowOnboarding(false);
+      setFirstResultRecord(null);
       setCreditStatus(null);
       setJobRole("engineering");
       setToneManner("impact");
@@ -157,6 +161,7 @@ export default function Home() {
       setRecords([]);
       setIsClientLoaded(false);
       setShowOnboarding(false);
+      setFirstResultRecord(null);
 
       // Read user-scoped settings if available, else clean defaults
       const userSettings = getSettings(user.uid);
@@ -300,6 +305,25 @@ export default function Home() {
     }
   };
 
+  const focusQuickLogger = () => {
+    requestAnimationFrame(() => {
+      const textarea = document.getElementById("quick-logger-textarea");
+      if (textarea) {
+        textarea.scrollIntoView({ behavior: "smooth", block: "center" });
+        textarea.focus({ preventScroll: true });
+      }
+    });
+  };
+
+  const handleFirstMemoStarted = () => {
+    const creationTime = auth?.currentUser?.metadata.creationTime;
+    const signupMs = creationTime ? Date.parse(creationTime) : NaN;
+    trackEvent(
+      "first_memo_started",
+      Number.isFinite(signupMs) ? { secondsSinceSignup: Math.round((Date.now() - signupMs) / 1000) } : undefined
+    );
+  };
+
   const handleTransform = async (
     rawMemo: string,
     targetWeek?: WeekSpan,
@@ -366,6 +390,8 @@ export default function Home() {
       openUpgradeModal(finalExistingRecordId ? "edit" : "input");
       return;
     }
+
+    const isFirstNote = records.length === 0 && !finalExistingRecordId;
 
     setIsLoading(true);
     try {
@@ -456,6 +482,11 @@ export default function Home() {
         impactMagnitude: output.star_portfolio?.impactMagnitude,
       });
 
+      if (isFirstNote) {
+        trackEvent("first_memo_saved", { memoLength: rawMemo.length });
+        setFirstResultRecord(newRecord);
+      }
+
       // Clear local summary cache to ensure next view reflects latest notes
       await clearUserSummaryCache(user.uid, Boolean(user.isDemo));
 
@@ -465,10 +496,11 @@ export default function Home() {
           : `🎉 ${finalTargetWeek ? finalTargetWeek.label : "Weekly entry"} successfully transformed and synced!`
       );
 
-      const dashElement = document.getElementById("dashboard-section");
-      if (dashElement) {
-        dashElement.scrollIntoView({ behavior: "smooth" });
-      }
+      // Wait a frame so the first-result card (or the newly shown dashboard) is in the DOM
+      requestAnimationFrame(() => {
+        const target = document.getElementById(isFirstNote ? "first-result-card" : "dashboard-section");
+        target?.scrollIntoView({ behavior: "smooth" });
+      });
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "An error occurred during transformation.";
@@ -588,11 +620,21 @@ export default function Home() {
             onUpgradeClick={() => openUpgradeModal("input")}
             selectedWeek={selectedWeek}
             onWeekChange={setSelectedWeek}
+            jobRole={jobRole}
+            isFirstNote={isClientLoaded && records.length === 0}
+            onFirstMemoStarted={handleFirstMemoStarted}
           />
         </section>
 
-        {/* Screen 1.5: 52-Week Career Heatmap */}
-        {isClientLoaded && (
+        {/* First-result card: shown once after the first note is saved */}
+        {firstResultRecord && records.some((r) => r.id === firstResultRecord.id) && (
+          <section>
+            <FirstResultCardEn record={firstResultRecord} onDismiss={() => setFirstResultRecord(null)} />
+          </section>
+        )}
+
+        {/* Screen 1.5: 52-Week Career Heatmap (hidden until the first record exists) */}
+        {isClientLoaded && records.length > 0 && (
           <section className="space-y-4">
             <CareerHeatmapEn
               records={records}
@@ -602,21 +644,21 @@ export default function Home() {
           </section>
         )}
 
-        {/* Screen 2: 3-Way Dashboard */}
-        <section id="dashboard-section" className="space-y-4 pt-4">
-          <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-3">
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-indigo-500" />
-                <span>3-Way Career Dashboard</span>
-              </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Switch tabs to view your short-term syncs, mid-term achievements, or interview case studies.
-              </p>
+        {/* Screen 2: 3-Way Dashboard (hidden until the first record exists) */}
+        {isClientLoaded && records.length > 0 && (
+          <section id="dashboard-section" className="space-y-4 pt-4">
+            <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-3">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-indigo-500" />
+                  <span>3-Way Career Dashboard</span>
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Switch tabs to view your short-term syncs, mid-term achievements, or interview case studies.
+                </p>
+              </div>
             </div>
-          </div>
 
-          {isClientLoaded && (
             <DashboardTabsEn
               records={records}
               activeRecordId={activeRecordId}
@@ -631,8 +673,8 @@ export default function Home() {
               onJobRoleChange={handleJobRoleChange}
               onToneMannerChange={handleToneMannerChange}
             />
-          )}
-        </section>
+          </section>
+        )}
       </main>
 
       {/* Footer */}
@@ -718,7 +760,9 @@ export default function Home() {
           isOpen={showOnboarding}
           onSave={(role) => {
             handleJobRoleChange(role);
+            trackEvent("onboarding_role_selected", { jobRole: role });
             setShowOnboarding(false);
+            focusQuickLogger();
           }}
         />
       )}

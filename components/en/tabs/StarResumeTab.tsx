@@ -224,6 +224,9 @@ export function StarResumeTab({
   }, [cachedEntry, currentRecordIds]);
 
   const needsGeneration = !cachedEntry || !isValid || isStale;
+  // With a single weekly note, a combined portfolio adds little; keep Generate secondary so new
+  // users don't spend a free synthesis on one note.
+  const isSingleRecord = records.length === 1 && filteredRecords.length === 1;
 
   // 5. Trigger AI Synthesis on-demand
   const handleSynthesizeWithAi = async () => {
@@ -443,7 +446,9 @@ export function StarResumeTab({
               onClick={handleSynthesizeWithAi}
               disabled={isSynthesizing || filteredRecords.length === 0}
               className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all ${
-                filteredRecords.length > 0
+                isSingleRecord
+                  ? "bg-white dark:bg-zinc-900 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 shadow-none cursor-pointer"
+                  : filteredRecords.length > 0
                   ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-amber-500/25 ring-2 ring-amber-500/30 animate-pulse cursor-pointer"
                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 border border-zinc-200 dark:border-zinc-800 cursor-not-allowed"
               } disabled:opacity-50`}
@@ -452,7 +457,7 @@ export function StarResumeTab({
                 <StarSynthesizingMessage />
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-white" />
+                  <Sparkles className={`w-4 h-4 ${isSingleRecord ? "text-amber-500" : "text-white"}`} />
                   <span>
                     {filteredRecords.length === 0
                       ? "No Weekly Logs in this Period"
@@ -697,6 +702,44 @@ export function StarResumeTab({
                   Log your weekly accomplishments in the Weekly Snippets drawer first, or adjust your year/half filters.
                 </p>
               </>
+            ) : isSingleRecord ? (
+              <div className="space-y-4 text-left max-w-xl mx-auto">
+                <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                    From your first note
+                  </span>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-relaxed">
+                    {records[0].star_portfolio?.title}
+                  </p>
+                  <dl className="space-y-1 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {(["situation", "task", "action", "result"] as const).map((key) => (
+                      <div key={key} className="flex gap-2">
+                        <dt className="font-bold text-amber-700 dark:text-amber-400 w-4 shrink-0">{key[0].toUpperCase()}</dt>
+                        <dd>{records[0].star_portfolio?.[key]}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+                  Add a few more weekly notes, then generate a combined portfolio.
+                </p>
+                <div className="text-center">
+                  <button
+                    onClick={handleSynthesizeWithAi}
+                    disabled={isSynthesizing}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSynthesizing ? (
+                      <StarSynthesizingMessage />
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Generate from 1 note anyway</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400 shadow-xs">

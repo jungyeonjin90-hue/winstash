@@ -29,12 +29,13 @@ async function seedDemoSession(page: Page, lastActivity = Date.now()) {
   );
 }
 
-const memoBox = (page: Page) => page.getByPlaceholder(/Hotfixed payment gateway timeouts/);
+const memoBox = (page: Page) => page.locator("#quick-logger-textarea");
 
 async function finishOnboarding(page: Page) {
-  const start = page.getByRole("button", { name: "Start Using WinStash" });
+  const start = page.getByRole("button", { name: "Write my first note" });
   await start.click();
   await expect(start).toBeHidden();
+  await expect(memoBox(page)).toBeFocused();
 }
 
 test("logged-out visitor sees the landing page, not the dashboard", async ({ page }) => {
@@ -47,6 +48,11 @@ test("first-time demo user: onboarding -> save memo -> record appears in dashboa
   await page.goto("/");
 
   await finishOnboarding(page);
+
+  // First-note state: role-based placeholder, one-line hint, no heatmap/dashboard yet
+  await expect(memoBox(page)).toHaveAttribute("placeholder", /Fixed the login timeout bug/);
+  await expect(page.getByText(/Write one line about what you did this week/)).toBeVisible();
+  await expect(page.locator("#dashboard-section")).toHaveCount(0);
 
   const memo = "Cut p99 latency from 1.2s to 85ms by adding Redis caching. Zero dropped transactions.";
   await memoBox(page).fill(memo);
@@ -62,9 +68,19 @@ test("first-time demo user: onboarding -> save memo -> record appears in dashboa
   await expect(page.getByText(/History \(1\)/)).toBeVisible();
   await expect(page.getByRole("button", { name: /Update Week/ })).toBeVisible();
 
-  // Record survives a reload (demo persistence is localStorage).
+  // First save shows the one-time first-result card with all three drafts.
+  const firstResult = page.locator("#first-result-card");
+  await expect(firstResult.getByText("Your note became three drafts")).toBeVisible();
+  await expect(firstResult.getByText("Weekly Snippet", { exact: true })).toBeVisible();
+  await expect(firstResult.getByText("Performance Review", { exact: true })).toBeVisible();
+  await expect(firstResult.getByText("Career Portfolio", { exact: true })).toBeVisible();
+  await firstResult.getByRole("button", { name: "Dismiss" }).click();
+  await expect(firstResult).toHaveCount(0);
+
+  // Record survives a reload (demo persistence is localStorage); the card does not come back.
   await page.reload();
   await expect(page.getByText(/History \(1\)/)).toBeVisible();
+  await expect(page.locator("#first-result-card")).toHaveCount(0);
 });
 
 test("save button is disabled for an empty memo", async ({ page }) => {
