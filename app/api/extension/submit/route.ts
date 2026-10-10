@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
       jobRole,
       toneManner,
       source: "chrome_extension",
+      savedAt: new Date().toISOString(),
     } as unknown as CareerRecord;
 
     // 6. Persist (Admin SDK). Demo users are never written to Firestore.

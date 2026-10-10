@@ -7,6 +7,7 @@ import { WeeklyReportTab } from "./tabs/WeeklyReportTab";
 import { BragSheetTab } from "./tabs/BragSheetTab";
 import { CareerVaultTab } from "./tabs/CareerVaultTab";
 import { TimelineArchiveTab } from "./tabs/TimelineArchiveTab";
+import { getMostRecentlySavedId } from "@/lib/recordOrder";
 
 interface DashboardTabsProps {
   records: CareerRecord[];
@@ -41,9 +42,12 @@ export function DashboardTabs({
   // 대시보드는 로그인 후 클라이언트에서만 마운트되므로 초기값에서 URL을 읽어도 hydration 불일치가 없음
   const [activeTab, setActiveTab] = useState<TabType>(readTabFromUrl);
 
+  // "최신" = 가장 최근에 저장한 기록 (lib/recordOrder.ts). 목록 자체는 주차 날짜순
+  const latestRecordId = getMostRecentlySavedId(records);
+
   // activeRecordId first: same result as the former mount effect that focused it
   const [selectedRecordId, setSelectedRecordId] = useState<string>(
-    activeRecordId || records[0]?.id || ""
+    activeRecordId || latestRecordId || ""
   );
 
   // Automatically switch tab and focus on newly recorded week (activeRecordId 변경 시 렌더 중 조정)
@@ -83,9 +87,9 @@ export function DashboardTabs({
     }
   };
 
-  // If selectedRecordId not found in records, pick first
+  // If selectedRecordId not found in records, pick the latest saved one
   const currentRecord =
-    records.find((r) => r.id === selectedRecordId) || records[0];
+    records.find((r) => r.id === selectedRecordId) || records.find((r) => r.id === latestRecordId);
 
   const tabs = [
     {
@@ -208,7 +212,7 @@ export function DashboardTabs({
           {currentRecord && (
             <div className="flex items-center gap-3 self-end sm:self-center">
               <span className="text-xs text-zinc-400 font-mono">
-                {records.indexOf(currentRecord) === 0 ? "🔥 최신 주간 기록" : `이전 기록`}
+                {currentRecord.id === latestRecordId ? "🔥 최신 주간 기록" : `이전 기록`}
               </span>
               <button
                 onClick={() => {

@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
 import { CareerRecord, JobRole, ToneManner, PersonaProfile, SeniorityLevel, RegionCode, FeedbackReport } from "@/types/career";
+import { sortRecordsByWeek, upsertRecordSorted } from "@/lib/recordOrder";
 import { INITIAL_CAREER_RECORDS } from "./initialData";
 
 const LOCAL_STORAGE_KEY_PREFIX = "career_pulse_records_user_";
@@ -52,16 +53,17 @@ export function subscribeUserRecords(
             jobRole: data.jobRole,
             toneManner: data.toneManner,
             source: data.source || "web_text",
+            savedAt: data.savedAt,
           } as CareerRecord;
         });
 
-        onUpdate(records);
+        onUpdate(sortRecordsByWeek(records));
       },
       (err) => {
         console.error("Firestore onSnapshot error:", err);
         if (onError) onError(err);
         // 실패 시 로컬 캐시 폴백
-        onUpdate(getLocalUserRecords(userId));
+        onUpdate(sortRecordsByWeek(getLocalUserRecords(userId)));
       }
     );
 
@@ -70,7 +72,7 @@ export function subscribeUserRecords(
 
   // 2. 데모 유저 또는 Firebase 미설정 로컬 모드
   const initial = getLocalUserRecords(userId);
-  onUpdate(initial);
+  onUpdate(sortRecordsByWeek(initial));
   return () => {};
 }
 
@@ -97,6 +99,7 @@ export async function saveUserRecordToFirestore(
   const normalizedRecord: CareerRecord = {
     ...record,
     source: record.source || "web_text",
+    savedAt: new Date().toISOString(),
   };
   // undefined 필드를 제거하여 Firestore Invalid argument 예외 원천 방지
   const cleanRecord = JSON.parse(JSON.stringify(normalizedRecord));
@@ -113,8 +116,7 @@ export async function saveUserRecordToFirestore(
   } else {
     // 로컬 스토리지에 저장
     const current = getLocalUserRecords(userId);
-    const updated = [cleanRecord, ...current.filter((r) => r.id !== cleanRecord.id)];
-    saveLocalUserRecords(userId, updated);
+    saveLocalUserRecords(userId, upsertRecordSorted(current, cleanRecord));
   }
 }
 

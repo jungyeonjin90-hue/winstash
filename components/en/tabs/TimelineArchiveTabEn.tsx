@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { getMostRecentlySavedId } from "@/lib/recordOrder";
 import { Trash2, ChevronDown, ChevronUp, Archive, Calendar, Pencil, Loader2 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
 import { getDetailedRecordDateInfo } from "@/lib/periodUtils";
@@ -12,11 +13,13 @@ interface TimelineArchiveTabEnProps {
 }
 
 export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: TimelineArchiveTabEnProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(records[0]?.id || null);
+  // "Latest" = the most recently saved record (lib/recordOrder.ts); the list itself is in week order
+  const latestRecordId = useMemo(() => getMostRecentlySavedId(records), [records]);
+  const [expandedId, setExpandedId] = useState<string | null>(latestRecordId || null);
 
   // Automatically expand the latest record when records arrive or change (adjusted during render)
-  if (records.length > 0 && !expandedId) {
-    setExpandedId(records[0].id);
+  if (latestRecordId && !expandedId) {
+    setExpandedId(latestRecordId);
   }
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMemo, setEditMemo] = useState("");
@@ -154,7 +157,7 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
                     <span className="font-bold text-sm text-indigo-600 dark:text-indigo-400">
                       {weekLabel}
                     </span>
-                    {record.id === records[0]?.id && (
+                    {record.id === latestRecordId && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500 text-white flex items-center gap-1 shadow-xs">
                         <span>🔥</span>
                         <span>Latest Entry</span>
@@ -162,7 +165,8 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
                     )}
                   </div>
                   <span className="text-[11px] text-zinc-400 font-mono hidden sm:inline-block">
-                    (Created: {new Date(record.createdAt).toLocaleDateString("en-US", {
+                    {/* createdAt is the week's date; savedAt is when the note was actually saved */}
+                    ({record.savedAt ? "Saved" : "Created"}: {new Date(record.savedAt || record.createdAt).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                       day: "numeric",

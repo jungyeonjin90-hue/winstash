@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useHasPriorSession } from "@/hooks/useHasPriorSession";
+import { upsertRecordSorted } from "@/lib/recordOrder";
 import Link from "next/link";
 import { HeaderEn } from "@/components/en/HeaderEn";
 import { QuickLoggerEn } from "@/components/en/QuickLoggerEn";
@@ -460,10 +461,12 @@ export default function Home() {
         jobRole: role,
         toneManner: tone,
         source: "web_text",
+        savedAt: new Date().toISOString(),
       };
 
       // Instant optimistic local state update
-      setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
+      // Keep week order: a note saved for an older week goes to its place, not to the top
+      setRecords((prev) => upsertRecordSorted(prev, newRecord));
       setActiveRecordId(newRecord.id);
 
       // Demo users persist to local storage fallback only
