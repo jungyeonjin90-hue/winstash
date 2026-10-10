@@ -548,7 +548,7 @@ export default function BragDocTemplatePage() {
               </Link>
               <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                 <ShieldCheck className="w-4 h-4 text-indigo-400" />
-                <span>Free during public beta • Zero card required</span>
+                <span>Free plan • No credit card required</span>
               </div>
             </div>
           </div>
