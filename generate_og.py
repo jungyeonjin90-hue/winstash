@@ -86,7 +86,7 @@ def create_og_image():
 
     # Domain Tag (bottom left)
     draw.text((left_x, 485), "winstash.net", font=f_url, fill=(165, 180, 252, 255))
-    draw.text((left_x + 125, 487), "— 100% Free Open Beta", font=f_card_sub, fill=(113, 113, 122, 255))
+    draw.text((left_x + 125, 487), "— Free to start · Pro $5.99/mo", font=f_card_sub, fill=(113, 113, 122, 255))
 
     # ================= RIGHT SIDE: Precision Glassmorphism Card =================
     card_x, card_y, card_w, card_h = 600, 65, 545, 500
@@ -156,12 +156,9 @@ def create_og_image():
         cur_row_y += 46
 
     # Save to public and app
-    og_public = "c:/Project/SP_2/public/og-image.png"
-    base.save(og_public, "PNG", optimize=True)
-    
-    # Save to artifact dir as well
-    artifact_path = "C:/Users/jungy/.gemini/antigravity/brain/6cd2cbab-ec60-4742-accf-0004d9e04fae/og-image.png"
-    base.save(artifact_path, "PNG", optimize=True)
+    root = os.path.dirname(os.path.abspath(__file__))
+    for rel in ("public/og-image.png", "app/opengraph-image.png", "app/twitter-image.png"):
+        base.save(os.path.join(root, rel), "PNG", optimize=True)
     print("New Open Graph image (1200x630) generated successfully with 100% matched service data!")
 
 create_og_image()
