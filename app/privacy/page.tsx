@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck, Lock, EyeOff, Trash2, Mail, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Lock, Trash2, Mail, CheckCircle2, Sparkles } from "lucide-react";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import type { Metadata } from "next";
 
@@ -47,29 +47,29 @@ export default function PrivacyPolicyPage() {
             Last Updated: September 30, 2026 · Effective Date: September 30, 2026
           </p>
           <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed">
-            At <strong>WinStash</strong> (&quot;we&quot;, &quot;our&quot;, or &quot;the Service&quot;), we believe your professional accomplishments and workplace records belong exclusively to you. This Privacy Policy details our unwavering commitment to confidential data isolation, our strict zero-training policy, and how you retain total ownership over your data.
+            At <strong>WinStash</strong> (&quot;we&quot;, &quot;our&quot;, or &quot;the Service&quot;), we believe your professional accomplishments and workplace records belong exclusively to you. This Privacy Policy details how we process your notes with AI, how we isolate and protect your data, and how you retain ownership of it.
           </p>
         </div>
 
-        {/* 1. Zero Model Training Guarantee */}
+        {/* 1. AI Processing */}
         <section className="space-y-4">
           <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 font-bold text-lg sm:text-xl">
-            <EyeOff className="w-5 h-5 shrink-0" />
-            <h2>1. Zero AI Model Training Guarantee (Strict No-Training Policy)</h2>
+            <Sparkles className="w-5 h-5 shrink-0" />
+            <h2>1. How AI Processing Works</h2>
           </div>
           <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-3 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
             <p className="font-semibold text-indigo-900 dark:text-indigo-200">
-              Your raw notes and career transformations are NEVER used to train public or proprietary AI models.
+              To turn your notes into drafts, WinStash sends the text you submit to Google&apos;s Gemini API, which generates the draft and returns it to us.
             </p>
             <ul className="space-y-2 list-disc list-inside">
               <li>
-                All AI synthesis requests are processed via stateless enterprise API agreements (Google Cloud Vertex / Gemini Enterprise API).
+                We send only what the draft needs: your note text (or, for Brag Sheet and STAR syntheses, the saved records you select) plus your chosen role and tone settings and, if you have set them, your seniority, industry and region. We do not send your name or email address with these requests.
               </li>
               <li>
-                Neither WinStash nor our foundational LLM providers retain your prompts or completion outputs for machine learning model training or algorithmic tuning.
+                Google processes these requests as our AI service provider under the Gemini API terms.
               </li>
               <li>
-                Your company&apos;s proprietary projects, internal metrics, and code references remain confidential to your private workspace.
+                The drafts are stored in your account, where only you can read them (see Section 3).
               </li>
             </ul>
           </div>
