@@ -127,3 +127,12 @@ test("the stored lemonSqueezyEventAt gates updates (why firestore.rules makes it
   await send(request, subscriptionEvent(uid, "subscription_expired", { status: "expired", updated_at: "2026-10-09T00:00:00Z" }));
   expect((await profile(uid)).plan).toBe("pro");
 });
+
+test("a test-mode purchase does not grant Pro (LEMON_SQUEEZY_ACCEPT_TEST_EVENTS is off)", async ({ request }) => {
+  const uid = newUid();
+  const event = subscriptionEvent(uid, "subscription_created", { status: "active", updated_at: "2026-10-08T10:00:00Z" });
+  const res = await send(request, { ...event, meta: { ...event.meta, test_mode: true } });
+  expect(res.status()).toBe(200);
+  expect((await res.json()).note).toBe("Test-mode event ignored");
+  expect((await profile(uid)).plan).toBeUndefined();
+});

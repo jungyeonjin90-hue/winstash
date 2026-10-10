@@ -73,6 +73,42 @@ function quotaRule(action: QuotaAction) {
 // Per-account limits (requests / minute), applied on top of the per-IP limits so rotating IPs
 // does not help a single account (audit H-3). Admins are exempt.
 const PER_USER_RATE_LIMIT: Record<QuotaAction, number> = { transform: 12, brag: 8, star: 8 };
+const RATE_WINDOW_MS = 60 * 1000;
+
+/**
+ * Per-account rate limit shared by every server instance: a fixed one-minute window counted in
+ * users/{uid}/usage/rate_{action} (server-only under firestore.rules) inside a transaction.
+ * Falls back to the per-instance in-memory limiter when Firestore is unavailable, so a storage
+ * hiccup never blocks a request on its own.
+ */
+async function checkAccountRateLimit(
+  userId: string,
+  action: QuotaAction
+): Promise<{ success: boolean; resetSeconds: number }> {
+  const limit = PER_USER_RATE_LIMIT[action];
+  if (!adminDb) return checkServerRateLimit(`uid:${userId}:${action}`, limit, RATE_WINDOW_MS);
+  const db = adminDb;
+  const ref = db.collection("users").doc(userId).collection("usage").doc(`rate_${action}`);
+  try {
+    return await db.runTransaction(async (tx) => {
+      const now = Date.now();
+      const snap = await tx.get(ref);
+      const windowStart = (snap.get("windowStart") as number) || 0;
+      const count = (snap.get("count") as number) || 0;
+      if (now - windowStart >= RATE_WINDOW_MS) {
+        tx.set(ref, { windowStart: now, count: 1 });
+        return { success: true, resetSeconds: Math.ceil(RATE_WINDOW_MS / 1000) };
+      }
+      const resetSeconds = Math.max(1, Math.ceil((windowStart + RATE_WINDOW_MS - now) / 1000));
+      if (count >= limit) return { success: false, resetSeconds };
+      tx.update(ref, { count: count + 1 });
+      return { success: true, resetSeconds };
+    });
+  } catch (e) {
+    console.error("[AuthQuota] Shared rate limit unavailable, using in-memory limit:", e);
+    return checkServerRateLimit(`uid:${userId}:${action}`, limit, RATE_WINDOW_MS);
+  }
+}
 
 export interface VerifiedRequestUser {
   uid: string;
@@ -211,8 +247,9 @@ export async function verifyServerAuthAndQuota(
     return { allowed: true, userId, userEmail, isPro: true, isAdmin: true, reserve: unlimitedReserve };
   }
 
-  // 4. Per-account rate limit (applies to Pro users too: unlimited quota is not unlimited throughput)
-  const userLimit = checkServerRateLimit(`uid:${userId}`, PER_USER_RATE_LIMIT[action], 60 * 1000);
+  // 4. Per-account rate limit (applies to Pro users too: unlimited quota is not unlimited throughput),
+  //    shared across server instances via Firestore
+  const userLimit = await checkAccountRateLimit(userId, action);
   if (!userLimit.success) {
     return {
       allowed: false,
