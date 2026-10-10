@@ -47,6 +47,7 @@ async function profile(uid: string) {
     planStatus: str("planStatus"),
     subscriptionId: str("lemonSqueezySubscriptionId"),
     lastEvent: str("lemonSqueezyLastEvent"),
+    pastDueSince: str("pastDueSince") ?? null,
   };
 }
 
@@ -135,4 +136,29 @@ test("a test-mode purchase does not grant Pro (LEMON_SQUEEZY_ACCEPT_TEST_EVENTS 
   expect(res.status()).toBe(200);
   expect((await res.json()).note).toBe("Test-mode event ignored");
   expect((await profile(uid)).plan).toBeUndefined();
+});
+
+test("past_due keeps Pro while payment is retried; the grace start is kept and cleared on recovery", async ({ request }) => {
+  const uid = newUid();
+  await send(request, subscriptionEvent(uid, "subscription_created", { status: "active", updated_at: "2026-10-01T00:00:00Z" }));
+
+  await send(request, subscriptionEvent(uid, "subscription_updated", { status: "past_due", updated_at: "2026-10-02T00:00:00Z" }));
+  expect(await profile(uid)).toMatchObject({ plan: "pro", planStatus: "past_due" });
+  const since = (await profile(uid)).pastDueSince;
+  expect(since && Date.parse(since)).toBe(Date.parse("2026-10-02T00:00:00Z"));
+
+  // Another retry failure: grace still counts from the first failure
+  await send(request, subscriptionEvent(uid, "subscription_updated", { status: "past_due", updated_at: "2026-10-05T00:00:00Z" }));
+  expect((await profile(uid)).pastDueSince).toBe(since);
+
+  // Payment recovered
+  await send(request, subscriptionEvent(uid, "subscription_updated", { status: "active", updated_at: "2026-10-06T00:00:00Z" }));
+  expect(await profile(uid)).toMatchObject({ plan: "pro", planStatus: "active", pastDueSince: null });
+});
+
+test("retries exhausted (unpaid) revokes Pro", async ({ request }) => {
+  const uid = newUid();
+  await send(request, subscriptionEvent(uid, "subscription_updated", { status: "past_due", updated_at: "2026-10-02T00:00:00Z" }));
+  await send(request, subscriptionEvent(uid, "subscription_updated", { status: "unpaid", updated_at: "2026-10-16T00:00:00Z" }));
+  expect(await profile(uid)).toMatchObject({ plan: "free", planStatus: "unpaid", pastDueSince: null });
 });

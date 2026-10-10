@@ -12,6 +12,7 @@ import {
   MAX_GLOBAL_SERVICE_CREDITS,
 } from "./creditConfig";
 import { isAdminEmail } from "./adminConfig";
+import { hasProAccess } from "./subscriptionAccess";
 
 const LOCAL_USER_USAGE_KEY = "career_pulse_free_usage_user_";
 const LOCAL_GLOBAL_USAGE_KEY = "career_pulse_global_free_usage";
@@ -110,14 +111,7 @@ export async function getCreditStatus(
       const userDocRef = doc(db, "users", userId);
       const userDocSnap = await getDoc(userDocRef);
       const userData = userDocSnap.exists() ? userDocSnap.data() : null;
-      const planStatus = userData?.planStatus;
-      const endsAt = userData?.endsAt ? new Date(userData.endsAt).getTime() : 0;
-      const isPro =
-        userData?.plan === "pro" &&
-        (planStatus === "active" ||
-          planStatus === "on_trial" ||
-          planStatus === "paid" ||
-          (planStatus === "cancelled" && endsAt > Date.now()));
+      const isPro = hasProAccess(userData ?? undefined);
 
       // 1-2. 개인 변환 사용량: 서버가 차감·차단에 쓰는 usage/summary 하나만 사용.
       //      예전 클라이언트가 쓰던 users.freeUsedCount 와 localStorage 카운트를 max()로 섞으면

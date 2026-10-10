@@ -79,6 +79,10 @@ describe("users/{uid} profile", () => {
     await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { lemonSqueezySubscriptionId: "fake" }));
   });
 
+  test("owner must NOT be able to set the payment-retry grace start", async () => {
+    await assertFails(updateDoc(doc(as(ALICE), "users", ALICE), { pastDueSince: "2099-01-01T00:00:00Z" }));
+  });
+
   test("[C-1] new profile must NOT be creatable with plan=pro", async () => {
     const carol = as("carol");
     await assertFails(setDoc(doc(carol, "users", "carol"), { plan: "pro", planStatus: "active" }));

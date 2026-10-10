@@ -108,6 +108,7 @@ export async function GET(req: NextRequest) {
             plan: fields.plan?.stringValue,
             planStatus: fields.planStatus?.stringValue,
             endsAt: fields.endsAt?.stringValue,
+            pastDueSince: fields.pastDueSince?.stringValue,
           });
           creditStatus = {
             isPro,
