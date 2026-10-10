@@ -37,6 +37,16 @@ test.describe("POST /api/extension/submit quota (C-3)", () => {
     expect(await listRecordIds(user.uid)).toContain(json.record.id);
   });
 
+  test("a new record's createdAt is its week's date, savedAt is the save time", async ({ request }) => {
+    const user = await createTestUser();
+    const target_week = { year: 2026, month: 8, weekOfMonth: 1, startDate: "2026-08-02", endDate: "2026-08-08", label: "Week 1" };
+    const res = await submit(request, user.idToken, { rawNote: SAMPLE_MEMO, target_week });
+    expect(res.status()).toBe(200);
+    const { record } = await res.json();
+    expect(record.createdAt).toBe("2026-08-08T09:00:00.000Z");
+    expect(Date.now() - Date.parse(record.savedAt)).toBeLessThan(60_000);
+  });
+
   test("editing an existing entry also consumes one credit", async ({ request }) => {
     const user = await createTestUser();
     const first = await (await submit(request, user.idToken, { rawNote: SAMPLE_MEMO })).json();

@@ -21,6 +21,16 @@ describe("sortRecordsByWeek", () => {
     assert.deepEqual(ids(sortRecordsByWeek(list)), ["b", "a"]);
   });
 
+  test("target_week wins over createdAt (extension records stored the save time in createdAt)", () => {
+    const extAug = {
+      id: "ext-aug",
+      createdAt: "2026-10-10T03:28:23.516Z", // save time
+      target_week: { year: 2026, month: 8, weekOfMonth: 1, startDate: "2026-08-02", endDate: "2026-08-08", label: "Week 1" },
+    };
+    const list = [rec("oct-w2", "2026-10-17"), extAug, rec("oct-w1", "2026-10-10"), rec("sep-w5", "2026-10-03")];
+    assert.deepEqual(ids(sortRecordsByWeek(list)), ["oct-w2", "oct-w1", "sep-w5", "ext-aug"]);
+  });
+
   test("does not mutate the input", () => {
     const list = [rec("old", "2026-01-01"), rec("new", "2026-02-01")];
     sortRecordsByWeek(list);

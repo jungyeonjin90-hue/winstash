@@ -17,8 +17,12 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
   const latestRecordId = useMemo(() => getMostRecentlySavedId(records), [records]);
   const [expandedId, setExpandedId] = useState<string | null>(latestRecordId || null);
 
-  // Automatically expand the latest record when records arrive or change (adjusted during render)
-  if (latestRecordId && !expandedId) {
+  // Expand the latest record when it first appears or a newer one is saved (adjusted during render).
+  // Collapsing a card must not re-open another one, so this runs per latest record, not whenever
+  // nothing is expanded.
+  const [autoExpandedFor, setAutoExpandedFor] = useState<string | undefined>(latestRecordId);
+  if (latestRecordId && latestRecordId !== autoExpandedFor) {
+    setAutoExpandedFor(latestRecordId);
     setExpandedId(latestRecordId);
   }
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -237,7 +241,11 @@ export function TimelineArchiveTabEn({ records, onDeleteRecord, onEditRecord }: 
               ) : (
                 <>
                   {/* Raw Memo Snippet */}
-                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 line-clamp-2">
+                  <p
+                    className={`text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 ${
+                      isExpanded ? "whitespace-pre-wrap break-words" : "line-clamp-2"
+                    }`}
+                  >
                     {record.raw_memo}
                   </p>
 

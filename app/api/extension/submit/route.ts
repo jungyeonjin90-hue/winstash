@@ -9,6 +9,12 @@ import { detectMemoLanguage, executeAiTransformation, type TransformLanguage } f
 
 const DEMO_USER_ID = "demo-user-1234";
 
+/** `${endDate}T09:00:00.000Z` for a valid target week (same convention as the web app), else undefined. */
+function weekDateOf(targetWeek: unknown): string | undefined {
+  const endDate = (targetWeek as { endDate?: unknown } | null)?.endDate;
+  return typeof endDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(endDate) ? `${endDate}T09:00:00.000Z` : undefined;
+}
+
 // Allow the Gemini budget (TRANSFORM_TIMEOUTS) plus Firestore persistence.
 export const maxDuration = 60;
 
@@ -101,7 +107,8 @@ export async function POST(req: NextRequest) {
     const recordId = existingRecordId || `rec-${Date.now()}`;
     const cleanRecord = {
       id: recordId,
-      createdAt: existingCreatedAt || new Date().toISOString(),
+      // Like the web app, a new record's createdAt is its week's date (not the save time; see savedAt)
+      createdAt: existingCreatedAt || weekDateOf(body.target_week) || new Date().toISOString(),
       target_week: body.target_week || undefined,
       raw_memo: memoText,
       rawNote: memoText,
