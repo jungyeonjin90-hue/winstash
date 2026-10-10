@@ -101,7 +101,7 @@ export default function TermsOfServicePage() {
             <h2>4. Subscriptions, Billing & Merchant of Record</h2>
           </div>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            WinStash offers free basic functionality along with an optional paid <strong>WinStash Pro</strong> monthly subscription ($5.99/month) granting unlimited AI transformations, revisions, and multi-year portfolio syntheses.
+            WinStash offers free basic functionality along with an optional paid <strong>WinStash Pro</strong> monthly subscription ($5.99/month plus applicable sales tax or VAT, calculated at checkout) granting unlimited AI transformations, revisions, and multi-year portfolio syntheses.
           </p>
           <div className="space-y-3 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
             <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-1">

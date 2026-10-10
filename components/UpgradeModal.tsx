@@ -19,6 +19,7 @@ import {
 import { AppUser } from "@/context/AuthContext";
 import {
   buildLemonSqueezyCheckoutUrl,
+  LEMON_SQUEEZY_BILLING_PORTAL_URL,
   PRO_PRICE_USD,
   IS_PAYMENT_GATEWAY_LIVE,
 } from "@/lib/lemonSqueezyConfig";
@@ -165,7 +166,7 @@ export function UpgradeModal({
       "To prevent unauthorized cancellations and ensure your current billing cycle is respected, subscriptions are managed directly through the Lemon Squeezy Customer Portal.\n\nWould you like to open the portal now to cancel your subscription or update your payment details?"
     );
     if (shouldOpenPortal) {
-      window.open("https://app.lemonsqueezy.com/my-orders", "_blank", "noopener,noreferrer");
+      window.open(LEMON_SQUEEZY_BILLING_PORTAL_URL, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -246,7 +247,7 @@ export function UpgradeModal({
             {/* Management Actions */}
             <div className="space-y-3 pt-1">
               <a
-                href="https://app.lemonsqueezy.com/my-orders"
+                href={LEMON_SQUEEZY_BILLING_PORTAL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-700"

@@ -41,3 +41,20 @@ export function hasProAccess(fields: PlanFields | undefined, now: number = Date.
       return false;
   }
 }
+
+/**
+ * A renewal payment problem the user can fix by updating their card, or null.
+ * - past_due: Lemon Squeezy is still retrying and the user keeps Pro for now.
+ * - unpaid: the retries ran out (or the past_due grace above did), so Pro is off until the card is updated.
+ */
+export type PaymentIssue = "past_due" | "unpaid";
+
+export function getPaymentIssue(
+  fields: PlanFields | undefined,
+  now: number = Date.now()
+): PaymentIssue | null {
+  const status = fields?.planStatus;
+  if (status === "unpaid") return "unpaid";
+  if (status === "past_due") return isInPastDueGrace(fields?.pastDueSince, now) ? "past_due" : "unpaid";
+  return null;
+}

@@ -28,6 +28,7 @@ import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan, Seni
 import { trackEvent } from "@/lib/analytics";
 import { Sparkles, Layers, Loader2 } from "lucide-react";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { PaymentIssueBanner } from "@/components/PaymentIssueBanner";
 import { UpdateConfirmModalEn } from "@/components/en/UpdateConfirmModalEn";
 import { CareerHeatmapEn } from "@/components/en/CareerHeatmapEn";
 
@@ -537,6 +538,8 @@ export default function Home() {
         recordCount={records.length}
         creditStatus={creditStatus}
       />
+
+      <PaymentIssueBanner issue={creditStatus?.paymentIssue} lang="en" />
 
       {/* Main Container */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 sm:space-y-12">

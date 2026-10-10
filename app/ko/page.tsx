@@ -23,6 +23,7 @@ import { CreditStatus, subscribeCreditStatus, consumeFreeCredit } from "@/lib/cr
 import { CareerRecord, TransformationOutput, JobRole, ToneManner, WeekSpan } from "@/types/career";
 import { Sparkles, CheckCircle2, Layers, Loader2, Globe } from "lucide-react";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { PaymentIssueBanner } from "@/components/PaymentIssueBanner";
 import { getAuthToken } from "@/lib/firebase";
 
 export default function HomeKo() {
@@ -329,6 +330,8 @@ export default function HomeKo() {
         recordCount={records.length}
         creditStatus={creditStatus}
       />
+
+      <PaymentIssueBanner issue={creditStatus?.paymentIssue} lang="ko" />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 sm:space-y-12">
         <section className="text-center space-y-3 max-w-2xl mx-auto pt-2">

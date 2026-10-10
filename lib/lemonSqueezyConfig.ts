@@ -21,6 +21,20 @@ export const DEFAULT_LEMON_SQUEEZY_CHECKOUT_URL =
   "https://winstash.lemonsqueezy.com/checkout/buy/4b670dbe-398d-4378-a97a-28b7b450ff88";
 
 /**
+ * The store's Customer Portal, where subscribers update their card, see invoices and cancel.
+ * It lives on the same store subdomain as the checkout link (`https://<store>.lemonsqueezy.com/billing`)
+ * and signs customers in by magic link. The per-subscription signed URLs from the API expire after
+ * 24 hours, so this stable link is the one the app shows.
+ */
+export const LEMON_SQUEEZY_BILLING_PORTAL_URL = (() => {
+  try {
+    return `${new URL(DEFAULT_LEMON_SQUEEZY_CHECKOUT_URL).origin}/billing`;
+  } catch {
+    return "https://winstash.lemonsqueezy.com/billing";
+  }
+})();
+
+/**
  * Builds a dynamic Lemon Squeezy checkout link pre-filled with the authenticated user's ID and email.
  */
 export function buildLemonSqueezyCheckoutUrl(

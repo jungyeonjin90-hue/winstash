@@ -5,7 +5,7 @@
  */
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { hasProAccess, PAST_DUE_GRACE_MS } from "../../lib/subscriptionAccess.ts";
+import { getPaymentIssue, hasProAccess, PAST_DUE_GRACE_MS } from "../../lib/subscriptionAccess.ts";
 
 const NOW = Date.parse("2026-10-10T00:00:00Z");
 const ago = (ms) => new Date(NOW - ms).toISOString();
@@ -45,5 +45,28 @@ describe("hasProAccess", () => {
     for (const planStatus of ["unpaid", "expired", "paused", "refunded", "inactive"]) {
       assert.equal(hasProAccess({ plan: "pro", planStatus }, NOW), false, planStatus);
     }
+  });
+});
+
+describe("getPaymentIssue", () => {
+  test("past_due within the grace is still being retried", () => {
+    const fields = { plan: "pro", planStatus: "past_due", pastDueSince: ago(3 * DAY) };
+    assert.equal(getPaymentIssue(fields, NOW), "past_due");
+  });
+
+  test("past_due past the grace counts as unpaid", () => {
+    const fields = { plan: "pro", planStatus: "past_due", pastDueSince: ago(PAST_DUE_GRACE_MS + DAY) };
+    assert.equal(getPaymentIssue(fields, NOW), "unpaid");
+  });
+
+  test("unpaid is unpaid", () => {
+    assert.equal(getPaymentIssue({ plan: "free", planStatus: "unpaid" }, NOW), "unpaid");
+  });
+
+  test("other states have no payment issue", () => {
+    for (const planStatus of ["active", "cancelled", "expired", "refunded", "inactive", undefined]) {
+      assert.equal(getPaymentIssue({ plan: "pro", planStatus }, NOW), null, String(planStatus));
+    }
+    assert.equal(getPaymentIssue(undefined, NOW), null);
   });
 });
