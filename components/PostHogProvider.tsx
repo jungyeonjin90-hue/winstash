@@ -14,7 +14,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       posthog.init(key, {
         api_host: host,
         person_profiles: "identified_only", // Create profiles for identified users
-        capture_pageview: true,
+        // App Router navigations change the URL without a page load; "history_change" records a $pageview for each.
+        capture_pageview: "history_change",
         capture_pageleave: true,
         // Session replay keeps layout and interactions but never what users type or read: weekly notes
         // and AI outputs can contain confidential work information.
