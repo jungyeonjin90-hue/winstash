@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebaseAdmin";
+import { serviceAccountFromEnv, signCustomToken } from "@/lib/customToken";
 import { verifyRequestToken } from "@/lib/serverAuthQuota";
 import { checkServerRateLimit, getClientIp } from "@/lib/serverRateLimit";
 
@@ -24,13 +25,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  if (!adminAuth) {
-    console.error("[Extension Session API] Firebase Admin Auth is not configured.");
+  // Sign with the service account key directly: adminAuth can be unavailable on Vercel.
+  // Without a key (local emulator runs) fall back to the Admin SDK.
+  const serviceAccount = serviceAccountFromEnv();
+  if (!serviceAccount && !adminAuth) {
+    console.error("[Extension Session API] No service account key and Firebase Admin Auth is not loaded.");
     return NextResponse.json({ error: "Sign-in service unavailable" }, { status: 503 });
   }
 
   try {
-    const customToken = await adminAuth.createCustomToken(user.uid);
+    const customToken = serviceAccount
+      ? signCustomToken(user.uid, serviceAccount)
+      : await adminAuth!.createCustomToken(user.uid);
     return NextResponse.json({ customToken }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("[Extension Session API] createCustomToken failed:", err);
