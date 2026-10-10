@@ -10,12 +10,15 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react";
+import { SELF_EVALUATION_PAGES, countExamples } from "@/lib/resources/selfEvaluationPages";
 
 export const metadata: Metadata = {
-  title: "Developer & Career Resources | WinStash",
+  title: "Career & Performance Review Resources | WinStash",
   description:
-    "Free, copy-pasteable templates and practical guides to track your engineering impact, prepare for performance reviews, and ship weekly updates with zero stress.",
+    "Free, copy-pasteable templates and practical guides to write your self-evaluation, track your impact, and prepare for performance reviews in any role.",
   keywords: [
+    "self evaluation examples by role",
+    "performance review self assessment examples",
     "developer career resources",
     "brag document template",
     "engineering 1:1 meeting agenda",
@@ -26,9 +29,9 @@ export const metadata: Metadata = {
     canonical: "https://winstash.net/resources",
   },
   openGraph: {
-    title: "Developer & Career Resources | WinStash",
+    title: "Career & Performance Review Resources | WinStash",
     description:
-      "Free, copy-pasteable templates and practical guides to track your engineering impact and prepare for performance reviews.",
+      "Free, copy-pasteable templates and practical guides to write your self-evaluation and prepare for performance reviews in any role.",
     url: "https://winstash.net/resources",
     siteName: "WinStash",
     images: [
@@ -36,7 +39,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Developer & Career Resources - WinStash",
+        alt: "Career & Performance Review Resources - WinStash",
       },
     ],
     locale: "en_US",
@@ -44,9 +47,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Developer & Career Resources | WinStash",
+    title: "Career & Performance Review Resources | WinStash",
     description:
-      "Free, copy-pasteable templates and practical guides to track your engineering impact and prepare for performance reviews.",
+      "Free, copy-pasteable templates and practical guides to write your self-evaluation and prepare for performance reviews in any role.",
     images: ["/og-image.png"],
   },
 };
@@ -55,9 +58,9 @@ export default function ResourcesHubPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Developer & Career Resources",
+    name: "Career & Performance Review Resources",
     description:
-      "Free, copy-pasteable templates and practical guides to track your engineering impact, prepare for performance reviews, and ship weekly updates.",
+      "Free, copy-pasteable templates and practical guides to write your self-evaluation, track your impact, and prepare for performance reviews in any role.",
     url: "https://winstash.net/resources",
     publisher: {
       "@type": "Organization",
@@ -111,11 +114,11 @@ export default function ResourcesHubPage() {
         <div className="space-y-4 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-900/60">
             <FileText className="w-3.5 h-3.5" />
-            <span>Developer Career Toolkit</span>
+            <span>Career Toolkit</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-900 dark:text-zinc-50 leading-[1.15]">
-            Engineering & Career Resources
+            Career & Performance Review Resources
           </h1>
 
           <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
@@ -124,7 +127,41 @@ export default function ResourcesHubPage() {
           </p>
         </div>
 
-        {/* 3. Resource Cards Grid */}
+        {/* 3. Self-evaluation examples by role */}
+        <section className="space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Self-evaluation examples by role
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Copy-and-paste examples, a free template, and before/after rewrites for your next review.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {SELF_EVALUATION_PAGES.map((page) => (
+              <Link
+                key={page.slug}
+                href={`/resources/${page.slug}`}
+                className="group flex flex-col justify-between p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 hover:border-indigo-500/80 dark:hover:border-indigo-500/80 shadow-xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
+              >
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-2">
+                    {page.rolePlural}
+                  </h3>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+                    {page.cardSummary}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:gap-2.5 transition-all">
+                  <span>See {countExamples(page)} examples</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. Resource Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Card 1: Brag Doc Template (Active) */}
           <Link
@@ -233,7 +270,7 @@ export default function ResourcesHubPage() {
           </div>
         </div>
 
-        {/* 4. Bottom WinStash Solution Banner */}
+        {/* 5. Bottom WinStash Solution Banner */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-indigo-950 via-zinc-950 to-zinc-950 border border-indigo-500/30 p-6 sm:p-10 text-white shadow-2xl">
           <div className="max-w-2xl space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
@@ -260,14 +297,14 @@ export default function ResourcesHubPage() {
               </Link>
               <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                 <ShieldCheck className="w-4 h-4 text-indigo-400" />
-                <span>100% Free during open beta • No card required</span>
+                <span>Free plan • No credit card required</span>
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      {/* 5. Footer */}
+      {/* 6. Footer */}
       <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-10 mt-16 text-xs text-zinc-500">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
