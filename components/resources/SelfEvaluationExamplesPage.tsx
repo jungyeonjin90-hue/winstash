@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { WinStashBrandBadge } from "@/components/WinStashLogo";
+import { ResourceHeader, ResourceFooter } from "@/components/resources/ResourceChrome";
 import { CopyTemplateButton } from "@/components/resources/CopyTemplateButton";
 import {
   SELF_EVALUATION_PAGES,
@@ -8,6 +8,7 @@ import {
   countExamples,
   type SelfEvaluationPage,
 } from "@/lib/resources/selfEvaluationPages";
+import { CANT_REMEMBER_GUIDE_SLUG } from "@/lib/resources/guides";
 import {
   Sparkles,
   ArrowRight,
@@ -107,27 +108,7 @@ export function SelfEvaluationExamplesPage({ page }: { page: SelfEvaluationPage 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer" aria-label="WinStash Home">
-            <WinStashBrandBadge size="sm" />
-            <span className="font-extrabold text-lg tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-              WinStash
-            </span>
-            <span className="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-              Resources
-            </span>
-          </Link>
-          <Link
-            href={signupUrl(page, "nav")}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 transition-all shadow-xs"
-          >
-            <span>Try WinStash Free</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </header>
+      <ResourceHeader signupHref={signupUrl(page, "nav")} />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-12">
         {/* Breadcrumb & title */}
@@ -388,6 +369,15 @@ export function SelfEvaluationExamplesPage({ page }: { page: SelfEvaluationPage 
               </Link>
             ))}
             <Link
+              href={`/resources/${CANT_REMEMBER_GUIDE_SLUG}`}
+              className="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-500/80 transition-colors"
+            >
+              <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                Guide: Writing a self-review when you can&apos;t remember your year
+              </span>
+              <ChevronRight className="w-4 h-4 text-zinc-400" />
+            </Link>
+            <Link
               href="/resources/brag-doc-template-software-engineers"
               className="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 hover:border-indigo-500/80 transition-colors"
             >
@@ -400,21 +390,7 @@ export function SelfEvaluationExamplesPage({ page }: { page: SelfEvaluationPage 
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-10 mt-16 text-xs text-zinc-500">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <WinStashBrandBadge size="sm" />
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">WinStash — Never Forget Your Wins</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link href="/pricing" className="hover:underline text-zinc-600 dark:text-zinc-300">Pricing</Link>
-            <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
-            <Link href="/terms" className="hover:underline">Terms of Service</Link>
-            <Link href="/" className="hover:underline text-indigo-600 dark:text-indigo-400 font-medium">App Home →</Link>
-          </div>
-        </div>
-      </footer>
+      <ResourceFooter />
     </div>
   );
 }

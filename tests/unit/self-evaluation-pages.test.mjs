@@ -13,6 +13,7 @@ import {
   countExamples,
   getSelfEvaluationPage,
 } from "../../lib/resources/selfEvaluationPages.ts";
+import { CANT_REMEMBER_GUIDE_SLUG } from "../../lib/resources/guides.ts";
 
 const appDir = path.resolve(import.meta.dirname, "../../app/resources");
 
@@ -61,6 +62,10 @@ describe("self-evaluation pages", () => {
     const template = buildTemplate(page);
     assert.ok(template.includes(`Role: ${page.role}`));
     for (const c of page.competencies) assert.ok(template.includes(`### ${c.name}`));
+  });
+
+  test("the can't-remember guide has a route at its slug", () => {
+    assert.ok(fs.existsSync(path.join(appDir, CANT_REMEMBER_GUIDE_SLUG, "page.tsx")));
   });
 
   test("unknown slug throws", () => {
