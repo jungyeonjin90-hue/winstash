@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SELF_EVALUATION_PAGES } from "@/lib/resources/selfEvaluationPages";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://winstash.net";
@@ -58,5 +59,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.8,
     },
+    ...SELF_EVALUATION_PAGES.map((page) => ({
+      url: `${baseUrl}/resources/${page.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
   ];
 }
