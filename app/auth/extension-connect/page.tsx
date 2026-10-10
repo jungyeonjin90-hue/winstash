@@ -24,7 +24,10 @@ async function handOffToExtension(): Promise<"success" | "no_extension" | "error
     method: "POST",
     headers: { Authorization: `Bearer ${idToken}` },
   });
-  if (!res.ok) return "error";
+  if (!res.ok) {
+    console.warn(`[ExtensionConnect] /api/extension/session failed: ${res.status}`);
+    return "error";
+  }
   const { customToken } = (await res.json()) as { customToken?: string };
   if (!customToken) return "error";
 
