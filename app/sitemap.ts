@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SELF_EVALUATION_PAGES } from "@/lib/resources/selfEvaluationPages";
+import { CANT_REMEMBER_GUIDE_SLUG } from "@/lib/resources/guides";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://winstash.net";
@@ -55,6 +56,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/resources/brag-doc-template-software-engineers`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/resources/${CANT_REMEMBER_GUIDE_SLUG}`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,

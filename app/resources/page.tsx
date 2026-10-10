@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { SELF_EVALUATION_PAGES, countExamples } from "@/lib/resources/selfEvaluationPages";
+import { CANT_REMEMBER_GUIDE_SLUG } from "@/lib/resources/guides";
 
 export const metadata: Metadata = {
   title: "Career & Performance Review Resources | WinStash",
@@ -163,6 +164,37 @@ export default function ResourcesHubPage() {
 
         {/* 4. Resource Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card 0: Can't-remember self-review guide (Active) */}
+          <Link
+            href={`/resources/${CANT_REMEMBER_GUIDE_SLUG}`}
+            className="group block p-6 sm:p-7 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 hover:border-indigo-500/80 dark:hover:border-indigo-500/80 shadow-xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
+          >
+            <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-900/50">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Guide
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                8 min read
+              </span>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-3">
+              How to Write a Self-Review When You Can&apos;t Remember What You Did
+            </h2>
+
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+              Rebuild your year in about 45 minutes from your calendar, email, and work tools, then
+              turn what you find into review-ready accomplishments. Includes a free template.
+            </p>
+
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:gap-2.5 transition-all">
+              <span>Read the guide</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
+          </Link>
+
           {/* Card 1: Brag Doc Template (Active) */}
           <Link
             href="/resources/brag-doc-template-software-engineers"
