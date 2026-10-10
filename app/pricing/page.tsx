@@ -10,7 +10,7 @@ import {
   CreditCard,
   RotateCcw,
   } from "lucide-react";
-import { PRO_PRICE_USD } from "@/lib/lemonSqueezyConfig";
+import { PRO_PRICE_USD, IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
 
 export const metadata: Metadata = {
   title: "WinStash Pricing: Free Plan & Pro ($5.99/mo)",
@@ -63,7 +63,9 @@ const PRICING_FAQS = [
   },
   {
     q: "When does Pro open?",
-    a: "Very soon. We are putting the finishing touches on our billing integration. Click the 'Notify Me' button on this page to join our early-access waitlist, and we'll send you an email the moment Pro launches.",
+    a: IS_PAYMENT_GATEWAY_LIVE
+      ? "WinStash Pro is officially open! You can upgrade instantly with one click using the Upgrade button above to get unlimited AI transformations, brag sheets, and STAR portfolio syntheses."
+      : "Very soon. We are putting the finishing touches on our billing integration. Click the 'Notify Me' button on this page to join our early-access waitlist, and we'll send you an email the moment Pro launches.",
   },
   {
     q: "Can I cancel anytime?",
@@ -98,7 +100,9 @@ export default function PricingPage() {
           price: String(PRO_PRICE_USD),
           priceCurrency: "USD",
           priceValidUntil: "2027-12-31",
-          availability: "https://schema.org/PreOrder",
+          availability: IS_PAYMENT_GATEWAY_LIVE
+            ? "https://schema.org/InStock"
+            : "https://schema.org/PreOrder",
           url: "https://winstash.net/pricing",
         },
       },
@@ -158,7 +162,11 @@ export default function PricingPage() {
 
       {/* 2. Top Status Banner */}
       <div className="w-full bg-indigo-50/80 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/60 py-2.5 px-4 text-center text-xs font-semibold text-indigo-900 dark:text-indigo-300">
-        <span>🎉 Free during the public beta. Pro opens soon.</span>
+        <span>
+          {IS_PAYMENT_GATEWAY_LIVE
+            ? "✨ WinStash Pro is now live! Upgrade for unlimited AI syntheses."
+            : "🎉 Free during the public beta. Pro opens soon."}
+        </span>
       </div>
 
       {/* 3. Hero Section */}
@@ -244,17 +252,17 @@ export default function PricingPage() {
             </Link>
           </div>
 
-          {/* Card 2: Pro Plan (Coming Soon with Waitlist Button) */}
+          {/* Card 2: Pro Plan */}
           <div className="relative p-7 sm:p-8 rounded-3xl bg-white dark:bg-zinc-900 border-2 border-indigo-500/80 dark:border-indigo-500/60 flex flex-col justify-between space-y-6 shadow-xl shadow-indigo-500/5">
             <div className="absolute -top-3.5 left-7 px-3 py-1 rounded-full text-xs font-bold bg-indigo-600 text-white shadow-xs">
-              Opening Soon
+              {IS_PAYMENT_GATEWAY_LIVE ? "Instant Access" : "Opening Soon"}
             </div>
 
             <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Pro</span>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-900/60">
-                  Waitlist Open
+                  {IS_PAYMENT_GATEWAY_LIVE ? "Pro Unlimited" : "Waitlist Open"}
                 </span>
               </div>
 

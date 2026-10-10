@@ -10,7 +10,7 @@ export const PRO_PRICE_USD = 5.99;
  * or change this default to true.
  */
 export const IS_PAYMENT_GATEWAY_LIVE =
-  process.env.NEXT_PUBLIC_LEMON_SQUEEZY_IS_LIVE === "true";
+  process.env.NEXT_PUBLIC_LEMON_SQUEEZY_IS_LIVE !== "false";
 
 /**
  * Base Checkout URL for WinStash Pro Monthly ($5.99)

@@ -346,16 +346,28 @@ export function UpgradeModal({
             {/* CTA Button */}
             <div className="space-y-3">
               {IS_PAYMENT_GATEWAY_LIVE ? (
-                <a
-                  href={checkoutUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
-                >
-                  <Zap className="w-4 h-4 fill-white" />
-                  <span>Upgrade to Pro Now (${PRO_PRICE_USD}/mo)</span>
-                  <ArrowRight className="w-4 h-4" />
-                </a>
+                user ? (
+                  <a
+                    href={checkoutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                  >
+                    <Zap className="w-4 h-4 fill-white" />
+                    <span>Upgrade to WinStash Pro (${PRO_PRICE_USD})</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <Link
+                    href="/en?login=1"
+                    onClick={onClose}
+                    className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                  >
+                    <Zap className="w-4 h-4 fill-white" />
+                    <span>Sign in to Upgrade (${PRO_PRICE_USD})</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                )
               ) : (
                 <div className="space-y-3">
                   {isWaitlistSuccess ? (

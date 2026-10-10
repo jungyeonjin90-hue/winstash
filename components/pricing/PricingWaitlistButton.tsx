@@ -1,12 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { trackEvent } from "@/lib/analytics";
-import { Bell, CheckCircle2, Loader2, ArrowRight } from "lucide-react";
-import { PRO_PRICE_USD } from "@/lib/lemonSqueezyConfig";
+import { Bell, CheckCircle2, Loader2, ArrowRight, Zap } from "lucide-react";
+import {
+  PRO_PRICE_USD,
+  IS_PAYMENT_GATEWAY_LIVE,
+  buildLemonSqueezyCheckoutUrl,
+} from "@/lib/lemonSqueezyConfig";
 
 export function PricingWaitlistButton() {
   const { user } = useAuth();
@@ -14,6 +19,39 @@ export function PricingWaitlistButton() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  if (IS_PAYMENT_GATEWAY_LIVE) {
+    if (user?.uid) {
+      const checkoutUrl = buildLemonSqueezyCheckoutUrl(
+        user.uid,
+        user.email,
+        user.displayName
+      );
+      return (
+        <a
+          href={checkoutUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+        >
+          <Zap className="w-4 h-4 fill-white" />
+          <span>Upgrade to WinStash Pro (${PRO_PRICE_USD}/mo)</span>
+          <ArrowRight className="w-4 h-4" />
+        </a>
+      );
+    }
+
+    return (
+      <Link
+        href="/en?utm_source=pricing_card&utm_medium=pricing&utm_campaign=upgrade_pro"
+        className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+      >
+        <Zap className="w-4 h-4 fill-white" />
+        <span>Upgrade to WinStash Pro (${PRO_PRICE_USD}/mo)</span>
+        <ArrowRight className="w-4 h-4" />
+      </Link>
+    );
+  }
 
   const handleJoin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
