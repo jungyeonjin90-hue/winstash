@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { trackEvent } from "@/lib/analytics";
 import { Bell, CheckCircle2, Loader2, ArrowRight, Zap } from "lucide-react";
 import {
@@ -14,11 +13,12 @@ import {
 } from "@/lib/lemonSqueezyConfig";
 
 export function PricingWaitlistButton() {
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [customEmail, setCustomEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   if (IS_PAYMENT_GATEWAY_LIVE) {
     if (user?.uid) {
@@ -41,15 +41,42 @@ export function PricingWaitlistButton() {
       );
     }
 
+    // Signed out: sign in with Google first, then continue straight to checkout.
+    const handleSignInToUpgrade = async () => {
+      try {
+        setIsSigningIn(true);
+        await signInWithGoogle();
+        const signedIn = auth?.currentUser;
+        if (signedIn) {
+          window.location.href = buildLemonSqueezyCheckoutUrl(
+            signedIn.uid,
+            signedIn.email,
+            signedIn.displayName
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Google sign-in encountered an error. Please try again.");
+      } finally {
+        setIsSigningIn(false);
+      }
+    };
+
     return (
-      <Link
-        href="/?utm_source=pricing_card&utm_medium=pricing&utm_campaign=upgrade_pro"
-        className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+      <button
+        type="button"
+        onClick={handleSignInToUpgrade}
+        disabled={isSigningIn}
+        className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-70"
       >
-        <Zap className="w-4 h-4 fill-white" />
-        <span>Upgrade to WinStash Pro (${PRO_PRICE_USD}/mo)</span>
+        {isSigningIn ? (
+          <Loader2 className="w-4 h-4 animate-spin text-white" />
+        ) : (
+          <Zap className="w-4 h-4 fill-white" />
+        )}
+        <span>Sign in to Upgrade (${PRO_PRICE_USD}/mo)</span>
         <ArrowRight className="w-4 h-4" />
-      </Link>
+      </button>
     );
   }
 
