@@ -20,6 +20,7 @@ import {
 import { CareerRecord } from "@/types/career";
 import { PeriodFilter, PeriodPreset } from "@/components/PeriodFilter";
 import { filterRecordsByPeriod } from "@/lib/dateFilter";
+import { getMostRecentlySavedId } from "@/lib/recordOrder";
 
 interface TimelineArchiveTabProps {
   records: CareerRecord[];
@@ -38,7 +39,8 @@ export function TimelineArchiveTab({
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>("ALL");
   const [customStart, setCustomStart] = useState<string>("");
   const [customEnd, setCustomEnd] = useState<string>("");
-  const [expandedId, setExpandedId] = useState<string | null>(records[0]?.id || null);
+  // 가장 최근에 저장한 기록을 기본으로 펼침 (lib/recordOrder.ts)
+  const [expandedId, setExpandedId] = useState<string | null>(getMostRecentlySavedId(records) || null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMemo, setEditMemo] = useState("");

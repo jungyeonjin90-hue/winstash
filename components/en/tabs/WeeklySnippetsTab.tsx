@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { CareerRecord } from "@/types/career";
 import { getDetailedRecordDateInfo } from "@/lib/periodUtils";
+import { getMostRecentlySavedId } from "@/lib/recordOrder";
 import { formatWeeklySnippet } from "@/lib/exportFormatters";
 
 interface WeeklySnippetsTabProps {
@@ -38,8 +39,12 @@ export function WeeklySnippetsTab({
     }));
   }, [records]);
 
+  // "Latest" = the most recently saved record (see lib/recordOrder.ts), not the newest week
+  const latestRecordId = useMemo(() => getMostRecentlySavedId(records), [records]);
+  const latestRecord = records.find((r) => r.id === latestRecordId);
+
   // Initial Year, Month, and RecordId
-  const latestDateInfo = recordsWithDateInfo[0]?.dateInfo;
+  const latestDateInfo = latestRecord ? getDetailedRecordDateInfo(latestRecord) : undefined;
   const [selectedYear, setSelectedYear] = useState<string>(
     latestDateInfo?.year || String(new Date().getFullYear())
   );
@@ -47,7 +52,7 @@ export function WeeklySnippetsTab({
     latestDateInfo?.month || "ALL"
   );
   const [selectedRecordId, setSelectedRecordId] = useState<string>(
-    initialRecordId || records[0]?.id || ""
+    initialRecordId || latestRecordId || ""
   );
 
   // 1. Available Years from records
@@ -98,9 +103,9 @@ export function WeeklySnippetsTab({
   }
 
   // Automatically select the most recent record when records load asynchronously or change
-  if (records.length > 0 && (!selectedRecordId || !records.some((r) => r.id === selectedRecordId))) {
-    // If no valid selection or uninitialized, snap to the latest created record
-    const latest = records[0];
+  if (latestRecord && (!selectedRecordId || !records.some((r) => r.id === selectedRecordId))) {
+    // If no valid selection or uninitialized, snap to the most recently saved record
+    const latest = latestRecord;
     setSelectedRecordId(latest.id);
     const latestInfo = getDetailedRecordDateInfo(latest);
     setSelectedYear(latestInfo.year);
@@ -128,8 +133,8 @@ export function WeeklySnippetsTab({
   // Active selected record
   const activeRecord = useMemo(() => {
     const found = recordsWithDateInfo.find((item) => item.record.id === selectedRecordId);
-    return found ? found.record : records[0] || null;
-  }, [recordsWithDateInfo, selectedRecordId, records]);
+    return found ? found.record : latestRecord || null;
+  }, [recordsWithDateInfo, selectedRecordId, latestRecord]);
 
   // Current global index for Older / Newer buttons
   const currentIndex = records.findIndex((r) => r.id === selectedRecordId);
@@ -266,7 +271,7 @@ export function WeeklySnippetsTab({
                 className="bg-zinc-50 dark:bg-zinc-950 pl-2.5 pr-8 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-indigo-600 dark:text-indigo-400 focus:outline-none focus:border-indigo-500 cursor-pointer appearance-none flex-1"
               >
                 {matchingRecords.map((item) => {
-                  const isLatestOverall = item.record.id === records[0]?.id;
+                  const isLatestOverall = item.record.id === latestRecordId;
                   return (
                     <option key={item.record.id} value={item.record.id}>
                       {item.dateInfo.displayLabel} {isLatestOverall ? "(Latest)" : ""}

@@ -150,6 +150,7 @@ export async function POST(req: NextRequest) {
         jobRole: job_role as JobRole,
         toneManner: tone_manner as ToneManner,
         source: "web_text",
+        savedAt: new Date().toISOString(),
       };
 
       // Server-side persistence: directly writes to Firestore if user is authenticated

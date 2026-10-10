@@ -61,7 +61,9 @@ export interface WeekSpan {
 
 export interface CareerRecord {
   id: string;
-  createdAt: string; // ISO date string e.g. "2026-09-25T17:30:00.000Z"
+  createdAt: string; // ISO date of the week the record belongs to (not when it was saved)
+  /** When the record was last saved (ISO). Drives "Latest"; absent on records saved before it existed. */
+  savedAt?: string;
   target_week?: WeekSpan; // 기록 대상 주차 메타데이터
   raw_memo: string;
   weekly_report: WeeklyReport;

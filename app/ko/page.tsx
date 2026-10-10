@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useHasPriorSession } from "@/hooks/useHasPriorSession";
+import { upsertRecordSorted } from "@/lib/recordOrder";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { QuickLogger } from "@/components/QuickLogger";
@@ -264,9 +265,11 @@ export default function HomeKo() {
         weekly_report: output.weekly_report,
         brag_sheet_item: output.brag_sheet_item,
         star_portfolio: output.star_portfolio,
+        savedAt: new Date().toISOString(),
       };
 
-      setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
+      // Keep week order: a note saved for an older week goes to its place, not to the top
+      setRecords((prev) => upsertRecordSorted(prev, newRecord));
       setActiveRecordId(newRecord.id);
       await saveUserRecordToFirestore(user.uid, Boolean(user.isDemo), newRecord);
 

@@ -202,3 +202,57 @@ test("saving a memo clears only this user's local summary cache (and legacy keys
   expect(keys).not.toContain("career_pulse_summary_cache_brag_legacy");
   expect(keys).toContain("career_pulse_summary_cache_v2_other-user_brag_x");
 });
+
+test.describe("History order and 'Latest'", () => {
+  // Stored out of order on purpose; Sep W3 was saved most recently although Oct W1 is the newest week.
+  const withSavedAt = [
+    { ...SEED_RECORDS[2], savedAt: "2026-10-01T10:00:00.000Z" }, // Aug 2025 W2
+    { ...SEED_RECORDS[0], savedAt: "2026-10-05T10:00:00.000Z" }, // Oct 2026 W1
+    { ...SEED_RECORDS[1], savedAt: "2026-10-08T10:00:00.000Z" }, // Sep 2026 W3  <- most recently saved
+  ];
+  // Labels look like "2026 October, Week 1: Oct 4 - 10"; compare the part before the date range.
+  const weekLabels = async (page: Page) =>
+    (await activePanel(page).locator("span.font-bold.text-sm.text-indigo-600").allInnerTexts()).map(
+      (t) => t.split(":")[0]
+    );
+  const latestCardLabel = (page: Page) =>
+    activePanel(page)
+      .locator("div.rounded-2xl", { has: page.getByText("Latest Entry") })
+      .last()
+      .locator("span.font-bold.text-sm.text-indigo-600")
+      .innerText()
+      .then((t) => t.split(":")[0]);
+
+  test("History is in week order and 'Latest Entry' marks the most recently saved record", async ({ page }) => {
+    await open(page, "/", withSavedAt);
+    await tabButton(page, /History/).click();
+    expect(await weekLabels(page)).toEqual([
+      "2026 October, Week 1",
+      "2026 September, Week 3",
+      "2025 August, Week 2",
+    ]);
+    expect(await latestCardLabel(page)).toBe("2026 September, Week 3");
+    await expect(activePanel(page).getByText("Memo Sep W3 (done)")).toBeVisible();
+  });
+
+  test("saving a note for an older week puts it in its week's place and makes it 'Latest'", async ({ page }) => {
+    await open(page, "/", withSavedAt);
+    await tabButton(page, /History/).click();
+    await pickLoggerWeek(page, "2026", "9", "1");
+    await memoBox(page).fill("Backfilled Sep W1 note");
+    await page.getByRole("button", { name: /Save to Week 1/ }).click();
+    await expect(page.getByText(/successfully transformed and synced/)).toBeVisible();
+
+    // Weekly Snippets is focused on it and labels it (Latest)
+    await expect(activePanel(page).locator("select").nth(2).locator("option:checked")).toHaveText(/Week 1.*\(Latest\)/);
+
+    await tabButton(page, /History/).click();
+    expect(await weekLabels(page)).toEqual([
+      "2026 October, Week 1",
+      "2026 September, Week 3",
+      "2026 September, Week 1",
+      "2025 August, Week 2",
+    ]);
+    expect(await latestCardLabel(page)).toBe("2026 September, Week 1");
+  });
+});
