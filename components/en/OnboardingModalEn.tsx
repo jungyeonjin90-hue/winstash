@@ -41,7 +41,7 @@ export function OnboardingModalEn({ isOpen, onSave }: OnboardingModalEnProps) {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Let&apos;s personalize your AI engine. Select your primary job role. 
             <br className="hidden sm:block"/>
-            <span className="text-xs opacity-80">(You can change this later in Settings)</span>
+            <span className="text-xs opacity-80">Add seniority, industry and region anytime in Settings for more tailored drafts.</span>
           </p>
         </div>
 
