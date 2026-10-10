@@ -84,6 +84,14 @@ const PRICING_FAQS = [
     a: "Payments are processed securely by Lemon Squeezy, our Merchant of Record. We never see, touch, or store your raw credit card numbers.",
   },
   {
+    q: "Is tax included in the price?",
+    a: `No. The $${PRO_PRICE_USD}/month price excludes tax. Any sales tax or VAT that applies in your country is calculated and shown at checkout before you pay, and Lemon Squeezy collects and remits it as our Merchant of Record.`,
+  },
+  {
+    q: "What happens if a payment fails?",
+    a: "Lemon Squeezy emails you and retries your card several times over about two weeks, and you keep Pro during that time. You can update your card anytime from the billing portal. If the payment still can't be collected, your account moves to the Free plan until the card is updated, and your notes stay intact.",
+  },
+  {
     q: "Does 'unlimited' mean completely unlimited?",
     a: "Pro is designed for real humans logging their professional career milestones. It provides more than enough capacity for weekly notes, sprint revisions, and review syntheses. A standard fair-use limit applies solely to prevent automated bot scripts or API abuse.",
   },
@@ -275,7 +283,7 @@ export default function PricingPage() {
                   <span className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-zinc-50">
                     ${PRO_PRICE_USD}
                   </span>
-                  <span className="text-xs font-medium text-zinc-500">/ month</span>
+                  <span className="text-xs font-medium text-zinc-500">/ month + tax</span>
                 </div>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
                   For professionals who want unlimited weekly AI syntheses.

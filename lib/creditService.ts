@@ -12,7 +12,7 @@ import {
   MAX_GLOBAL_SERVICE_CREDITS,
 } from "./creditConfig";
 import { isAdminEmail } from "./adminConfig";
-import { hasProAccess } from "./subscriptionAccess";
+import { getPaymentIssue, hasProAccess, type PaymentIssue } from "./subscriptionAccess";
 
 const LOCAL_USER_USAGE_KEY = "career_pulse_free_usage_user_";
 const LOCAL_GLOBAL_USAGE_KEY = "career_pulse_global_free_usage";
@@ -45,6 +45,8 @@ export interface CreditStatus {
   globalUsedCount: number;
   maxGlobalCredits: number;
   isGlobalExhausted: boolean;
+  // 갱신 결제 실패 (카드 변경 안내용). 결제 정보가 없는 데모·로컬 모드에서는 없음
+  paymentIssue?: PaymentIssue | null;
 }
 
 /**
@@ -112,6 +114,7 @@ export async function getCreditStatus(
       const userDocSnap = await getDoc(userDocRef);
       const userData = userDocSnap.exists() ? userDocSnap.data() : null;
       const isPro = hasProAccess(userData ?? undefined);
+      const paymentIssue = getPaymentIssue(userData ?? undefined);
 
       // 1-2. 개인 변환 사용량: 서버가 차감·차단에 쓰는 usage/summary 하나만 사용.
       //      예전 클라이언트가 쓰던 users.freeUsedCount 와 localStorage 카운트를 max()로 섞으면
@@ -161,6 +164,7 @@ export async function getCreditStatus(
           globalUsedCount,
           maxGlobalCredits: MAX_GLOBAL_SERVICE_CREDITS,
           isGlobalExhausted: false,
+          paymentIssue,
         };
       }
 
@@ -187,6 +191,7 @@ export async function getCreditStatus(
         globalUsedCount,
         maxGlobalCredits: MAX_GLOBAL_SERVICE_CREDITS,
         isGlobalExhausted: globalUsedCount >= MAX_GLOBAL_SERVICE_CREDITS,
+        paymentIssue,
       };
     } catch (e) {
       console.warn("Firestore usage fetch failed, using local fallback:", e);
