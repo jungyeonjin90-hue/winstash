@@ -16,7 +16,7 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
-import { AppUser } from "@/context/AuthContext";
+import { AppUser, useAuth } from "@/context/AuthContext";
 import {
   buildLemonSqueezyCheckoutUrl,
   LEMON_SQUEEZY_BILLING_PORTAL_URL,
@@ -25,7 +25,7 @@ import {
 } from "@/lib/lemonSqueezyConfig";
 import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { trackEvent } from "@/lib/analytics";
 
 interface UpgradeModalProps {
@@ -47,6 +47,8 @@ export function UpgradeModal({
   const [isWaitlistSuccess, setIsWaitlistSuccess] = useState(false);
   const [customEmail, setCustomEmail] = useState("");
   const [waitlistError, setWaitlistError] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const { signInWithGoogle } = useAuth();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -137,6 +139,27 @@ export function UpgradeModal({
       setIsWaitlistSuccess(true);
     } finally {
       setIsWaitlistSubmitting(false);
+    }
+  };
+
+  // Signed out: sign in with Google first, then continue straight to checkout.
+  const handleSignInToUpgrade = async () => {
+    try {
+      setIsSigningIn(true);
+      await signInWithGoogle();
+      const signedIn = auth?.currentUser;
+      if (signedIn) {
+        window.location.href = buildLemonSqueezyCheckoutUrl(
+          signedIn.uid,
+          signedIn.email,
+          signedIn.displayName
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Google sign-in encountered an error. Please try again.");
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
@@ -359,15 +382,20 @@ export function UpgradeModal({
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 ) : (
-                  <Link
-                    href="/en?login=1"
-                    onClick={onClose}
-                    className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+                  <button
+                    type="button"
+                    onClick={handleSignInToUpgrade}
+                    disabled={isSigningIn}
+                    className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-70"
                   >
-                    <Zap className="w-4 h-4 fill-white" />
+                    {isSigningIn ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    ) : (
+                      <Zap className="w-4 h-4 fill-white" />
+                    )}
                     <span>Sign in to Upgrade (${PRO_PRICE_USD})</span>
                     <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  </button>
                 )
               ) : (
                 <div className="space-y-3">
