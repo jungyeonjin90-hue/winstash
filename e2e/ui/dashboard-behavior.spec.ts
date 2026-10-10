@@ -235,6 +235,49 @@ test.describe("History order and 'Latest'", () => {
     await expect(activePanel(page).getByText("Memo Sep W3 (done)")).toBeVisible();
   });
 
+  test("a record whose createdAt is its save time (old extension records) is still ordered by its week", async ({ page }) => {
+    const extAug = {
+      ...SEED_RECORDS[1],
+      id: "rec-ext-aug",
+      createdAt: "2026-10-09T03:28:23.516Z", // save time, not the week
+      target_week: { year: 2026, month: 8, weekOfMonth: 1, startDate: "2026-08-02", endDate: "2026-08-08", label: "Week 1" },
+      source: "chrome_extension",
+      savedAt: "2026-10-09T03:28:23.591Z",
+    };
+    await open(page, "/", [...withSavedAt, extAug]);
+    await tabButton(page, /History/).click();
+    expect(await weekLabels(page)).toEqual([
+      "2026 October, Week 1",
+      "2026 September, Week 3",
+      "2026 August, Week 1",
+      "2025 August, Week 2",
+    ]);
+    expect(await latestCardLabel(page)).toBe("2026 August, Week 1");
+  });
+
+  test("an expanded card shows the whole raw note; collapsing it does not open another card", async ({ page }) => {
+    const longMemo = Array.from({ length: 6 }, (_, i) => `Line ${i + 1}: shipped item number ${i + 1} with details.`).join("\n");
+    const records = [{ ...withSavedAt[2], raw_memo: longMemo }, withSavedAt[1], withSavedAt[0]]; // Sep W3 = latest
+    await open(page, "/", records);
+    await tabButton(page, /History/).click();
+
+    const panel = activePanel(page);
+    const memo = panel.locator("p", { hasText: "Line 1:" });
+    // Expanded by default (latest): every line is rendered, not clamped to two lines
+    await expect(memo).not.toHaveClass(/line-clamp/);
+    await expect(memo).toContainText("Line 6: shipped item number 6");
+    const box = await memo.boundingBox();
+    expect(box!.height).toBeGreaterThan(80);
+
+    // Collapse it: nothing else opens
+    // Only the expanded card shows the "collapse" chevron
+    await panel.locator("button:has(svg.lucide-chevron-up)").click();
+    await expect(memo).toHaveClass(/line-clamp-2/);
+    await expect(panel.getByText("Memo Oct W1 (done)")).toHaveCount(0);
+    await expect(panel.getByText("Memo Aug 2025 W2 (done)")).toHaveCount(0);
+    await expect(panel.locator("svg.lucide-chevron-up")).toHaveCount(0);
+  });
+
   test("saving a note for an older week puts it in its week's place and makes it 'Latest'", async ({ page }) => {
     await open(page, "/", withSavedAt);
     await tabButton(page, /History/).click();

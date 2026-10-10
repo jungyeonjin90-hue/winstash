@@ -3,8 +3,10 @@ import type { CareerRecord } from "@/types/career";
 /*
  * Ordering rules for weekly records shown in the dashboard.
  *
- * - Lists are ordered by the week the record belongs to (`createdAt` holds the week's date), newest
- *   week first. A record saved for an older week therefore lands in its place, not at the top.
+ * - Lists are ordered by the week the record belongs to, newest week first: `target_week` when present
+ *   (the same source the period filters use), otherwise `createdAt`. A record saved for an older week
+ *   therefore lands in its place, not at the top. (Extension records used to store the save time in
+ *   `createdAt`, so it cannot be trusted as the week on its own.)
  * - "Latest" means the record the user saved most recently (`savedAt`), whatever week it is for.
  *   Records saved before `savedAt` existed fall back to the newest week, as before.
  */
@@ -14,10 +16,15 @@ function time(value: string | undefined): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-/** Newest week first; ties (same week date) by most recently saved. Returns a new array. */
+/** The point in time a record's week stands for. */
+function weekTime(record: CareerRecord): number {
+  return time(record.target_week?.endDate) || time(record.createdAt);
+}
+
+/** Newest week first; ties (same week) by most recently saved. Returns a new array. */
 export function sortRecordsByWeek(records: CareerRecord[]): CareerRecord[] {
   return [...records].sort(
-    (a, b) => time(b.createdAt) - time(a.createdAt) || time(b.savedAt) - time(a.savedAt)
+    (a, b) => weekTime(b) - weekTime(a) || time(b.savedAt) - time(a.savedAt)
   );
 }
 
