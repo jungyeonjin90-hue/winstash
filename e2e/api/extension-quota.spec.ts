@@ -93,6 +93,20 @@ test.describe("POST /api/extension/submit quota (C-3)", () => {
     expect(await readFreeUsedCount(user.uid)).toBe(10);
   });
 
+  test("past_due within the payment-retry grace is still Pro; after the grace it is not", async ({ request }) => {
+    const user = await createTestUser();
+    await seedDoc(`users/${user.uid}/usage/summary`, { freeUsedCount: 10 });
+
+    await seedDoc(`users/${user.uid}`, { plan: "pro", planStatus: "past_due", pastDueSince: new Date(Date.now() - 3 * 86400000).toISOString() });
+    const inGrace = await submit(request, user.idToken, { rawNote: SAMPLE_MEMO });
+    expect(inGrace.status()).toBe(200);
+    expect((await inGrace.json()).credits.isPro).toBe(true);
+
+    await seedDoc(`users/${user.uid}`, { plan: "pro", planStatus: "past_due", pastDueSince: new Date(Date.now() - 30 * 86400000).toISOString() });
+    const afterGrace = await submit(request, user.idToken, { rawNote: SAMPLE_MEMO });
+    expect(afterGrace.status()).toBe(403);
+  });
+
   test("memo over 5,000 chars -> 400 without charging", async ({ request }) => {
     const user = await createTestUser();
     const res = await submit(request, user.idToken, { rawNote: "a".repeat(5001) });

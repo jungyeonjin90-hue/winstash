@@ -4,6 +4,7 @@ import { adminAuth, adminDb } from "./firebaseAdmin";
 import { isAdminEmail } from "./adminConfig";
 import { verifyFirebaseIdTokenLightweight } from "./lightweightAuth";
 import { checkServerRateLimit } from "./serverRateLimit";
+import { hasProAccess } from "./subscriptionAccess";
 import {
   MAX_USER_FREE_CREDITS,
   MAX_FREE_BRAG_SYNTHESIS,
@@ -304,19 +305,10 @@ export async function verifyServerAuthAndQuota(
 }
 
 /**
- * Pro membership check shared by quota enforcement and credit reporting.
- * A cancelled subscription stays Pro until its paid period (endsAt) runs out.
+ * Pro membership check shared by quota enforcement and credit reporting (rules in lib/subscriptionAccess).
  */
 export function isProPlan(userData: DocumentData | undefined): boolean {
-  const planStatus = userData?.planStatus;
-  const endsAt = userData?.endsAt ? new Date(userData.endsAt).getTime() : 0;
-  return (
-    userData?.plan === "pro" &&
-    (planStatus === "active" ||
-      planStatus === "on_trial" ||
-      planStatus === "paid" ||
-      (planStatus === "cancelled" && endsAt > Date.now()))
-  );
+  return hasProAccess(userData);
 }
 
 export interface ServerCreditStatus {

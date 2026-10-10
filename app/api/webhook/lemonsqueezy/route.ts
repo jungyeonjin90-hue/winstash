@@ -135,10 +135,12 @@ export async function POST(req: NextRequest) {
       updateData = { plan: finalPlan, planStatus: "refunded" };
     } else {
       // Active states: active, on_trial. Cancelled keeps Pro until ends_at (grace period).
-      // Inactive states: expired, past_due, unpaid, paused
+      // past_due keeps Pro while Lemon Squeezy retries the payment (capped by pastDueSince, see
+      // lib/subscriptionAccess). Inactive states: expired, unpaid, paused
       const isExplicitlyExpired =
         eventName === "subscription_expired" || status === "expired" || status === "unpaid";
-      const isCurrentlyActive = (status === "active" || status === "on_trial") && !isExplicitlyExpired;
+      const isCurrentlyActive =
+        (status === "active" || status === "on_trial" || status === "past_due") && !isExplicitlyExpired;
       const endsAtTime = attributes.ends_at ? new Date(attributes.ends_at).getTime() : 0;
       const hasRemainingPeriod = status === "cancelled" && endsAtTime > Date.now();
 
@@ -179,7 +181,13 @@ export async function POST(req: NextRequest) {
       if (lastAppliedAt && Date.parse(lastAppliedAt) > Date.parse(eventAt)) {
         return "stale" as const;
       }
-      tx.set(userRef, updateData, { merge: true });
+      // Start of the payment-retry grace: kept across repeated past_due events, cleared otherwise
+      let pastDueSince: string | null = null;
+      if (updateData.planStatus === "past_due") {
+        const previous = snap.get("pastDueSince");
+        pastDueSince = snap.get("planStatus") === "past_due" && typeof previous === "string" ? previous : eventAt;
+      }
+      tx.set(userRef, { ...updateData, pastDueSince }, { merge: true });
       return "applied" as const;
     });
 

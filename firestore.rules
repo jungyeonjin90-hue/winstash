@@ -17,7 +17,8 @@ service cloud.firestore {
     function protectedProfileKeys() {
       return ['plan', 'planStatus', 'endsAt', 'renewsAt',
               'lemonSqueezyCustomerId', 'lemonSqueezySubscriptionId',
-              'lemonSqueezyEventAt', 'lemonSqueezyLastEvent', 'freeUsedCount'];
+              'lemonSqueezyEventAt', 'lemonSqueezyLastEvent', 'freeUsedCount',
+              'pastDueSince'];
     }
 
     // WinStash 사용자별 철통 격리 보안 규칙
