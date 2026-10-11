@@ -245,8 +245,8 @@ export function LandingPageEn() {
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 selection:bg-indigo-500 selection:text-white">
       {/* 1. Sticky Navigation Bar */}
       <header className="sticky top-0 z-50 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <WinStashBrandBadge size="md" />
             <div>
               <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export function LandingPageEn() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <Link
               href="/pricing"
               className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
@@ -279,13 +279,15 @@ export function LandingPageEn() {
             <button
               onClick={handleGoogleLogin}
               disabled={loading !== null}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 transition-all cursor-pointer active:scale-95"
             >
               <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center shrink-0 p-0.5 shadow-xs">
                 <GoogleIcon className="w-3 h-3" />
               </div>
-              <span>Sign In with Google</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {/* Short label on phones so the header fits on one line next to the logo and Pricing */}
+              <span className="sm:hidden">Sign in</span>
+              <span className="hidden sm:inline">Sign In with Google</span>
+              <ArrowRight className="w-3.5 h-3.5 hidden sm:block" />
             </button>
           </div>
         </div>
