@@ -11,3 +11,19 @@ export function shouldIgnoreTestModeEvent(
 ): boolean {
   return meta?.test_mode === true && env.LEMON_SQUEEZY_ACCEPT_TEST_EVENTS !== "true";
 }
+
+/**
+ * Context for the "payment not matched to an account" alert: Lemon Squeezy ids only, so the
+ * subscription can be found and linked by hand. Never the customer's email or name (personal data).
+ */
+export function unmatchedPaymentContext(
+  eventName: string | undefined,
+  data: { id?: unknown; type?: unknown; attributes?: { customer_id?: unknown } } | undefined
+): { event: string; objectType: string; objectId: string; customerId: string } {
+  return {
+    event: String(eventName || ""),
+    objectType: String(data?.type || ""),
+    objectId: String(data?.id || ""),
+    customerId: String(data?.attributes?.customer_id || ""),
+  };
+}

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CareerRecord, JobRole, ToneManner, SynthesizedBragItem, SynthesizedStarItem } from "@/types/career";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
-import { generateGeminiJson, SYNTHESIS_TIMEOUTS } from "@/lib/gemini";
+import { generateGeminiJson, isGeminiConfigured, SYNTHESIS_TIMEOUTS } from "@/lib/gemini";
+import { reportException, reportMessage } from "@/lib/monitoring";
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { SummaryCacheEntry } from "@/lib/summaryCacheService";
@@ -382,7 +383,7 @@ export async function POST(req: NextRequest) {
             .doc(`latest_${type}`)
             .set(cleanEntry, { merge: true });
         } catch (dbErr) {
-          console.error("[Synthesis API] Server-side Firestore persistence error:", dbErr);
+          reportException(dbErr, "[Synthesis API] Server-side Firestore persistence error");
         }
       }
 
@@ -413,6 +414,11 @@ export async function POST(req: NextRequest) {
     if (aiResult) {
       return await persistSummaryCacheAndBuildResponse(aiResult.items, false);
     }
+
+    reportMessage("AI fallback: all Gemini models failed for synthesis", "warning", {
+      geminiConfigured: isGeminiConfigured(),
+      type,
+    });
 
     // Pure 100% User-Record Fallback (Zero hardcoded fake projects)
     // If AI generation is temporarily unavailable, directly map the user's actual weekly records
