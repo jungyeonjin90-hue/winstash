@@ -154,6 +154,34 @@ export function findInventedEntities(source, item, type) {
   return [...found];
 }
 
+/** Bracketed placeholders ("[Logistics Enterprise]") that stand in for a name and are not in the records. */
+export function findMaskedNames(source, texts) {
+  const found = new Set();
+  for (const text of texts) {
+    for (const match of String(text).match(/\[[A-Z][^\]\n]{1,60}\]/g) || []) {
+      if (!source.includes(match)) found.add(match);
+    }
+  }
+  return [...found];
+}
+
+/**
+ * Prompt-template phrasing leaking into the output: sentences that start with "Accomplished", and
+ * "as measured by" in a sentence with no number (a measure that is not one).
+ */
+export function findTemplateLeaks(texts) {
+  const found = [];
+  for (const text of texts) {
+    for (const sentence of String(text).split(/(?<=[.!?])\s+/)) {
+      if (/^Accomplished\b/.test(sentence.trim())) found.push(`"Accomplished ..." : ${sentence.slice(0, 80)}`);
+      else if (/\bas measured by\b/i.test(sentence) && extractNumbers(sentence).length === 0) {
+        found.push(`"as measured by" without a number: ${sentence.slice(0, 80)}`);
+      }
+    }
+  }
+  return found;
+}
+
 /**
  * Coverage of the fixture's key achievements. Each `match` group must be found in the output text;
  * a group lists alternatives separated by "|" (case-insensitive substring match).
@@ -178,6 +206,8 @@ export function scoreSynthesis(fixture, type, scope, items) {
     structureProblems: checkItems(items, type, fixture.records.length, scope),
     inventedNumbers: findInventedNumbers(fixture.records, texts),
     inventedEntities: [...new Set(list.flatMap((item) => findInventedEntities(source, item, type)))],
+    maskedNames: findMaskedNames(source, texts),
+    templateLeaks: findTemplateLeaks(texts),
     coverage,
     coverageOk: coverage.every((c) => c.covered),
     languageOk: language.ok,

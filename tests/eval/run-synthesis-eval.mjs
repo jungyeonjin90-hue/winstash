@@ -76,6 +76,8 @@ function buildSummary(meta, rows) {
   lines.push(`| 구조 통과 (필수 필드·출처 인덱스·개수) | ${count((r) => r.score.structureProblems.length === 0)}/${ai.length} |`);
   lines.push(`| 기록에 없는 숫자 등장 | ${count((r) => r.score.inventedNumbers.length > 0)}/${ai.length} |`);
   lines.push(`| 기록에 없는 고유명사 후보 | ${count((r) => r.score.inventedEntities.length > 0)}/${ai.length} |`);
+  lines.push(`| 이름 가림 ([...] 자리표시) | ${count((r) => (r.score.maskedNames ?? []).length > 0)}/${ai.length} |`);
+  lines.push(`| 템플릿 문구 노출 (Accomplished…, 숫자 없는 as measured by) | ${count((r) => (r.score.templateLeaks ?? []).length > 0)}/${ai.length} |`);
   lines.push(
     `| 핵심 성과 모두 포함 | ${count((r) => r.score.coverageOk)}/${ai.length} (성과 단위 ${goals.filter((g) => g.covered).length}/${goals.length}) |`
   );
@@ -87,15 +89,15 @@ function buildSummary(meta, rows) {
   lines.push("");
 
   lines.push("## 케이스별", "");
-  lines.push("| fixture | type | run | AI | 항목 수/기록 수 | 구조 | 없는 숫자 | 고유명사 후보 | 빠진 성과 | 언어 |");
-  lines.push("|---|---|---|---|---|---|---|---|---|---|");
+  lines.push("| fixture | type | run | AI | 항목 수/기록 수 | 구조 | 없는 숫자 | 고유명사 후보 | 이름 가림 | 템플릿 | 빠진 성과 | 언어 |");
+  lines.push("|---|---|---|---|---|---|---|---|---|---|---|---|");
   for (const r of rows) {
     if (r.error) {
-      lines.push(`| ${r.id} | ${r.type} | ${r.run} | 오류 | ${cell(r.error)} | | | | | |`);
+      lines.push(`| ${r.id} | ${r.type} | ${r.run} | 오류 | ${cell(r.error)} | | | | | | | |`);
       continue;
     }
     if (r.aiFallback) {
-      lines.push(`| ${r.id} | ${r.type} | ${r.run} | 폴백 | | | | | | |`);
+      lines.push(`| ${r.id} | ${r.type} | ${r.run} | 폴백 | | | | | | | | |`);
       continue;
     }
     const s = r.score;
@@ -103,7 +105,9 @@ function buildSummary(meta, rows) {
     lines.push(
       `| ${r.id} | ${r.type} | ${r.run} | AI | ${s.itemCount}/${r.recordCount} | ${s.structureProblems.length ? "실패" : "OK"} | ${cell(
         s.inventedNumbers.join(", ")
-      )} | ${cell(s.inventedEntities.join(", "))} | ${cell(missing.join(", "))} | ${s.languageOk ? "OK" : `실패 (${s.hangulRatio})`} |`
+      )} | ${cell(s.inventedEntities.join(", "))} | ${cell((s.maskedNames ?? []).join(", "))} | ${(s.templateLeaks ?? []).length || ""} | ${cell(
+        missing.join(", ")
+      )} | ${s.languageOk ? "OK" : `실패 (${s.hangulRatio})`} |`
     );
   }
   lines.push("");
@@ -135,6 +139,8 @@ function buildReviewCsv(rows) {
       s.structureProblems.length ? "구조" : "",
       s.inventedNumbers.length ? `숫자:${s.inventedNumbers.join("/")}` : "",
       s.inventedEntities.length ? `고유명사:${s.inventedEntities.join("/")}` : "",
+      s.maskedNames?.length ? `이름가림:${s.maskedNames.join("/")}` : "",
+      s.templateLeaks?.length ? `템플릿:${s.templateLeaks.length}` : "",
       s.coverageOk ? "" : `누락:${s.coverage.filter((c) => !c.covered).map((c) => c.label).join("/")}`,
       s.languageOk ? "" : "언어",
     ]
