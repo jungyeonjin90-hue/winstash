@@ -63,3 +63,40 @@ node --env-file=.env.eval tests/eval/run-transform-eval.mjs --label baseline
 - `run-transform-eval.mjs` : 실행기
 - `score.mjs` : 채점 함수 (단위 테스트: `tests/unit/eval-score.test.mjs`)
 - `ts-hooks.mjs` : 앱의 TypeScript 파일을 빌드 없이 불러오기 위한 Node 로더 (프로젝트의 `typescript` 패키지 사용)
+
+---
+
+# Brag / STAR 종합(synthesis) 품질 평가
+
+실제 서비스와 같은 종합 코드(`lib/synthesisService.ts` 의 `generateAiSynthesis`: `app/api/synthesize/en` 과 같은 프롬프트, 모델 순서, 검증, 시간 제한)에
+여러 주의 기록 묶음을 넣고 결과를 자동 채점합니다. Gemini만 직접 호출하며 Firestore, 크레딧, 사용자 데이터는 건드리지 않습니다.
+Gemini가 모두 실패하면(앱에서는 기록을 그대로 옮기는 폴백) `FALLBACK` 으로 표시합니다.
+
+## 실행
+
+```
+node --env-file=.env.eval tests/eval/run-synthesis-eval.mjs --label baseline --concurrency 1
+```
+
+옵션
+- `--types brag,star` : 유형 (기본 둘 다)
+- `--scope 5` : 요청 항목 수 3 / 5 / 10 (기본 5)
+- `--runs 3`, `--only eng-metrics,sales-named`, `--label 이름`, `--concurrency 1` : 위 변환 평가와 같음
+- `--rescore tests/eval/results/<폴더>` : 저장된 결과(raw.json)를 지금의 채점 기준으로 다시 채점 (Gemini 호출 없음)
+
+7개 픽스처 × 2유형 = 호출 14번, 약 3~4분.
+
+## 자동 채점 항목 (`synthesis-score.mjs`, 단위 테스트: `tests/unit/eval-synthesis-score.test.mjs`)
+
+| 항목 | 기준 | 한계 |
+|---|---|---|
+| 구조 | Brag: metric_summary·business_impact·key_highlights, STAR: title·situation·task·action·result 가 비어 있지 않음. 출처 인덱스가 기록 범위 안. 항목 수 ≤ scope, ≤ 기록 수 | Brag 에는 프롬프트 스키마상 title 이 없음 |
+| 기록에 없는 숫자 | 출력의 숫자(%, $, K/M 포함)가 기록 숫자도, **같은 주** 기록 숫자의 차이·변화율·배수도 아니면 표시. 초↔ms, 시간↔분, K/M 환산 허용 | "절반" 같은 말, 여러 주를 합친 계산은 사람이 판단. 단위 없는 한 자리 수는 제외 |
+| 고유명사 후보 | 기록에 없는 도구·제품형 단어(PostgreSQL, GA4), 대문자 약어, 문장 중간의 대문자 단어 | 약어 풀이(MAP), 번역(엑셀→Excel)도 잡힘. 후보일 뿐 |
+| 핵심 성과 포함 | 픽스처의 `mustCover` 마다 모든 `match` 그룹이 출력에 있어야 함 (그룹 안은 `|` 로 대안) | 다른 표현으로 쓰면 놓칠 수 있음 |
+| 언어 | 한글 0자 | |
+
+## 픽스처 (`synthesis-fixtures.json`)
+
+7개, 기록 4~8주: 엔지니어(수치), PM(수치 없음), 마케터(%·금액), 영업(고객사 이름·ARR), CS/운영 8주(섞임), 디자이너(수치 없음), 한국어 입력 데이터 엔지니어.
+필드: `id`, `jobRole`, `toneManner`, `periodLabel`, `records`(`raw_memo`, `target_week.label`, `createdAt`), `mustCover`(`label`, `match`).
