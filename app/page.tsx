@@ -447,7 +447,7 @@ export default function Home() {
         throw new Error(errorData.error || "Transformation request failed.");
       }
 
-      const output: TransformationOutput & { record?: CareerRecord } = await res.json();
+      const output: TransformationOutput & { record?: CareerRecord; aiFallback?: boolean } = await res.json();
 
       const newRecord: CareerRecord = output.record || {
         id: proposedRecordId,
@@ -480,6 +480,8 @@ export default function Home() {
         toneManner: tone,
         impactCategory: output.star_portfolio?.impactCategory,
         impactMagnitude: output.star_portfolio?.impactMagnitude,
+        // true when Gemini was unavailable and the heuristic generator produced the result
+        aiFallback: Boolean(output.aiFallback),
       });
 
       if (isFirstNote) {

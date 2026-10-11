@@ -32,6 +32,7 @@ export function PricingWaitlistButton() {
           href={checkoutUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackEvent("checkout_clicked", { source: "pricing_page", signedIn: true })}
           className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
         >
           <Zap className="w-4 h-4 fill-white" />
@@ -43,6 +44,7 @@ export function PricingWaitlistButton() {
 
     // Signed out: sign in with Google first, then continue straight to checkout.
     const handleSignInToUpgrade = async () => {
+      trackEvent("checkout_clicked", { source: "pricing_page", signedIn: false });
       try {
         setIsSigningIn(true);
         await signInWithGoogle();
