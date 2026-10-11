@@ -10,6 +10,8 @@ import {
   checkItems,
   findInventedEntities,
   findInventedNumbers,
+  findMaskedNames,
+  findTemplateLeaks,
   scoreSynthesis,
   sourceText,
 } from "../eval/synthesis-score.mjs";
@@ -143,6 +145,33 @@ describe("checkItems", () => {
 
   test("an empty list is a single problem", () => {
     assert.deepEqual(checkItems([], "brag", 4, 5), ["items is empty or not an array"]);
+  });
+});
+
+describe("findMaskedNames", () => {
+  test("bracketed placeholders for names are flagged", () => {
+    assert.deepEqual(findMaskedNames(source, ["Closed a deal with [Logistics Enterprise] worth $48K ARR"]), [
+      "[Logistics Enterprise]",
+    ]);
+  });
+
+  test("brackets that are in the records, or not name-like, pass", () => {
+    assert.deepEqual(findMaskedNames("[Beta] launch", ["Shipped the [Beta] launch", "Logged [1] item", "see [note]"]), []);
+  });
+});
+
+describe("findTemplateLeaks", () => {
+  test("sentences starting with Accomplished are flagged", () => {
+    assert.equal(findTemplateLeaks(["Accomplished closing Northwind, by doing a 4-month cycle."]).length, 1);
+  });
+
+  test("'as measured by' without a number is flagged, with a number it passes", () => {
+    assert.equal(findTemplateLeaks(["Improved reports, as measured by advancing freshness indicators."]).length, 1);
+    assert.deepEqual(findTemplateLeaks(["Cut latency, as measured by response time falling from 2.4s to 320ms."]), []);
+  });
+
+  test("natural sentences pass", () => {
+    assert.deepEqual(findTemplateLeaks(["Closed Northwind Logistics for $48K ARR after a 4-month cycle."]), []);
   });
 });
 
