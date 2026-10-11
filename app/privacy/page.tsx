@@ -109,6 +109,12 @@ export default function PrivacyPolicyPage() {
                 Pro payments are processed by Lemon Squeezy, our Merchant of Record, which collects your payment details and billing address. We receive only your subscription status and customer ID, never your card number.
               </p>
             </div>
+            <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-1.5">
+              <strong className="block font-bold text-zinc-900 dark:text-zinc-100">Error Monitoring</strong>
+              <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed text-xs">
+                We use Sentry to catch errors in the app. Error reports contain technical details such as the error message, the page and your browser, and for payment issues our internal Lemon Squeezy customer ID. They never include your notes, email, name, cookies or request contents.
+              </p>
+            </div>
           </div>
         </section>
 
