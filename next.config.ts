@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/ko", destination: "/", permanent: true },
+      // /en was the English home before the Korean service was removed. A server redirect (308) instead of
+      // the old client-side one, so crawlers see a single URL; query strings (utm_*) are passed through.
+      { source: "/en", destination: "/", permanent: true },
       {
         source: "/ko/:page(pricing|privacy|refund|terms|resources)/:rest*",
         destination: "/:page/:rest*",

@@ -5,6 +5,9 @@ import type { Metadata } from "next";
 import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://winstash.net/terms",
+  },
   title: "Terms of Service - WinStash",
   description:
     "WinStash Terms of Service. Review our usage guidelines, intellectual property ownership, subscription terms, and Merchant of Record policies.",

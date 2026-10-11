@@ -5,6 +5,9 @@ import type { Metadata } from "next";
 import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://winstash.net/privacy",
+  },
   title: "Privacy Policy - WinStash",
   description:
     "WinStash Privacy Policy. Learn about our confidential data isolation, encryption at rest and in transit, and data retention policies.",

@@ -5,6 +5,9 @@ import type { Metadata } from "next";
 import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://winstash.net/refund",
+  },
   title: "Refund Policy - WinStash",
   description:
     "WinStash Refund Policy. Learn about our 14-day money-back guarantee, Lemon Squeezy refund processing, and cancellation policies.",
