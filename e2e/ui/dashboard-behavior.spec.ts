@@ -266,3 +266,8 @@ test.describe("History order and 'Latest'", () => {
     expect(await latestCardLabel(page)).toBe("2026 September, Week 1");
   });
 });
+
+test("signed-in header shows no Beta badge while payments are live", async ({ page }) => {
+  await open(page);
+  await expect(page.locator("header").getByText("Beta", { exact: true })).toHaveCount(0);
+});

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import {
+  getAdditionalUserInfo,
   signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
@@ -9,6 +10,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { identifyUser, resetUser, trackEvent } from "@/lib/analytics";
+import { authErrorCode, isSignInCancelled } from "@/lib/authEvents";
 
 export interface AppUser {
   uid: string;
@@ -114,9 +116,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             photoURL: fbUser.photoURL,
             isDemo: false,
           });
-          // Identify by uid only: no email or name in product analytics
+          // Identify by uid only: no email or name in product analytics. Restoring a session on page
+          // load is not a sign-in, so no event here (user_authenticated fires in signInWithGoogle).
           identifyUser(fbUser.uid);
-          trackEvent("user_authenticated", { method: "google" });
         } else {
           try {
             localStorage.removeItem(SESSION_FLAG_KEY);
@@ -231,9 +233,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       trackEvent("sign_in_google_clicked");
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      identifyUser(result.user.uid);
+      trackEvent("user_authenticated", {
+        method: "google",
+        isNewUser: Boolean(getAdditionalUserInfo(result)?.isNewUser),
+      });
     } catch (err: unknown) {
-      console.error("Google sign in error:", err);
+      // Closing the popup is a choice, not an error: tracked separately so the funnel shows both.
+      if (isSignInCancelled(err)) {
+        trackEvent("sign_in_cancelled", { method: "google" });
+      } else {
+        console.error("Google sign in error:", err);
+        trackEvent("sign_in_failed", { method: "google", code: authErrorCode(err) });
+      }
       setLoading(false);
       throw err;
     }

@@ -5,7 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import { CheckCircle2, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { auth, googleProvider, getAuthToken } from "@/lib/firebase";
-import { signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult, getAdditionalUserInfo } from "firebase/auth";
+import { trackEvent } from "@/lib/analytics";
 
 // Message protocol with the extension's content script (extension/public/content.js).
 // Messages are posted to this page's own origin only; the content script relays the one-time custom
@@ -67,6 +68,10 @@ export default function ExtensionConnectPage() {
           .then((res) => {
             if (res?.user) {
               console.log("[ExtensionConnect] Logged in via redirect:", res.user.email);
+              trackEvent("user_authenticated", {
+                method: "google_redirect",
+                isNewUser: Boolean(getAdditionalUserInfo(res)?.isNewUser),
+              });
             }
           })
           .catch((err) => {
