@@ -144,6 +144,7 @@ export function UpgradeModal({
 
   // Signed out: sign in with Google first, then continue straight to checkout.
   const handleSignInToUpgrade = async () => {
+    trackEvent("checkout_clicked", { source: "upgrade_modal", signedIn: false, trigger: triggerReason });
     try {
       setIsSigningIn(true);
       await signInWithGoogle();
@@ -375,6 +376,9 @@ export function UpgradeModal({
                     href={checkoutUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() =>
+                      trackEvent("checkout_clicked", { source: "upgrade_modal", signedIn: true, trigger: triggerReason })
+                    }
                     className="flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
                   >
                     <Zap className="w-4 h-4 fill-white" />

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const securityHeaders = [
   {
@@ -47,4 +48,24 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Source maps are uploaded only when SENTRY_AUTH_TOKEN is set (e.g. on Vercel); without it, and without
+// any Sentry env vars, the build runs exactly as before.
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: sentryAuthToken,
+  silent: true,
+  telemetry: false,
+  sourcemaps: { disable: !sentryAuthToken },
+  release: { create: Boolean(sentryAuthToken) },
+  // Errors only: drop the tracing and replay code from the browser bundle.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+    excludeReplayShadowDom: true,
+    excludeReplayIframe: true,
+    excludeReplayWorker: true,
+  },
+});

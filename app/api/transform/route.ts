@@ -4,6 +4,7 @@ import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/se
 import { verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { executeAiTransformation } from "@/lib/transformService";
+import { reportException } from "@/lib/monitoring";
 
 // Allow the Gemini budget (TRANSFORM_TIMEOUTS) plus Firestore persistence.
 export const maxDuration = 60;
@@ -176,7 +177,7 @@ export async function POST(req: NextRequest) {
             await batch.commit();
           }
         } catch (dbErr) {
-          console.error("[Transform API] Server-side Firestore persistence error:", dbErr);
+          reportException(dbErr, "[Transform API] Server-side Firestore persistence error");
         }
       }
 

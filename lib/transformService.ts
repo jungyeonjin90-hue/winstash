@@ -1,6 +1,7 @@
 import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode } from "@/types/career";
 import { buildSystemPromptEn, generateFallbackOutputEn } from "@/lib/transformPromptEn";
-import { generateGeminiJson, isTransformationOutput, TRANSFORM_MODELS, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
+import { reportMessage } from "@/lib/monitoring";
+import { generateGeminiJson, isGeminiConfigured, isTransformationOutput, TRANSFORM_MODELS, TRANSFORM_TIMEOUTS } from "@/lib/gemini";
 
 export interface TransformOptions {
   /** Profile hints from the user's persona. */
@@ -37,6 +38,10 @@ export async function executeAiTransformation(
     return { output: aiOutput as TransformationOutput, aiFallback: false };
   }
 
-  // Fallback if AI call failed or key absent
+  // Fallback if AI call failed or key absent. Users still get a result, so report it to notice outages.
+  reportMessage("AI fallback: all Gemini models failed for transform", "warning", {
+    geminiConfigured: isGeminiConfigured(),
+    jobRole,
+  });
   return { output: generateFallbackOutputEn(rawMemo, jobRole, toneManner), aiFallback: true };
 }

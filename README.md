@@ -16,7 +16,7 @@
 | 인증·데이터 | Firebase Auth (Google 로그인), Firestore, Firebase Admin SDK |
 | AI | Google Gemini (`lib/gemini.ts`) |
 | 결제 | Lemon Squeezy 구독 + 웹훅 |
-| 분석 | PostHog, Firebase Analytics |
+| 분석·모니터링 | PostHog, Firebase Analytics, Sentry (오류만) |
 | 확장 프로그램 | Chrome MV3, Vite + React |
 
 > 이 Next.js 버전은 이전 버전과 API·규칙이 다를 수 있습니다. 코드를 바꾸기 전에 `node_modules/next/dist/docs/`의 해당 문서를 확인하세요 (`AGENTS.md` 참고).
@@ -41,6 +41,8 @@ npm run dev                         # http://localhost:3000
 | `LEMON_SQUEEZY_WEBHOOK_SECRET` | ✅ (결제) | 웹훅 서명 검증 |
 | `EXTENSION_ALLOWED_ORIGINS` | 권장 | 확장 프로그램 API에 CORS를 허용할 `chrome-extension://<ID>` |
 | `TRUST_CF_CONNECTING_IP` | – | Cloudflare를 앞단에 둘 때만 `true` |
+| `NEXT_PUBLIC_SENTRY_DSN` | 권장 (운영) | Sentry 오류 수집. 비우면 Sentry가 꺼집니다(개발·테스트) |
+| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | – | 빌드 시 소스맵 업로드. 토큰이 없으면 업로드를 건너뜁니다 |
 
 로컬에서 서비스 계정 없이 실행하면 서버의 쿼터 확인은 허용(개발 편의) 쪽으로 동작하고, 로그인 사용자의 서버 측 저장은 건너뜁니다.
 
@@ -77,6 +79,7 @@ npm test
    ```bash
    npx firebase deploy --only firestore:rules --project <운영 프로젝트 ID>
    ```
+3. 모니터링: `GET /api/health`는 필수 설정(Firebase Admin, Firebase 웹 설정, Gemini 키, 웹훅 시크릿)이 있는지 불리언으로만 알려 주고, 하나라도 없으면 **503**을 반환합니다(외부 호출 없음). 업타임 모니터에 등록하세요. Sentry에는 처리되지 않은 오류 외에 다음이 보고됩니다: 계정과 연결되지 않은 결제(`ACTION NEEDED: Lemon Squeezy payment not matched to an account`, error), Gemini 전체 실패로 인한 폴백(warning), 서버 측 Firestore 저장 실패.
 
 ## Chrome 확장 프로그램
 

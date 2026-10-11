@@ -64,6 +64,8 @@ export default defineConfig({
             OPENAI_API_KEY: "",
             // Keep test traffic out of product analytics.
             NEXT_PUBLIC_POSTHOG_KEY: "",
+            // Keep test errors out of Sentry (an empty DSN disables it, see lib/sentryOptions.ts).
+            NEXT_PUBLIC_SENTRY_DSN: "",
             // Deterministic webhook signing secret (see e2e/api/webhook.spec.ts).
             LEMON_SQUEEZY_WEBHOOK_SECRET: E2E_WEBHOOK_SECRET,
             // Browser Firebase config pinned to the throwaway demo project, so the suite neither depends on
