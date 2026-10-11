@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, RefreshCw, ShieldCheck, Mail, CreditCard, Clock, CheckCircle2, HelpCircle } from "lucide-react";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import type { Metadata } from "next";
+import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
 
 export const metadata: Metadata = {
   title: "Refund Policy - WinStash",
@@ -25,9 +26,11 @@ export default function RefundPolicyPage() {
           <div className="flex items-center gap-2">
             <WinStashBrandBadge size="sm" />
             <span className="font-extrabold text-sm tracking-tight">WinStash</span>
-            <span className="text-[9px] font-extrabold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/70">
-              Beta
-            </span>
+            {!IS_PAYMENT_GATEWAY_LIVE && (
+              <span className="text-[9px] font-extrabold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/70">
+                Beta
+              </span>
+            )}
           </div>
         </div>
       </header>

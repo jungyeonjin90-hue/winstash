@@ -122,3 +122,12 @@ test("unknown URLs return 404 with the custom not-found page", async ({ page }) 
   await expect(page.getByRole("link", { name: "Resources" })).toBeVisible();
   await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute("content", /noindex/);
 });
+
+test("no Beta badge next to the logo while payments are live", async ({ page }) => {
+  // The E2E server runs with payments live (NEXT_PUBLIC_LEMON_SQUEEZY_IS_LIVE unset).
+  for (const path of ["/", "/pricing", "/privacy", "/terms", "/refund"]) {
+    await page.goto(path);
+    await expect(page.locator("header").first()).toBeVisible();
+    await expect(page.locator("header").getByText("Beta", { exact: true }), path).toHaveCount(0);
+  }
+});
