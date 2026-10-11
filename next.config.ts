@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
+import { cspReportOnlyHeaders } from "./lib/csp";
 
 const securityHeaders = [
   {
@@ -22,6 +23,9 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  // Report-only for now (lib/csp.ts): violations go to Sentry when NEXT_PUBLIC_SENTRY_DSN is set,
+  // nothing is blocked. Do not add an enforcing Content-Security-Policy until the reports are clean.
+  ...cspReportOnlyHeaders({ isDev: process.env.NODE_ENV === "development" }),
 ];
 
 const nextConfig: NextConfig = {
