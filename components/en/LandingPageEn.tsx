@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { trackEvent } from "@/lib/analytics";
+import { isSignInCancelled } from "@/lib/authEvents";
 import { FeedbackModalEn } from "./FeedbackModalEn";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
@@ -221,14 +222,17 @@ export function LandingPageEn() {
 
   const activeData = SHOWCASE_DATA[selectedPersona];
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (location: "header" | "hero" | "footer") => {
     try {
-      trackEvent("landing_cta_clicked", { location: "hero" });
+      trackEvent("landing_cta_clicked", { location });
       setLoading("google");
       await signInWithGoogle();
     } catch (e) {
-      console.error(e);
-      alert("Google sign-in encountered an error. Please try again.");
+      // A closed popup is the user's choice: only real failures get an alert.
+      if (!isSignInCancelled(e)) {
+        console.error(e);
+        alert("Google sign-in encountered an error. Please try again.");
+      }
     } finally {
       setLoading(null);
     }
@@ -277,7 +281,7 @@ export function LandingPageEn() {
               Resources
             </Link>
             <button
-              onClick={handleGoogleLogin}
+              onClick={() => handleGoogleLogin("header")}
               disabled={loading !== null}
               className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 transition-all cursor-pointer active:scale-95"
             >
@@ -339,7 +343,7 @@ export function LandingPageEn() {
           {/* Large High-Conversion Primary CTA Button */}
           <div className="flex flex-col items-center justify-center pt-3 max-w-md mx-auto space-y-2">
             <button
-              onClick={handleGoogleLogin}
+              onClick={() => handleGoogleLogin("hero")}
               disabled={loading !== null}
               className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-sm sm:text-base font-bold bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white shadow-xl shadow-indigo-600/30 transition-all cursor-pointer"
             >
@@ -965,7 +969,7 @@ export function LandingPageEn() {
             </p>
             <div className="pt-2 flex flex-col items-center justify-center gap-2.5">
               <button
-                onClick={handleGoogleLogin}
+                onClick={() => handleGoogleLogin("footer")}
                 disabled={loading !== null}
                 className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-sm sm:text-base font-bold bg-white text-zinc-900 hover:bg-zinc-100 shadow-xl transition-all cursor-pointer active:scale-95"
               >

@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { trackEvent } from "@/lib/analytics";
+import { isSignInCancelled } from "@/lib/authEvents";
 import { Bell, CheckCircle2, Loader2, ArrowRight, Zap } from "lucide-react";
 import {
   PRO_PRICE_USD,
@@ -57,8 +58,11 @@ export function PricingWaitlistButton() {
           );
         }
       } catch (err) {
-        console.error(err);
-        alert("Google sign-in encountered an error. Please try again.");
+        // A closed popup is the user's choice: only real failures get an alert.
+        if (!isSignInCancelled(err)) {
+          console.error(err);
+          alert("Google sign-in encountered an error. Please try again.");
+        }
       } finally {
         setIsSigningIn(false);
       }
