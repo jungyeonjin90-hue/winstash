@@ -112,3 +112,13 @@ test("privacy policy lists every third-party processor the app sends data to", a
     await expect(page.getByText(processor).first()).toBeVisible();
   }
 });
+
+test("unknown URLs return 404 with the custom not-found page", async ({ page }) => {
+  const res = await page.goto("/this-page-does-not-exist-e2e");
+  expect(res?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "This page doesn't exist" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go to Home" })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: "Pricing" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Resources" })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute("content", /noindex/);
+});
