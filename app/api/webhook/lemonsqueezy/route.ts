@@ -112,7 +112,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (!userId) {
-      console.warn("[LemonSqueezy Webhook] No userId found in custom_data. Payload attributes email:", attributes.user_email);
+      // A paying customer we cannot match to an account: they will not get Pro until someone links it by hand.
+      // Logged as an error (no email, which would put personal data in the logs) so log alerts can pick it up.
+      console.error(
+        `[LemonSqueezy Webhook] ACTION NEEDED: ${eventName} has no custom_data.user_id ` +
+          `(subscription ${String(data.id || "")}, customer ${String(attributes.customer_id || "")}). Pro was not granted.`
+      );
       // Return 200 OK so Lemon Squeezy does not indefinitely retry
       return NextResponse.json({ received: true, note: "No user_id found in custom_data" });
     }

@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy & Data Security
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-            Last Updated: September 30, 2026 · Effective Date: September 30, 2026
+            Last Updated: October 11, 2026 · Effective Date: October 11, 2026
           </p>
           <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-300 leading-relaxed">
             At <strong>WinStash</strong> (&quot;we&quot;, &quot;our&quot;, or &quot;the Service&quot;), we believe your professional accomplishments and workplace records belong exclusively to you. This Privacy Policy details how we process your notes with AI, how we isolate and protect your data, and how you retain ownership of it.
@@ -95,6 +95,18 @@ export default function PrivacyPolicyPage() {
               <strong className="block font-bold text-zinc-900 dark:text-zinc-100">Career Vault Records</strong>
               <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed text-xs">
                 Raw weekly brain-dump notes and synthesized outputs (Weekly Snippets, Brag Sheet Items, and STAR Portfolio stories) you choose to save.
+              </p>
+            </div>
+            <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-1.5">
+              <strong className="block font-bold text-zinc-900 dark:text-zinc-100">Product Analytics</strong>
+              <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed text-xs">
+                We use PostHog and Google Analytics to see how the app is used (pages visited, features used). Analytics are tied to an internal user ID, never your email or name. Session replays mask everything you type and all text on screen, so your notes are never recorded.
+              </p>
+            </div>
+            <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-1.5">
+              <strong className="block font-bold text-zinc-900 dark:text-zinc-100">Billing</strong>
+              <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed text-xs">
+                Pro payments are processed by Lemon Squeezy, our Merchant of Record, which collects your payment details and billing address. We receive only your subscription status and customer ID, never your card number.
               </p>
             </div>
           </div>
@@ -160,7 +172,7 @@ export default function PrivacyPolicyPage() {
                 <strong>1-Click Backup Export:</strong> You can download a complete, readable JSON copy of all your weekly notes, brag sheets, and STAR portfolio cards anytime from the Settings menu.
               </li>
               <li className="p-3.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                <strong>Permanent Account Purge:</strong> You may permanently delete individual records directly inside the app, or request a complete wipe of your user profile, backups, and credentials by emailing our data privacy desk.
+                <strong>Permanent Account Purge:</strong> You may permanently delete individual records directly inside the app, or request deletion of your account and all associated data by emailing our data privacy desk. We complete deletion requests within 30 days.
               </li>
             </ul>
           </div>

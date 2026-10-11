@@ -247,7 +247,7 @@ export function UpgradeModal({
                   <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
                     ${PRO_PRICE_USD}
                   </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400"> / month</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400"> / month + tax</span>
                 </div>
               </div>
 
@@ -326,7 +326,7 @@ export function UpgradeModal({
                   <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100">
                     ${PRO_PRICE_USD}
                   </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400"> / month</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400"> / month + tax</span>
                 </div>
               </div>
 

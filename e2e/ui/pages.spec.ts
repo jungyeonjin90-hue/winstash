@@ -102,4 +102,6 @@ test("sitemap lists no Korean (/ko) URLs", async ({ request }) => {
   const xml = await (await request.get("/sitemap.xml")).text();
   expect(xml).toContain("<urlset");
   expect(xml).not.toMatch(/winstash\.net\/ko(\/|<)/);
+  // /en only redirects to / on the client, so it should not be listed either
+  expect(xml).not.toContain("winstash.net/en<");
 });
