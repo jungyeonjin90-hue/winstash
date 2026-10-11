@@ -105,3 +105,10 @@ test("sitemap lists no Korean (/ko) URLs", async ({ request }) => {
   // /en only redirects to / on the client, so it should not be listed either
   expect(xml).not.toContain("winstash.net/en<");
 });
+
+test("privacy policy lists every third-party processor the app sends data to", async ({ page }) => {
+  await page.goto("/privacy");
+  for (const processor of ["PostHog", "Lemon Squeezy", "Sentry"]) {
+    await expect(page.getByText(processor).first()).toBeVisible();
+  }
+});
