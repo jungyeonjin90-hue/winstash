@@ -27,6 +27,7 @@ import { MAX_USER_FREE_CREDITS } from "@/lib/creditConfig";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { trackEvent } from "@/lib/analytics";
+import { isSignInCancelled } from "@/lib/authEvents";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -157,8 +158,11 @@ export function UpgradeModal({
         );
       }
     } catch (err) {
-      console.error(err);
-      alert("Google sign-in encountered an error. Please try again.");
+      // A closed popup is the user's choice: only real failures get an alert.
+      if (!isSignInCancelled(err)) {
+        console.error(err);
+        alert("Google sign-in encountered an error. Please try again.");
+      }
     } finally {
       setIsSigningIn(false);
     }
