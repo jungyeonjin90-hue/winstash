@@ -4,6 +4,9 @@ import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://winstash.net/refund",
+  },
   title: "Refund Policy - WinStash",
   description:
     "WinStash Refund Policy. Learn about our 14-day money-back guarantee, Lemon Squeezy refund processing, and cancellation policies.",

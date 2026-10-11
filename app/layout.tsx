@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://winstash.net"),
+  // Canonical for the home page (app/page.tsx is a client component, so it lives here). Every other
+  // indexed page sets its own, which overrides this one.
+  alternates: {
+    canonical: "https://winstash.net",
+  },
   title: "WinStash - Never Forget Your Wins | 1-Min Friday Notes to Career Assets",
   description:
     "Turn 1-minute Friday notes into manager-ready weekly syncs, promotion brag sheets, and career portfolios. Never forget what you shipped.",

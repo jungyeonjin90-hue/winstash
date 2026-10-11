@@ -122,3 +122,30 @@ test("unknown URLs return 404 with the custom not-found page", async ({ page }) 
   await expect(page.getByRole("link", { name: "Resources" })).toBeVisible();
   await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute("content", /noindex/);
 });
+
+test("/en permanently redirects to / on the server and keeps the query string", async ({ request }) => {
+  for (const [from, to] of [
+    ["/en", "/"],
+    ["/en?utm_source=newsletter&utm_campaign=q4", "/?utm_source=newsletter&utm_campaign=q4"],
+  ]) {
+    const res = await request.get(from, { maxRedirects: 0 });
+    expect(res.status(), from).toBe(308);
+    const location = new URL(res.headers()["location"], "http://localhost");
+    expect(location.pathname + location.search, from).toBe(to);
+  }
+});
+
+test("indexed pages declare their own canonical URL", async ({ page }) => {
+  for (const [path, canonical] of [
+    ["/", "https://winstash.net"],
+    ["/?utm_source=x", "https://winstash.net"],
+    ["/privacy", "https://winstash.net/privacy"],
+    ["/terms", "https://winstash.net/terms"],
+    ["/refund", "https://winstash.net/refund"],
+    ["/pricing", "https://winstash.net/pricing"],
+    ["/resources", "https://winstash.net/resources"],
+  ]) {
+    await page.goto(path);
+    await expect(page.locator('link[rel="canonical"]'), path).toHaveAttribute("href", canonical);
+  }
+});
