@@ -1,0 +1,533 @@
+[
+  {
+    "id": "eng-metrics",
+    "jobRole": "engineering",
+    "toneManner": "impact",
+    "periodLabel": "2026 Q3",
+    "hasMetrics": true,
+    "inputLanguage": "en",
+    "note": "Backend engineer with clear numbers; numbers must be copied exactly",
+    "mustCover": [
+      {
+        "label": "API latency fix",
+        "match": [
+          "2.4|320|latency|response time"
+        ]
+      },
+      {
+        "label": "CI migration",
+        "match": [
+          "CI|pipeline|GitHub Actions"
+        ]
+      },
+      {
+        "label": "Flaky tests",
+        "match": [
+          "flaky"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "id": "eng-metrics-w1",
+        "createdAt": "2026-06-29T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W27 (Jun 29 – Jul 5)"
+        },
+        "raw_memo": "Order list API was timing out for big accounts. Found a full table scan, added a composite index and removed N+1 queries. Avg response went from 2.4s to 320ms."
+      },
+      {
+        "id": "eng-metrics-w2",
+        "createdAt": "2026-07-06T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W28 (Jul 6 – Jul 12)"
+        },
+        "raw_memo": "Moved CI from Jenkins to GitHub Actions. Pipeline time dropped from 40 min to 12 min. Wrote the migration guide for the team."
+      },
+      {
+        "id": "eng-metrics-w3",
+        "createdAt": "2026-07-13T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W29 (Jul 13 – Jul 19)"
+        },
+        "raw_memo": "On-call week. Two incidents, both Redis connection pool exhaustion. Raised pool size and added an alert so we catch it earlier."
+      },
+      {
+        "id": "eng-metrics-w4",
+        "createdAt": "2026-07-20T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W30 (Jul 20 – Jul 26)"
+        },
+        "raw_memo": "Started splitting the billing module out of the monolith. Extracted invoice generation as the first service behind a feature flag."
+      },
+      {
+        "id": "eng-metrics-w5",
+        "createdAt": "2026-07-27T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W31 (Jul 27 – Aug 2)"
+        },
+        "raw_memo": "Flaky test cleanup: went from 18 flaky tests to 3 by fixing shared fixtures and time-dependent asserts."
+      },
+      {
+        "id": "eng-metrics-w6",
+        "createdAt": "2026-08-03T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W32 (Aug 3 – Aug 9)"
+        },
+        "raw_memo": "Paired with our intern Dana on her first production PR (CSV export for admins). Shipped Thursday."
+      }
+    ]
+  },
+  {
+    "id": "pm-nometrics",
+    "jobRole": "product",
+    "toneManner": "problem_solving",
+    "periodLabel": "2026 Q3",
+    "hasMetrics": false,
+    "inputLanguage": "en",
+    "note": "PM with no numbers at all; any number in the output is invented",
+    "mustCover": [
+      {
+        "label": "Customer discovery",
+        "match": [
+          "interview"
+        ]
+      },
+      {
+        "label": "Freshness indicators",
+        "match": [
+          "freshness|stale"
+        ]
+      },
+      {
+        "label": "PDF exporter deprecation",
+        "match": [
+          "PDF|deprecat|legacy"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "id": "pm-nometrics-w1",
+        "createdAt": "2026-06-29T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W27 (Jun 29 – Jul 5)"
+        },
+        "raw_memo": "Ran customer interviews with admins at mid-size clients about why they stop using scheduled reports. Main theme: they can't tell which reports are stale."
+      },
+      {
+        "id": "pm-nometrics-w2",
+        "createdAt": "2026-07-06T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W28 (Jul 6 – Jul 12)"
+        },
+        "raw_memo": "Wrote the PRD for report freshness indicators and got sign-off from design and engineering leads."
+      },
+      {
+        "id": "pm-nometrics-w3",
+        "createdAt": "2026-07-13T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W29 (Jul 13 – Jul 19)"
+        },
+        "raw_memo": "Coordinated the beta launch of freshness indicators with support and docs. Wrote the in-app announcement."
+      },
+      {
+        "id": "pm-nometrics-w4",
+        "createdAt": "2026-07-20T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W30 (Jul 20 – Jul 26)"
+        },
+        "raw_memo": "Proposed deprecating the legacy PDF exporter; aligned with sales on a migration plan for the accounts that still use it."
+      },
+      {
+        "id": "pm-nometrics-w5",
+        "createdAt": "2026-07-27T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W31 (Jul 27 – Aug 2)"
+        },
+        "raw_memo": "Quarter planning: pushed back on adding a new dashboard builder and got the team to prioritize report reliability instead."
+      }
+    ]
+  },
+  {
+    "id": "mkt-metrics",
+    "jobRole": "marketing",
+    "toneManner": "impact",
+    "periodLabel": "2026 Q3",
+    "hasMetrics": true,
+    "inputLanguage": "en",
+    "note": "Marketer with percentages and money",
+    "mustCover": [
+      {
+        "label": "Webinar",
+        "match": [
+          "webinar"
+        ]
+      },
+      {
+        "label": "Pricing page A/B test",
+        "match": [
+          "4.1|5.3|A/B|headline"
+        ]
+      },
+      {
+        "label": "Budget reallocation",
+        "match": [
+          "12,000|12K|budget|LinkedIn"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "id": "mkt-metrics-w1",
+        "createdAt": "2026-06-29T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W27 (Jun 29 – Jul 5)"
+        },
+        "raw_memo": "Hosted the Q3 webinar on onboarding automation. 240 registrants, 96 attended live."
+      },
+      {
+        "id": "mkt-metrics-w2",
+        "createdAt": "2026-07-06T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W28 (Jul 6 – Jul 12)"
+        },
+        "raw_memo": "Rewrote the trial nurture email sequence. Open rate on email 2 went from 22% to 31%."
+      },
+      {
+        "id": "mkt-metrics-w3",
+        "createdAt": "2026-07-13T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W29 (Jul 13 – Jul 19)"
+        },
+        "raw_memo": "A/B tested the pricing page headline. Variant B lifted signup conversion from 4.1% to 5.3% over two weeks."
+      },
+      {
+        "id": "mkt-metrics-w4",
+        "createdAt": "2026-07-20T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W30 (Jul 20 – Jul 26)"
+        },
+        "raw_memo": "Published two SEO articles on onboarding checklists; both indexed this week."
+      },
+      {
+        "id": "mkt-metrics-w5",
+        "createdAt": "2026-07-27T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W31 (Jul 27 – Aug 2)"
+        },
+        "raw_memo": "Reallocated $12,000 of paid budget from display ads to LinkedIn retargeting after reviewing CAC by channel."
+      },
+      {
+        "id": "mkt-metrics-w6",
+        "createdAt": "2026-08-03T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W32 (Aug 3 – Aug 9)"
+        },
+        "raw_memo": "Built a shared campaign calendar in Notion with sales so launches stop colliding."
+      }
+    ]
+  },
+  {
+    "id": "sales-named",
+    "jobRole": "sales",
+    "toneManner": "impact",
+    "periodLabel": "2026 Q3",
+    "hasMetrics": true,
+    "inputLanguage": "en",
+    "note": "AE with a named customer and ARR; customer names must not be swapped or invented",
+    "mustCover": [
+      {
+        "label": "Northwind deal",
+        "match": [
+          "Northwind",
+          "48"
+        ]
+      },
+      {
+        "label": "Contoso expansion",
+        "match": [
+          "Contoso"
+        ]
+      },
+      {
+        "label": "Mutual action plan",
+        "match": [
+          "mutual action plan|action plan|template"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "id": "sales-named-w1",
+        "createdAt": "2026-06-29T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W27 (Jun 29 – Jul 5)"
+        },
+        "raw_memo": "Closed Northwind Logistics: $48K ARR, 2-year contract. Took 4 months from first call."
+      },
+      {
+        "id": "sales-named-w2",
+        "createdAt": "2026-07-06T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W28 (Jul 6 – Jul 12)"
+        },
+        "raw_memo": "Ran 6 product demos for inbound leads, 2 moved to evaluation."
+      },
+      {
+        "id": "sales-named-w3",
+        "createdAt": "2026-07-13T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W29 (Jul 13 – Jul 19)"
+        },
+        "raw_memo": "Led the QBR with Contoso Health and found an expansion opportunity for their second warehouse team."
+      },
+      {
+        "id": "sales-named-w4",
+        "createdAt": "2026-07-20T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W30 (Jul 20 – Jul 26)"
+        },
+        "raw_memo": "Built a mutual action plan template that the rest of the team started using."
+      },
+      {
+        "id": "sales-named-w5",
+        "createdAt": "2026-07-27T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W31 (Jul 27 – Aug 2)"
+        },
+        "raw_memo": "Pipeline review: my Q4 pipeline is at 2x quota coverage."
+      }
+    ]
+  },
+  {
+    "id": "cs-mixed",
+    "jobRole": "operations",
+    "toneManner": "stability",
+    "periodLabel": "2026 Q3",
+    "hasMetrics": true,
+    "inputLanguage": "en",
+    "note": "Customer success / ops, 8 weeks, mix of numbers and none",
+    "mustCover": [
+      {
+        "label": "Onboarding 14 accounts",
+        "match": [
+          "14|onboard"
+        ]
+      },
+      {
+        "label": "Fabrikam renewal save",
+        "match": [
+          "Fabrikam|renewal"
+        ]
+      },
+      {
+        "label": "Help center articles",
+        "match": [
+          "help center|article"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "id": "cs-mixed-w1",
+        "createdAt": "2026-06-29T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W27 (Jun 29 – Jul 5)"
+        },
+        "raw_memo": "Onboarded 14 new accounts this month, all live within the 30-day target."
+      },
+      {
+        "id": "cs-mixed-w2",
+        "createdAt": "2026-07-06T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W28 (Jul 6 – Jul 12)"
+        },
+        "raw_memo": "Saved an at-risk renewal at Fabrikam by setting up weekly check-ins and fixing their SSO setup with support."
+      },
+      {
+        "id": "cs-mixed-w3",
+        "createdAt": "2026-07-13T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W29 (Jul 13 – Jul 19)"
+        },
+        "raw_memo": "CSAT for my queue was 92% this month."
+      },
+      {
+        "id": "cs-mixed-w4",
+        "createdAt": "2026-07-20T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W30 (Jul 20 – Jul 26)"
+        },
+        "raw_memo": "Wrote 5 help center articles for the new permissions model."
+      },
+      {
+        "id": "cs-mixed-w5",
+        "createdAt": "2026-07-27T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W31 (Jul 27 – Aug 2)"
+        },
+        "raw_memo": "Handled two escalations about missing exports; worked with engineering on the root cause."
+      },
+      {
+        "id": "cs-mixed-w6",
+        "createdAt": "2026-08-03T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W32 (Aug 3 – Aug 9)"
+        },
+        "raw_memo": "Ran a training session for the support team on the new permissions model."
+      },
+      {
+        "id": "cs-mixed-w7",
+        "createdAt": "2026-08-10T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W33 (Aug 10 – Aug 16)"
+        },
+        "raw_memo": "Quiet week, mostly renewals prep and account health reviews."
+      },
+      {
+        "id": "cs-mixed-w8",
+        "createdAt": "2026-08-17T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W34 (Aug 17 – Aug 23)"
+        },
+        "raw_memo": "Started a churn-risk checklist to flag accounts with dropping logins earlier."
+      }
+    ]
+  },
+  {
+    "id": "design-nometrics",
+    "jobRole": "design",
+    "toneManner": "leadership",
+    "periodLabel": "2026 Q3",
+    "hasMetrics": false,
+    "inputLanguage": "en",
+    "note": "Product designer, no numbers, short",
+    "mustCover": [
+      {
+        "label": "Usability tests",
+        "match": [
+          "usability"
+        ]
+      },
+      {
+        "label": "Design system components",
+        "match": [
+          "design system|component"
+        ]
+      },
+      {
+        "label": "Accessibility pass",
+        "match": [
+          "accessib|contrast|keyboard"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "id": "design-nometrics-w1",
+        "createdAt": "2026-06-29T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W27 (Jun 29 – Jul 5)"
+        },
+        "raw_memo": "Ran usability tests on the new checkout flow; people kept missing the promo code field."
+      },
+      {
+        "id": "design-nometrics-w2",
+        "createdAt": "2026-07-06T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W28 (Jul 6 – Jul 12)"
+        },
+        "raw_memo": "Added form field, select and date picker components to the design system with documentation."
+      },
+      {
+        "id": "design-nometrics-w3",
+        "createdAt": "2026-07-13T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W29 (Jul 13 – Jul 19)"
+        },
+        "raw_memo": "Did an accessibility pass on the dashboard: color contrast and keyboard focus issues logged and fixed with frontend."
+      },
+      {
+        "id": "design-nometrics-w4",
+        "createdAt": "2026-07-20T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W30 (Jul 20 – Jul 26)"
+        },
+        "raw_memo": "Handed off the redesigned settings page; reviewed the build with engineering and filed polish tickets."
+      }
+    ]
+  },
+  {
+    "id": "ko-data-metrics",
+    "jobRole": "engineering",
+    "toneManner": "problem_solving",
+    "periodLabel": "2026 Q3",
+    "hasMetrics": true,
+    "inputLanguage": "ko",
+    "note": "Korean input with English tool names; output must be English and keep numbers",
+    "mustCover": [
+      {
+        "label": "Batch job speedup",
+        "match": [
+          "batch|Airflow|DAG",
+          "50"
+        ]
+      },
+      {
+        "label": "Looker dashboard",
+        "match": [
+          "Looker|dashboard"
+        ]
+      },
+      {
+        "label": "Data quality checks",
+        "match": [
+          "quality|null|duplicate"
+        ]
+      }
+    ],
+    "records": [
+      {
+        "id": "ko-data-metrics-w1",
+        "createdAt": "2026-06-29T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W27 (Jun 29 – Jul 5)"
+        },
+        "raw_memo": "야간 배치가 6시간 넘게 걸려서 아침 리포트가 늦게 나옴. Airflow DAG 병렬화하고 불필요한 조인 제거해서 50분으로 줄임."
+      },
+      {
+        "id": "ko-data-metrics-w2",
+        "createdAt": "2026-07-06T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W28 (Jul 6 – Jul 12)"
+        },
+        "raw_memo": "매출 대시보드를 Looker로 옮김. 기존 엑셀 수작업 리포트 없앰."
+      },
+      {
+        "id": "ko-data-metrics-w3",
+        "createdAt": "2026-07-13T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W29 (Jul 13 – Jul 19)"
+        },
+        "raw_memo": "데이터 품질 체크 추가 (null 비율, 중복 키). 이번 주에 잘못된 환율 데이터 하나 잡아냄."
+      },
+      {
+        "id": "ko-data-metrics-w4",
+        "createdAt": "2026-07-20T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W30 (Jul 20 – Jul 26)"
+        },
+        "raw_memo": "신규 입사자 2명 온보딩, SQL 스타일 가이드 정리해서 공유."
+      },
+      {
+        "id": "ko-data-metrics-w5",
+        "createdAt": "2026-07-27T00:00:00.000Z",
+        "target_week": {
+          "label": "2026 W31 (Jul 27 – Aug 2)"
+        },
+        "raw_memo": "다음 분기 데이터 웨어하우스 비용 줄이는 방안 조사 시작. 아직 결론 없음."
+      }
+    ]
+  }
+]

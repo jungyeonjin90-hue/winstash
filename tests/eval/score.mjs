@@ -109,7 +109,7 @@ export function extractNumbers(text) {
 }
 
 /** Values that may legitimately appear given the memo's numbers: the numbers and simple derivations. */
-function allowedValues(memoNumbers) {
+export function allowedValues(memoNumbers) {
   const allowed = new Set(memoNumbers);
   for (const a of memoNumbers) {
     for (const b of memoNumbers) {
@@ -124,7 +124,7 @@ function allowedValues(memoNumbers) {
   return allowed;
 }
 
-function isAllowed(value, allowed) {
+export function isAllowed(value, allowed) {
   for (const a of allowed) {
     // Rounding slack: half a unit for percent-sized values, 2% otherwise ("1.2s" must not match "2.4s").
     const tolerance = Math.max(Math.abs(a) * 0.02, Math.abs(a) >= 10 ? 0.5 : 0.01);
