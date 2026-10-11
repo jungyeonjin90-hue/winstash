@@ -91,3 +91,15 @@ test("without NEXT_PUBLIC_POSTHOG_KEY no analytics requests are sent (no built-i
   await page.waitForLoadState("networkidle");
   expect(analytics).toEqual([]);
 });
+
+test("pricing shows the Pro price before tax and explains tax in the FAQ", async ({ page }) => {
+  await page.goto("/pricing");
+  await expect(page.getByText("/ month + tax")).toBeVisible();
+  await expect(page.getByText("Is tax included in the price?")).toBeVisible();
+});
+
+test("sitemap lists no Korean (/ko) URLs", async ({ request }) => {
+  const xml = await (await request.get("/sitemap.xml")).text();
+  expect(xml).toContain("<urlset");
+  expect(xml).not.toMatch(/winstash\.net\/ko(\/|<)/);
+});

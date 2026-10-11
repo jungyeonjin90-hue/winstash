@@ -66,6 +66,13 @@ export default defineConfig({
             NEXT_PUBLIC_POSTHOG_KEY: "",
             // Deterministic webhook signing secret (see e2e/api/webhook.spec.ts).
             LEMON_SQUEEZY_WEBHOOK_SECRET: E2E_WEBHOOK_SECRET,
+            // Browser Firebase config pinned to the throwaway demo project, so the suite neither depends on
+            // .env.local (fresh worktrees have none) nor points the browser at the production project.
+            // Without a config, AuthContext never restores the seeded demo session and UI tests see the landing page.
+            NEXT_PUBLIC_FIREBASE_API_KEY: "e2e-fake-api-key",
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: `${E2E_PROJECT_ID}.firebaseapp.com`,
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID: E2E_PROJECT_ID,
+            NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: "",
             // Server-side Admin SDK -> local emulators only (never the production project).
             FIREBASE_PROJECT_ID: E2E_PROJECT_ID,
             FIRESTORE_EMULATOR_HOST: E2E_FIRESTORE_EMULATOR_HOST,
