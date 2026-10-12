@@ -77,6 +77,9 @@ export default function PrivacyPolicyPage() {
               <li>
                 The drafts are stored in your account, where only you can read them (see Section 3).
               </li>
+              <li>
+                The free STAR Method Generator (no sign-in) sends the note you type and your chosen role to Gemini the same way, but stores neither the note nor the result. To enforce its daily limit we keep only a per-day count tied to a one-way hash of your IP address, never the address itself.
+              </li>
             </ul>
           </div>
         </section>
