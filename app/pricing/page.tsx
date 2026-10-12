@@ -68,7 +68,7 @@ const PRICING_FAQS = [
   {
     q: IS_PAYMENT_GATEWAY_LIVE ? "How do I upgrade to Pro?" : "When does Pro open?",
     a: IS_PAYMENT_GATEWAY_LIVE
-      ? "WinStash Pro is officially open! You can upgrade instantly with one click using the Upgrade button above to get unlimited AI transformations, brag sheets, and STAR portfolio syntheses."
+      ? "Use the Upgrade button above. Pro starts right away and gives you unlimited AI transformations, brag sheets, and STAR portfolio syntheses."
       : "Very soon. We are putting the finishing touches on our billing integration. Click the 'Notify Me' button on this page to join our early-access waitlist, and we'll send you an email the moment Pro launches.",
   },
   {
@@ -176,7 +176,7 @@ export default function PricingPage() {
       <div className="w-full bg-indigo-50/80 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/60 py-2.5 px-4 text-center text-xs font-semibold text-indigo-900 dark:text-indigo-300">
         <span>
           {IS_PAYMENT_GATEWAY_LIVE
-            ? "✨ WinStash Pro is now live! Upgrade for unlimited AI syntheses."
+            ? "Every draft uses only what you wrote. Pro adds unlimited AI syntheses."
             : "🎉 Free during the public beta. Pro opens soon."}
         </span>
       </div>
@@ -234,7 +234,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
-                  <span><strong>3 total</strong> Brag Sheet syntheses (XYZ formula)</span>
+                  <span><strong>3 total</strong> Brag Sheet syntheses</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />

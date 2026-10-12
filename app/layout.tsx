@@ -20,9 +20,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://winstash.net",
   },
-  title: "WinStash - Never Forget Your Wins | 1-Min Friday Notes to Career Assets",
+  title: "WinStash: Self-Review Prep from Your Own Work Notes",
   description:
-    "Turn 1-minute Friday notes into manager-ready weekly syncs, promotion brag sheets, and career portfolios. Never forget what you shipped.",
+    "Turn rough work notes into a brag sheet, weekly updates, and STAR stories for your review. Only what you wrote, nothing made up. Free to start.",
   verification: {
     google: [
       "a7NjIvBTtR627n1EqGwav6v2_hO9NpAA9tbojTw8kN8",
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
   },
   openGraph: {
-    title: "WinStash - Never Forget Your Wins",
+    title: "WinStash: Walk into your review with proof",
     description:
-      "1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio. Write rough notes on Friday, auto-fill your career assets.",
+      "Rough work notes into a brag sheet, weekly updates, and STAR stories for your review. Only what you wrote, nothing made up.",
     url: "https://winstash.net",
     siteName: "WinStash",
     images: [
@@ -62,9 +62,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "WinStash - Never Forget Your Wins",
+    title: "WinStash: Walk into your review with proof",
     description:
-      "1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio. Write rough notes on Friday, auto-fill your career assets.",
+      "Rough work notes into a brag sheet, weekly updates, and STAR stories for your review. Only what you wrote, nothing made up.",
     images: ["/og-image.png"],
   },
 };

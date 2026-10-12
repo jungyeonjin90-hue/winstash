@@ -252,81 +252,6 @@ export default function ResourcesHubPage() {
               <ChevronRight className="w-3.5 h-3.5" />
             </div>
           </Link>
-
-          {/* Card 2: 1:1 Meeting Agenda (Upcoming) */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-zinc-100/60 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800/60 opacity-80 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-                <span className="font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-200/80 dark:bg-zinc-800 px-2.5 py-1 rounded-full">
-                  Coming Soon
-                </span>
-                <span>Template</span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-800 dark:text-zinc-200 mb-3">
-                1:1 Meeting Agenda Template for Engineers & Managers
-              </h2>
-
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
-                Turn awkward weekly 1:1s into high-leverage alignment sessions. A structured template
-                covering progress, architectural roadblocks, career trajectory, and upward feedback.
-              </p>
-            </div>
-
-            <div className="text-xs font-medium text-zinc-400 dark:text-zinc-500">
-              Publishing next
-            </div>
-          </div>
-
-          {/* Card 3: Weekly Status Update (Upcoming) */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-zinc-100/60 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800/60 opacity-80 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-                <span className="font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-200/80 dark:bg-zinc-800 px-2.5 py-1 rounded-full">
-                  Coming Soon
-                </span>
-                <span>Template</span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-800 dark:text-zinc-200 mb-3">
-                Weekly Status Update Template for Slack & Teams
-              </h2>
-
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
-                Concise, high-signal bullet-point formats to keep your manager and cross-functional
-                peers in the loop every Friday without spending an hour typing essays.
-              </p>
-            </div>
-
-            <div className="text-xs font-medium text-zinc-400 dark:text-zinc-500">
-              Publishing soon
-            </div>
-          </div>
-
-          {/* Card 4: STAR Interview Prep Guide (Upcoming) */}
-          <div className="p-6 sm:p-7 rounded-3xl bg-zinc-100/60 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800/60 opacity-80 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-                <span className="font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-200/80 dark:bg-zinc-800 px-2.5 py-1 rounded-full">
-                  Coming Soon
-                </span>
-                <span>Framework</span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-800 dark:text-zinc-200 mb-3">
-                STAR Method Case Study Framework for Tech Interviews
-              </h2>
-
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
-                How to synthesize past sprint notes into compelling Situation, Task, Action, Result
-                stories that pass behavioral interview loops at top tech companies.
-              </p>
-            </div>
-
-            <div className="text-xs font-medium text-zinc-400 dark:text-zinc-500">
-              Publishing soon
-            </div>
-          </div>
         </div>
 
         {/* 5. Bottom WinStash Solution Banner */}
@@ -343,7 +268,7 @@ export default function ResourcesHubPage() {
 
             <p className="text-sm sm:text-base text-zinc-300 leading-relaxed">
               WinStash turns rough 60-second Friday notes into manager-ready weekly syncs,
-              XYZ-formatted brag sheets, and STAR interview portfolios automatically.
+              review-ready brag sheets, and STAR interview stories automatically, using only what you wrote.
             </p>
 
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-4">

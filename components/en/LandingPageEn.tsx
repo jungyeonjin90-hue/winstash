@@ -78,131 +78,170 @@ interface ShowcaseData {
   };
 }
 
+// Every number, tool and name in the drafts below appears in the raw memo above it.
+// Keep it that way: the demo has to show the same "nothing made up" rule the product follows.
 const SHOWCASE_DATA: Record<string, ShowcaseData> = {
-  engineering: {
-    role: "Software Engineering",
-    roleBadge: "Staff Engineer / Tech Lead",
+  operations: {
+    role: "Operations / BizOps",
+    roleBadge: "BizOps Manager",
     rawMemo:
-      "Primary payment gateway threw 50+ timeouts/min during flash sale. Did emergency hotfix on Friday. Root cause: connection pool starvation in HikariCP. Tuned maxPoolSize, added Redis L2 cache for hot settlement queries. Latency plummeted from 1,200ms to 85ms (93% drop), error rate hit 0%. Next week: Grafana executive APM dashboard.",
+      "Vendor invoice approvals were taking about 6 days because requests sat in three different inboxes. Set up one shared intake form and a weekly 30-min triage with finance and procurement. Approvals now take about 2 days. Wrote the how-to doc and walked 4 team leads through it. Next week: add the two remaining regional teams.",
     weeklySnippet: {
       done: [
-        "Resolved critical payment gateway timeout crisis under flash-sale concurrency",
-        "Tuned HikariCP database pool parameters and deployed Redis distributed L2 caching",
-        "Slashed p99 transactional latency by 93% (1,200ms → 85ms) with 0% error rate",
+        "Set up one shared intake form for vendor invoice approvals, replacing three separate inboxes",
+        "Started a weekly 30-minute triage with finance and procurement",
+        "Cut typical approval time from about 6 days to about 2; wrote the how-to doc and walked 4 team leads through it",
       ],
       inProgress: [
-        "Configuring Prometheus alert thresholds for connection pool saturation warnings",
+        "Collecting feedback from the 4 team leads on the new intake process",
       ],
       nextWeek: [
-        "Deploy executive-level real-time Grafana APM dashboard for finance stakeholders",
+        "Add the two remaining regional teams to the intake form",
       ],
     },
     bragDoc: {
-      metricSummary: "Slashed P99 Payment Latency by 93% (1.2s → 0.08s) with Zero Transaction Drops",
+      metricSummary:
+        "Cut vendor invoice approval time from about 6 days to about 2 by moving requests from three inboxes into one intake form with a weekly finance and procurement triage.",
       businessImpact:
-        "Protected an estimated $120,000 in monthly checkout GMV during high-concurrency peak hours and eliminated critical customer churn.",
+        "Requests no longer sit unseen in separate inboxes, and 4 team leads now follow the same documented process.",
       milestones: [
-        "HikariCP connection leak profiling and pool optimization",
-        "Multi-tier Redis cache implementation for repetitive settlement queries",
-        "Zero-downtime canary deployment across payment microservices",
+        "One shared intake form replacing three inboxes",
+        "Weekly 30-minute triage with finance and procurement",
+        "How-to doc and walkthrough for 4 team leads",
       ],
       quarter: "2026-Q3",
     },
     starResume: {
-      title: "High-Concurrency Payment Gateway Optimization & Latency Reduction",
+      title: "Vendor Invoice Approval Process Fix",
       situation:
-        "During major traffic surges, primary payment gateway timeouts spiked to 50+ errors/minute, threatening immediate revenue loss and customer trust.",
+        "Vendor invoice approvals were taking about 6 days because requests were spread across three different inboxes.",
       task:
-        "Diagnose backend connection bottlenecks, eliminate connection starvation, and stabilize transaction latency below 100ms with zero downtime.",
+        "Shorten approval time and give finance and procurement one place to see every request.",
       action:
-        "Led root-cause profiling using APM thread dumps; reconfigured HikariCP connection lifecycles and architected a Redis-based cache-aside pattern.",
+        "Set up a shared intake form, started a weekly 30-minute triage with finance and procurement, wrote a how-to doc and walked 4 team leads through it.",
       result:
-        "Reduced p99 response time from 1,200ms to 85ms (93% reduction), restored a 99.99% payment success rate, and safeguarded $120K in monthly GMV.",
-      ndaTags: ["#LatencyOptimization", "#DistributedSystems", "#Redis", "#SystemResilience"],
+        "Approvals now take about 2 days instead of about 6. The two remaining regional teams are next.",
+      ndaTags: ["#ProcessImprovement", "#CrossFunctional", "#Operations"],
+    },
+  },
+  engineering: {
+    role: "Software Engineering",
+    roleBadge: "Senior Engineer",
+    rawMemo:
+      "Payment gateway threw 50+ timeouts/min during the flash sale. Shipped a hotfix Friday. Root cause: connection pool starvation in HikariCP. Tuned maxPoolSize and added a Redis cache for hot settlement queries. Latency went from 1,200ms to 85ms and error rate dropped to 0%. Next week: Grafana dashboard for the gateway.",
+    weeklySnippet: {
+      done: [
+        "Shipped a Friday hotfix for payment gateway timeouts (50+/min) during the flash sale",
+        "Traced the cause to HikariCP connection pool starvation; tuned maxPoolSize and added a Redis cache for hot settlement queries",
+        "Latency down from 1,200ms to 85ms (93%), error rate down to 0%",
+      ],
+      inProgress: [
+        "Watching gateway latency and errors after the hotfix",
+      ],
+      nextWeek: [
+        "Build a Grafana dashboard for the payment gateway",
+      ],
+    },
+    bragDoc: {
+      metricSummary:
+        "Cut payment gateway latency from 1,200ms to 85ms (93%) and brought the error rate to 0% by fixing HikariCP pool starvation and caching hot settlement queries in Redis.",
+      businessImpact:
+        "Stopped 50+ timeouts per minute on the payment gateway during the flash sale.",
+      milestones: [
+        "Found the root cause: connection pool starvation in HikariCP",
+        "Tuned maxPoolSize and added a Redis cache for hot settlement queries",
+        "Shipped the hotfix on Friday",
+      ],
+      quarter: "2026-Q3",
+    },
+    starResume: {
+      title: "Payment Gateway Timeout Fix During a Flash Sale",
+      situation:
+        "During a flash sale, the payment gateway was throwing more than 50 timeouts per minute.",
+      task: "Find the root cause and stop the timeouts.",
+      action:
+        "Traced the problem to connection pool starvation in HikariCP, tuned maxPoolSize, added a Redis cache for hot settlement queries and shipped a hotfix on Friday.",
+      result: "Latency dropped from 1,200ms to 85ms (93%) and the error rate fell to 0%.",
+      ndaTags: ["#Reliability", "#Performance", "#Backend"],
     },
   },
   product: {
     role: "Product Management",
-    roleBadge: "Lead / Principal PM",
+    roleBadge: "Product Manager",
     rawMemo:
-      "Shipped 3-step streamlined onboarding experiment to 100% of global mobile traffic with 1-click social auth. Monitored telemetry for 7 days: drop-off plummeted from 38% to 19%, overall signup conversion rate (CVR) surged by +24%. Team celebrated over Friday demo.",
+      "Shipped the new 3-step onboarding (was 5 steps) with 1-click Google sign-up to all mobile users. After 7 days, drop-off fell from 38% to 19% and signup conversion rose 24%. Shared results at the Friday demo.",
     weeklySnippet: {
       done: [
-        "Shipped 3-step progressive onboarding experiment to 100% of global mobile users",
-        "Integrated 1-click OAuth friction reduction leading to an immediate +24% CVR lift",
-        "Halved new visitor signup abandonment rate from 38% down to 19%",
+        "Shipped the new 3-step onboarding (down from 5) with 1-click Google sign-up to all mobile users",
+        "Onboarding drop-off fell from 38% to 19% and signup conversion rose 24% after 7 days",
+        "Shared the results at the Friday demo",
       ],
       inProgress: [
-        "Tracking Day-7 and Day-30 activation retention cohorts across A/B test cohorts",
+        "Keep tracking onboarding drop-off and signup conversion",
       ],
       nextWeek: [
-        "Roll out personalized welcome coupon triggers based on user role classification",
+        "Pick the next onboarding improvement based on the 7-day results",
       ],
     },
     bragDoc: {
-      metricSummary: "Boosted User Onboarding CVR by +24% and Slashed Abandonment by Half (38% → 19%)",
+      metricSummary:
+        "Halved mobile onboarding drop-off (38% to 19%) and raised signup conversion 24% by cutting onboarding from 5 steps to 3 and adding 1-click Google sign-up.",
       businessImpact:
-        "Accelerated customer acquisition velocity with zero incremental marketing spend, yielding an estimated +15,000 newly activated monthly users.",
+        "More new mobile users finish signing up, measured over the first 7 days after full rollout.",
       milestones: [
-        "Cross-functional redesign of legacy 5-step registration funnel into 3 progressive screens",
-        "Amplitude funnel telemetry instrumentation for granular drop-off tracking",
-        "100% rollout approval after conclusive 7-day A/B statistical significance",
+        "Cut onboarding from 5 steps to 3",
+        "Added 1-click Google sign-up",
+        "Rolled out to all mobile users and shared 7-day results at the Friday demo",
       ],
       quarter: "2026-Q3",
     },
     starResume: {
-      title: "Frictionless Growth Funnel Redesign & Onboarding Conversion Lift",
-      situation:
-        "The legacy 5-step mobile signup process created excessive cognitive friction, resulting in a 38% drop-off rate before new visitors experienced core product value.",
-      task:
-        "Re-architect the user acquisition flow to minimize initial cognitive load, accelerate time-to-first-value, and lift completion rates above 80%.",
+      title: "Mobile Onboarding Redesign",
+      situation: "Mobile onboarding had 5 steps and 38% of new users dropped off.",
+      task: "Make mobile sign-up shorter and easier to finish.",
       action:
-        "Designed and validated an A/B experimentation roadmap; collapsed signup steps, embedded 1-tap social login, and deferred non-essential profiling questions.",
-      result:
-        "Achieved a 24% uplift in signup conversion, slashed funnel abandonment by 50%, and drove a 12% boost in Day-7 user retention cohorts.",
-      ndaTags: ["#GrowthProduct", "#FunnelOptimization", "#ABTesting", "#UserActivation"],
+        "Shipped a 3-step onboarding with 1-click Google sign-up to all mobile users and tracked the results for 7 days.",
+      result: "Drop-off fell from 38% to 19% and signup conversion rose 24%.",
+      ndaTags: ["#Onboarding", "#Conversion", "#Mobile"],
     },
   },
   marketing: {
     role: "Growth & Marketing",
-    roleBadge: "Growth Marketing Director",
+    roleBadge: "Growth Marketer",
     rawMemo:
-      "Tested high-intent search ad landing pages and instant benefit messaging across US campaigns. In 14 days, signup conversion climbed 32% and CAC fell 18%. Reallocated $40k budget to top-performing keyword cohorts. Next week: automated retargeting sequences.",
+      "Tested new landing pages with benefit-first copy for US search ads. In 14 days signup conversion rose 32% and CAC fell 18%. Moved $40k of budget to the best keyword groups. Next week: set up retargeting.",
     weeklySnippet: {
       done: [
-        "Launched optimized high-intent landing page variants across primary US paid channels",
-        "Achieved an 18% reduction in Blended CAC while increasing qualified signups by 32%",
-        "Reallocated $40,000 monthly ad spend to high-converting keyword cohorts",
+        "Launched new benefit-first landing pages for US search ads",
+        "Signup conversion up 32% and CAC down 18% over 14 days",
+        "Moved $40k of budget to the best-performing keyword groups",
       ],
       inProgress: [
-        "Refining automated behavioral email onboarding drips for paid traffic cohorts",
+        "Watching conversion and CAC after the budget move",
       ],
       nextWeek: [
-        "Launch dynamic audience retargeting sequence on LinkedIn & Meta Ads",
+        "Set up retargeting",
       ],
     },
     bragDoc: {
-      metricSummary: "Slashed Blended CAC by 18% and Lifted Paid Conversion Rate by +32%",
-      businessImpact:
-        "Generated an estimated $85,000 in annualized marketing efficiency while accelerating qualified enterprise sales pipeline by 22%.",
+      metricSummary:
+        "Raised signup conversion 32% and cut CAC 18% in 14 days by testing benefit-first landing pages for US search ads and moving $40k to the best keyword groups.",
+      businessImpact: "Search ad budget now goes to the keyword groups that convert best.",
       milestones: [
-        "High-intent landing page messaging overhaul and value proposition reframing",
-        "Dynamic budget reallocation engine based on real-time ROAS telemetry",
-        "Integration of multi-touch attribution tracking across ad networks",
+        "Benefit-first landing page tests for US search ads",
+        "$40k of budget moved to the best keyword groups",
+        "14-day result: conversion up 32%, CAC down 18%",
       ],
       quarter: "2026-Q3",
     },
     starResume: {
-      title: "Performance Acquisition Engine Optimization & CAC Reduction",
-      situation:
-        "Rising digital advertising auction costs caused customer acquisition cost (CAC) to climb 25% quarter-over-quarter, compressing paid acquisition unit economics.",
-      task:
-        "Restructure acquisition funnels, optimize ad creative relevance, and reduce CAC by at least 15% without sacrificing inbound lead quality.",
+      title: "Search Ad Landing Page Tests",
+      situation: "US search ad campaigns needed better signup conversion and a lower CAC.",
+      task: "Test new landing pages and put budget behind what worked.",
       action:
-        "Conducted comprehensive audit of paid search clusters; deployed high-conversion modular landing pages with instant benefit proof and dynamic copy testing.",
-      result:
-        "Decreased CAC by 18% within two weeks, expanded conversion rates by 32%, and captured an estimated $85,000 in annualized marketing budget efficiency.",
-      ndaTags: ["#GrowthMarketing", "#CACReduction", "#PaidAcquisition", "#ROASOptimization"],
+        "Ran landing page tests with benefit-first copy for 14 days and moved $40k of budget to the best keyword groups.",
+      result: "Signup conversion rose 32% and CAC fell 18%.",
+      ndaTags: ["#PaidSearch", "#Conversion", "#Marketing"],
     },
   },
 };
@@ -212,7 +251,7 @@ export function LandingPageEn() {
   const [loading, setLoading] = useState<"google" | null>(null);
 
   // Interactive Showcase States
-  const [selectedPersona, setSelectedPersona] = useState<"engineering" | "product" | "marketing">("engineering");
+  const [selectedPersona, setSelectedPersona] = useState<"operations" | "engineering" | "product" | "marketing">("operations");
   const [activeOutputTab, setActiveOutputTab] = useState<"weekly" | "brag" | "star">("weekly");
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
 
@@ -261,7 +300,7 @@ export function LandingPageEn() {
                   </span>
                 )}
                 <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 hidden sm:inline-block">
-                  Career Memory Vault
+                  Self-Review Prep
                 </span>
               </div>
             </div>
@@ -315,17 +354,16 @@ export function LandingPageEn() {
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50 text-balance">
             <span className="block">
-              Can&apos;t remember what you did this year?
+              Walk into your review with proof.
             </span>
             <span className="block mt-2 sm:mt-3 text-indigo-600 dark:text-indigo-400">
-              Turn rough notes into a review-ready self-evaluation.
+              Nothing made up.
             </span>
           </h1>
 
           <div className="max-w-3xl mx-auto space-y-4">
             <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal text-pretty max-w-2xl mx-auto">
-              For anyone who owes their manager a self-review: PMs, marketers, sales, customer success, designers, and engineers. <br className="hidden sm:inline" />
-              Pick the weeks you remember, jot a few lines for each—no formatting required—and WinStash turns them into 3 ready-to-use career assets:
+              Can&apos;t remember what you did this year? Jot a few rough lines for the weeks you remember. WinStash turns them into evidence for your self-review, promotion case, or raise conversation, using only what you wrote. Built for work that doesn&apos;t show up on a dashboard: ops, PMs, customer success, marketing, sales, design, and engineering.
             </p>
 
             {/* 3단 가로 나열 태그 형태 (1줄 정렬 유지) */}
@@ -426,13 +464,13 @@ export function LandingPageEn() {
           <div className="text-center space-y-2 mb-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               <Cpu className="w-3.5 h-3.5" />
-              <span>Live Interactive Transformation Engine</span>
+              <span>Example</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 text-balance">
-              See How 1 Raw Friday Memo Unlocks 3 Strategic Drawers
+              See One Rough Note Become Three Drafts
             </h2>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-pretty">
-              Select your job persona below to witness the real-time AI synthesis in action.
+              Pick a role. Every number in the drafts comes from the note.
             </p>
             <p className="text-xs sm:text-sm">
               <Link
@@ -446,6 +484,17 @@ export function LandingPageEn() {
 
             {/* Persona Switcher Chips */}
             <div className="pt-4 flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={() => setSelectedPersona("operations")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  selectedPersona === "operations"
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200"
+                }`}
+              >
+                <span>🧭 Operations / BizOps</span>
+              </button>
+
               <button
                 onClick={() => setSelectedPersona("engineering")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -480,7 +529,7 @@ export function LandingPageEn() {
               </button>
 
               <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border border-dashed border-zinc-300 dark:border-zinc-700">
-                + Design, Sales & BizOps in App
+                + Design, Sales & CS in App
               </span>
             </div>
           </div>
@@ -521,7 +570,7 @@ export function LandingPageEn() {
               </div>
               <div className="relative flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs font-bold text-indigo-600 dark:text-indigo-400 shadow-xs">
                 <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                <span>AI Automated 1-Input ➡️ 3-Output Separation</span>
+                <span>One note, three drafts</span>
               </div>
             </div>
 
@@ -538,7 +587,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Drawer 1: Weekly Snippets</span>
+                  <span>Draft 1: Weekly Update</span>
                   <span
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "weekly"
@@ -559,7 +608,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <TrendingUp className="w-4 h-4" />
-                  <span>Drawer 2: Performance Review</span>
+                  <span>Draft 2: Brag Sheet</span>
                   <span
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "brag"
@@ -580,7 +629,7 @@ export function LandingPageEn() {
                   }`}
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Drawer 3: Career Portfolio</span>
+                  <span>Draft 3: STAR Story</span>
                   <span
                     className={`hidden sm:inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                       activeOutputTab === "star"
@@ -657,7 +706,7 @@ export function LandingPageEn() {
                         <span className="text-xs text-zinc-400">{activeData.bragDoc.quarter} Metric Punch</span>
                       </div>
                       <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-                        XYZ Impact Formula Verified
+                        Only numbers from your note
                       </span>
                     </div>
 
@@ -665,7 +714,7 @@ export function LandingPageEn() {
                       <div>
                         <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
                           <Award className="w-3.5 h-3.5" />
-                          <span>Quantifiable Metric Achievement</span>
+                          <span>Impact statement</span>
                         </div>
                         <h4 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-zinc-50 leading-snug">
                           {activeData.bragDoc.metricSummary}
@@ -674,7 +723,7 @@ export function LandingPageEn() {
 
                       <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
                         <span className="font-semibold text-emerald-900 dark:text-emerald-300 mr-1.5">
-                          Strategic Business Impact:
+                          Why it mattered:
                         </span>
                         {activeData.bragDoc.businessImpact}
                       </div>
@@ -701,7 +750,7 @@ export function LandingPageEn() {
                     <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                          Long-Term · Career Vault & Stories
+                          Long-Term · Interviews & Promotion
                         </span>
                         <span className="text-xs text-zinc-400">STAR Story Method</span>
                       </div>
@@ -742,7 +791,7 @@ export function LandingPageEn() {
 
                         <div className="p-3 rounded-xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-900/50 space-y-1">
                           <span className="font-bold text-rose-600 dark:text-rose-400 uppercase text-[11px] block">
-                            R · Result (Quantifiable XYZ)
+                            R · Result
                           </span>
                           <p className="text-zinc-900 dark:text-zinc-50 font-semibold leading-relaxed text-xs">
                             {activeData.starResume.result}
@@ -777,10 +826,10 @@ export function LandingPageEn() {
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800">
           <div className="text-center space-y-2 mb-10">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 text-balance">
-              One Weekly Action. Three Career-Defining Assets.
+              One Note a Week. Three Drafts at Review Time.
             </h2>
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto text-pretty">
-              Never start from a blank page again when annual review or unexpected recruiter outreach arrives.
+              When your review, promotion case, or raise conversation comes up, start from a record instead of from memory.
             </p>
           </div>
 
@@ -795,11 +844,11 @@ export function LandingPageEn() {
                   [Short-Term] Every Monday
                 </div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  Weekly Snippets (PPP)
+                  Weekly Update (PPP)
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
-                Structured into Progress, Plans, and Problems. Optimized for async Slack check-ins and executive skip-level syncs in 1 click.
+                Done, in progress, and next week, ready to paste into Slack or your 1:1 doc.
               </p>
               <div className="pt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
                 <span>1-Click Weekly Snippet Copy</span>
@@ -817,11 +866,11 @@ export function LandingPageEn() {
                   [Mid-Term] Quarterly / Annual
                 </div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  XYZ Performance Review (Brag Sheet)
+                  Brag Sheet for Your Review
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
-                Condenses 12 weeks of micro-tasks into 3, 5, or 10 high-leverage bullet points. Built on the proven XYZ impact formula for promo packets.
+                Condenses weeks of notes into 3, 5, or 10 review-ready bullets: the outcome first, then how you did it. Numbers only if you wrote them.
               </p>
               <div className="pt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <span>1-Click Performance Review Copy</span>
@@ -839,7 +888,7 @@ export function LandingPageEn() {
                   [Long-Term] Senior Interviews
                 </div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  STAR Career Portfolio
+                  STAR Stories
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
@@ -892,12 +941,12 @@ export function LandingPageEn() {
         {/* 6. Section 5: Global Tech Frameworks & Standards */}
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800 text-center space-y-6">
           <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-            Built on proven frameworks: XYZ, STAR, PPP
+            Built on familiar frameworks
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 opacity-80">
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
               <Award className="w-5 h-5 text-indigo-500" />
-              <span>XYZ Impact Formula</span>
+              <span>Outcome-First Bullets (XYZ idea)</span>
             </div>
             <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 font-bold text-sm sm:text-base">
               <ShieldCheck className="w-5 h-5 text-emerald-500" />
@@ -932,8 +981,12 @@ export function LandingPageEn() {
                 a: "Yes. In the week picker, choose any past week, write a few lines about what you worked on, and save. Repeat for the projects you remember, then generate a Brag Sheet for the year, half, or quarter. The free plan's 10 AI transformations are enough to cover your biggest projects. For wording ideas, see our free self-evaluation examples by role in Resources.",
               },
               {
+                q: "Will WinStash make up numbers to make me look better?",
+                a: "No. Every number in your drafts comes from your notes, or from simple math on them (for example, about 6 days to about 2 days). If a note has no number, the draft describes the result in words, and you can add the real figure yourself before you use it.",
+              },
+              {
                 q: "How is WinStash different from just using a general AI chatbot?",
-                a: "Fair question. WinStash uses AI too, and if you're happy to write a good prompt and paste your notes every week, a general chatbot can do a lot of this. WinStash takes care of everything around the AI: (1) A habit, not a blank prompt—write a rough one-minute note on Friday with zero prompt tweaking. (2) Three outputs from one note—a weekly manager sync, an XYZ-style brag sheet, and STAR stories in consistent formats. (3) A record that builds up—your notes stay in one place, so your brag sheet draws on months of entries instead of whatever you remembered to paste in. If you already have a prompt and routine that works for you, keep using it. WinStash is for people who want the habit to be easy enough to actually stick.",
+                a: "Fair question. WinStash uses AI too, and if you're happy to write a good prompt and paste your notes every week, a general chatbot can do a lot of this. WinStash takes care of everything around the AI: (1) A habit, not a blank prompt—write a rough one-minute note on Friday with zero prompt tweaking. (2) Three outputs from one note—a weekly manager sync, an outcome-first brag sheet, and STAR stories in consistent formats. (3) A record that builds up—your notes stay in one place, so your brag sheet draws on months of entries instead of whatever you remembered to paste in. If you already have a prompt and routine that works for you, keep using it. WinStash is for people who want the habit to be easy enough to actually stick.",
               },
               {
                 q: "What happens after I use my free AI credits?",
@@ -943,15 +996,15 @@ export function LandingPageEn() {
               },
               {
                 q: "Can I use WinStash if I am not a Software Engineer?",
-                a: "Absolutely. WinStash supports 6 dedicated career personas (Engineering, Product Management, Product Design, Growth & Marketing, Sales & BD, BizOps & Finance) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). AI tunes metrics and domain-specific terminology for your exact discipline.",
+                a: "Absolutely. WinStash supports 6 dedicated career personas (Engineering, Product Management, Product Design, Growth & Marketing, Sales & BD, BizOps & Finance) and 4 narrative voices (Impact, Problem Solving, Stability, Leadership). The wording follows your kind of work, and it still only uses what you wrote.",
               },
               {
                 q: "How do I export my synthesized career achievements?",
-                a: "In 1 click, you can copy structured, golden-standard Markdown formatted with callouts and checklists for Notion, Slack, Google Docs, or ATS applications—complete with verified WinStash career attribution.",
+                a: "Copy any draft as Markdown in one click and paste it into Notion, Slack, Google Docs, or your review form.",
               },
               {
                 q: "How much time does WinStash take every Friday?",
-                a: "Only about 60 seconds. You don't need to format anything—just brain-dump what you worked on, shipped, or fixed. WinStash categorizes it into your 3 career drawers automatically.",
+                a: "Only about 60 seconds. You don't need to format anything—just brain-dump what you worked on, shipped, or fixed. WinStash turns it into your three drafts automatically.",
               },
             ].map((faq, idx) => (
               <div
@@ -984,11 +1037,11 @@ export function LandingPageEn() {
         <section className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center space-y-6">
           <div className="p-8 sm:p-14 rounded-3xl bg-zinc-900 border border-zinc-800 text-white shadow-2xl space-y-6">
             <h3 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight text-balance">
-              <span className="block">Start building your career vault this Friday.</span>
-              <span className="block mt-1 sm:mt-2 text-zinc-300">Never lose another promotion-worthy win.</span>
+              <span className="block">Start your record this Friday.</span>
+              <span className="block mt-1 sm:mt-2 text-zinc-300">Bring proof to your next review.</span>
             </h3>
             <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed text-pretty">
-              Catch up on this year&apos;s review today, then take command of your career story in 1 minute a week.
+              Catch up on this year&apos;s review today, then keep it going in 1 minute a week.
             </p>
             <div className="pt-2 flex flex-col items-center justify-center gap-2.5">
               <button
@@ -1012,7 +1065,7 @@ export function LandingPageEn() {
 
       {/* Footer */}
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-10 bg-white/50 dark:bg-zinc-950/50 text-center text-xs text-zinc-500 space-y-3 px-4">
-        <p>© 2026 WinStash. AI Career Memory for Everything You Do.</p>
+        <p>© 2026 WinStash. Rough work notes into review-ready proof.</p>
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <Link
             href="/pricing"
@@ -1064,7 +1117,7 @@ export function LandingPageEn() {
           </button>
         </div>
         <p className="text-[11px] text-zinc-400 max-w-md mx-auto leading-relaxed">
-          AES-256 encryption at rest &amp; in transit, and confidential tenant isolation guaranteed.
+          Notes are encrypted at rest &amp; in transit and private to your account.
         </p>
         <p className="text-[10px] text-zinc-400 max-w-xl mx-auto leading-relaxed">
           Disclaimer: WinStash is an independent product and is not affiliated with, endorsed by, or sponsored by Google LLC, Amazon.com, Inc., or any other referenced organizations. All trademarks belong to their respective owners. AI-synthesized outputs should be reviewed and verified by the user before professional use.

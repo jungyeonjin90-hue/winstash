@@ -81,11 +81,11 @@ export function HeaderEn({
                 </span>
               )}
               <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 hidden sm:inline-block">
-                Career Memory Vault
+                Self-Review Prep
               </span>
             </div>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 hidden sm:block">
-              1-Min Friday Notes → Weekly Sync, Promo Review & Portfolio
+              Rough work notes into review-ready proof
             </p>
           </div>
         </div>
