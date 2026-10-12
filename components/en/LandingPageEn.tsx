@@ -420,6 +420,15 @@ export function LandingPageEn() {
             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-pretty">
               Select your job persona below to witness the real-time AI synthesis in action.
             </p>
+            <p className="text-xs sm:text-sm">
+              <Link
+                href="/tools/star-method-generator"
+                onClick={() => trackEvent("free_tool_link_clicked", { location: "landing_showcase" })}
+                className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                Try it with your own note, no sign-up →
+              </Link>
+            </p>
 
             {/* Persona Switcher Chips */}
             <div className="pt-4 flex flex-wrap items-center justify-center gap-2">

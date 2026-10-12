@@ -164,6 +164,33 @@ export default function ResourcesHubPage() {
 
         {/* 4. Resource Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Free tool: STAR method generator (no sign-up) */}
+          <Link
+            href="/tools/star-method-generator"
+            className="group block p-6 sm:p-7 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 hover:border-indigo-500/80 dark:hover:border-indigo-500/80 shadow-xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300"
+          >
+            <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-900/50">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Free Tool
+              </span>
+              <span className="flex items-center gap-1">No sign-up</span>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-3">
+              Free STAR Method Generator
+            </h2>
+
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+              Turn one or two sentences about your work into a STAR story and a resume bullet. It only uses the numbers you wrote.
+            </p>
+
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:gap-2.5 transition-all">
+              <span>Try it now</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
+          </Link>
+
           {/* Card 0: Can't-remember self-review guide (Active) */}
           <Link
             href={`/resources/${CANT_REMEMBER_GUIDE_SLUG}`}
