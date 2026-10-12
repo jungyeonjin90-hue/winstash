@@ -303,8 +303,7 @@ export default function App() {
           target_week: selectedWeek,
           existingRecordId: existingRecord?.id,
           existingCreatedAt: existingRecord?.createdAt,
-          job_role: "engineering",
-          tone_manner: "impact",
+          // Role and tone come from the user's saved web persona (server side).
         }),
       });
 
@@ -439,6 +438,7 @@ export default function App() {
       {/* 3. Textarea Input Card */}
       <div className="relative rounded-2xl bg-zinc-950/90 border border-zinc-800/80 focus-within:border-indigo-500/80 transition-colors shadow-inner">
         <textarea
+          autoFocus
           value={memo}
           onChange={(e) => handleMemoChange(e.target.value)}
           onKeyDown={(e) => {
