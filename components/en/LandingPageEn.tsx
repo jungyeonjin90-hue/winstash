@@ -363,26 +363,8 @@ export function LandingPageEn() {
 
           <div className="max-w-3xl mx-auto space-y-4">
             <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal text-pretty max-w-2xl mx-auto">
-              Jot a few rough lines for the weeks you remember. WinStash turns them into evidence for your self-review, promotion case, or raise conversation, using only what you wrote. Built for work that doesn&apos;t show up on a dashboard: ops, PMs, customer success, marketing, sales, design, and engineering.
+              Jot a few lines about what you did. Get a brag sheet, weekly updates, and STAR stories for your review, using only what you wrote.
             </p>
-
-            {/* 3단 가로 나열 태그 형태 (1줄 정렬 유지) */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 sm:gap-3 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Review-ready brag sheet</span>
-              </span>
-
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
-                <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>Manager-ready weekly updates</span>
-              </span>
-
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow-xs whitespace-nowrap">
-                <CheckCircle2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span>Interview-ready career stories</span>
-              </span>
-            </div>
           </div>
 
           {/* Large High-Conversion Primary CTA Button */}
@@ -405,24 +387,17 @@ export function LandingPageEn() {
             >
               Or try it free without signing in →
             </Link>
-            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold text-pretty text-center px-4">
-              {PRICING_NOTE}
-            </p>
           </div>
 
           {/* Trust Guarantees */}
           <div className="pt-1 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             <div className="flex items-center gap-1.5 whitespace-nowrap">
               <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Free forever to log raw notes</span>
+              <span>Free to start</span>
             </div>
             <div className="flex items-center gap-1.5 whitespace-nowrap">
               <Check className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>No credit card required</span>
-            </div>
-            <div className="flex items-center gap-1.5 whitespace-nowrap">
-              <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>1-click Google setup</span>
             </div>
           </div>
 
