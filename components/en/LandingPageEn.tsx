@@ -267,12 +267,20 @@ export function LandingPageEn() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
             <Link
               href="/pricing"
               className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
               Pricing
+            </Link>
+            <Link
+              href="/tools/star-method-generator"
+              onClick={() => trackEvent("free_tool_link_clicked", { location: "landing_nav" })}
+              className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors whitespace-nowrap"
+            >
+              <span className="sm:hidden">Free Tool</span>
+              <span className="hidden sm:inline">Free STAR Tool</span>
             </Link>
             <Link
               href="/resources"
@@ -283,12 +291,12 @@ export function LandingPageEn() {
             <button
               onClick={() => handleGoogleLogin("header")}
               disabled={loading !== null}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-2 px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 transition-all cursor-pointer active:scale-95"
             >
               <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center shrink-0 p-0.5 shadow-xs">
                 <GoogleIcon className="w-3 h-3" />
               </div>
-              {/* Short label on phones so the header fits on one line next to the logo and Pricing */}
+              {/* Short label on phones so the header fits on one line next to the logo, Pricing and Free Tool */}
               <span className="sm:hidden">Sign in</span>
               <span className="hidden sm:inline">Sign In with Google</span>
               <ArrowRight className="w-3.5 h-3.5 hidden sm:block" />
@@ -353,6 +361,13 @@ export function LandingPageEn() {
               <span>Start My Self-Review — It&apos;s Free</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+            <Link
+              href="/tools/star-method-generator"
+              onClick={() => trackEvent("free_tool_link_clicked", { location: "hero" })}
+              className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline"
+            >
+              Or try it free without signing in →
+            </Link>
             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold text-pretty text-center px-4">
               {PRICING_NOTE}
             </p>

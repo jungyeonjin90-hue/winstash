@@ -95,7 +95,7 @@ export default function StarMethodGeneratorPage() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 selection:bg-indigo-500 selection:text-white">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <ResourceHeader signupHref={signupUrl("nav")} />
+      <ResourceHeader signupHref={signupUrl("nav")} showFreeToolLink={false} />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-12">
         <div className="space-y-4">

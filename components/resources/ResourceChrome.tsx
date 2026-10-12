@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
+import { FreeToolLink } from "@/components/tools/FreeToolLink";
 
 /** 리소스 글 페이지 공통 상단 바. signupHref 에 페이지별 UTM 을 담습니다. */
-export function ResourceHeader({ signupHref }: { signupHref: string }) {
+export function ResourceHeader({ signupHref, showFreeToolLink = true }: { signupHref: string; showFreeToolLink?: boolean }) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-2.5 group cursor-pointer" aria-label="WinStash Home">
           <WinStashBrandBadge size="sm" />
           <span className="font-extrabold text-lg tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -16,13 +17,25 @@ export function ResourceHeader({ signupHref }: { signupHref: string }) {
             Resources
           </span>
         </Link>
-        <Link
-          href={signupHref}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 transition-all shadow-xs"
-        >
-          <span>Try WinStash Free</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          {showFreeToolLink && (
+            <FreeToolLink
+              location="resources_nav"
+              className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors whitespace-nowrap"
+            >
+              <span className="sm:hidden">Free Tool</span>
+              <span className="hidden sm:inline">Free STAR Tool</span>
+            </FreeToolLink>
+          )}
+          <Link
+            href={signupHref}
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 transition-all shadow-xs"
+          >
+            <span>Try WinStash Free</span>
+            {/* Arrow hidden on phones so the logo, Free Tool link and this button fit on one line */}
+            <ArrowRight className="w-3.5 h-3.5 hidden sm:block" />
+          </Link>
+        </div>
       </div>
     </header>
   );
