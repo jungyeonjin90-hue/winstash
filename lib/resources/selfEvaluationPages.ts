@@ -679,7 +679,133 @@ const uxDesigners: SelfEvaluationPage = {
   ],
 };
 
+const operations: SelfEvaluationPage = {
+  slug: "self-evaluation-examples-operations",
+  role: "Operations Manager",
+  rolePlural: "Operations and BizOps",
+  breadcrumb: "Operations Self-Evaluation",
+  title: "Operations and BizOps Self-Evaluation Examples (Copy and Paste)",
+  h1: "Operations and BizOps Self-Evaluation Examples (Copy and Paste)",
+  description:
+    "25 self-evaluation examples for operations and BizOps roles: process fixes, cross-team work, planning, cost, and risk. Includes ways to show impact when your work has no single metric.",
+  keywords: [
+    "operations self evaluation examples",
+    "bizops self assessment",
+    "operations manager accomplishments for performance review",
+    "business operations performance review phrases",
+    "how to show impact in operations without metrics",
+  ],
+  cardSummary:
+    "25 examples covering process fixes, cross-team coordination, planning and reporting, cost and vendors, and risk.",
+  intro:
+    "When operations work goes well, nothing breaks, so it looks like nothing happened. Engineers have pull requests and sales has revenue, but your evidence is scattered across inboxes, trackers, and meetings. A strong self-evaluation turns that quiet work into before-and-after results a reviewer can repeat.",
+  formulaExample:
+    "Cut vendor invoice approval time from about 6 days to about 2 (result) by moving requests from three inboxes into one intake form with a weekly finance triage (what I did), so suppliers stopped chasing late payments (why it mattered).",
+  competencies: [
+    {
+      name: "Process improvement and automation",
+      lookFor: "Is something faster, simpler, or less error-prone because of a change you made?",
+      examples: [
+        "Cut [invoice approval] time from about [6] days to about [2] by replacing [three] separate inboxes with one intake form and a weekly triage.",
+        "Automated the [weekly headcount report] with [a shared spreadsheet and a scheduled export], removing about [3] hours of manual work every week.",
+        "Mapped the [order-to-cash] process end to end, found [4] duplicate approval steps, and removed [2] of them with finance sign-off.",
+        "Wrote a how-to guide for [the purchasing process] and walked [4] team leads through it; questions in our team channel dropped noticeably within a month.",
+        "Replaced an email-based [access request] flow with a tracked form, so every request now has an owner and a status.",
+      ],
+    },
+    {
+      name: "Cross-functional coordination",
+      lookFor: "Did teams that don't report to you move together because of your work?",
+      examples: [
+        "Ran a weekly [30]-minute sync between [finance, procurement, and legal] that cleared [a backlog of 40] stuck requests in [6] weeks.",
+        "Coordinated the [office move / system cutover] across [5] teams and finished on the agreed date with no unplanned downtime for [sales].",
+        "Got [two] teams with conflicting priorities to agree on one [launch checklist] by documenting each trade-off and who owned it.",
+        "Became the go-to contact for [vendor onboarding], answering [about 20] questions a week so team leads could stay on their own work.",
+        "Set up a shared decision log for [the planning cycle], so decisions stopped being re-opened in later meetings.",
+      ],
+    },
+    {
+      name: "Planning, reporting, and analysis",
+      lookFor: "Did leaders make better or faster decisions because of the information you gave them?",
+      examples: [
+        "Built the [monthly business review] deck that leadership now uses to set priorities, cutting prep time from [2] days to [half a day].",
+        "Ran the [annual budget] process for [6] departments and delivered the final plan [1] week ahead of the deadline.",
+        "Created a single [KPI dashboard] that replaced [5] separate reports and became the source of truth for [the leadership team].",
+        "Analyzed [support ticket] volume by cause and showed that [30]% came from one form; fixing it was the team's top priority next quarter.",
+        "Turned a recurring ad hoc data request into a self-serve report, so [the sales team] stopped waiting [2] to [3] days for numbers.",
+      ],
+    },
+    {
+      name: "Cost and vendor management",
+      lookFor: "Did the company spend less, or get more for the same money, because of you?",
+      examples: [
+        "Renegotiated the [software / logistics] contract, saving $[X] a year without reducing service.",
+        "Found [12] unused [software licenses] in a spend audit and cancelled them, saving $[X] a year.",
+        "Consolidated [3] vendors for [office supplies / shipping] into one, simplifying invoicing and saving about [8]%.",
+        "Set up a quarterly vendor review with clear service targets, and [two] underperforming vendors improved or were replaced.",
+        "Kept [the operations budget] within [2]% of plan for the year while supporting [a 20% increase] in headcount.",
+      ],
+    },
+    {
+      name: "Reliability, risk, and compliance",
+      lookFor: "Did problems get caught early, or stop happening, because of a system you put in place?",
+      examples: [
+        "Created a [month-end close] checklist that took us from [3] late closes last year to none this year.",
+        "Spotted a [contract renewal] that would have auto-renewed at a [25]% higher price and renegotiated it [6] weeks before the deadline.",
+        "Prepared the documentation for [the annual audit]; the audit closed with no findings in my area.",
+        "Wrote a backup procedure for [payroll / order processing], which we used during [an outage in month] with no missed payments.",
+        "Set up access reviews for [our finance tools] every quarter, removing [15] accounts that no longer needed access.",
+      ],
+    },
+  ],
+  growthExamples: [
+    "I fixed problems quietly and rarely shared the results, so leadership didn't see the impact. I now send a short monthly summary of what changed and what it saved.",
+    "I took on every request that reached me and my own projects slipped. I have agreed with my manager which requests I own and which I route to other teams.",
+    "Some of my process changes were hard to measure because I didn't record the starting point. I now note the before number before changing anything.",
+    "I want to get stronger at data analysis, so I plan to [complete a SQL course] and build [the quarterly cost report] myself.",
+    "I relied on a few people to know how things work. My goal is for each core process I own to have a written guide someone else can follow.",
+  ],
+  beforeAfter: [
+    {
+      weak: "I improved a lot of processes this year.",
+      strong:
+        "I cut invoice approval time from about six days to about two by moving requests from three inboxes into one intake form with a weekly finance triage.",
+      why: "One specific process with a before and after beats a vague claim about many.",
+    },
+    {
+      weak: "I worked closely with many teams.",
+      strong:
+        "I ran a weekly sync between finance, procurement, and legal that cleared 40 stuck requests in six weeks.",
+      why: "It names who you brought together and what moved because of it.",
+    },
+    {
+      weak: "I helped keep things running smoothly.",
+      strong: "I created a month-end close checklist, and we went from three late closes last year to none this year.",
+      why: "Prevention is invisible until you show the problems that stopped happening.",
+    },
+  ],
+  faq: [
+    {
+      q: "How do I show impact in operations when there is no clear metric?",
+      a: "Compare before and after: how long something took, how many steps or handoffs it had, how often it went wrong, or how many people it affected. If there is truly no number, describe who stopped being blocked or what stopped breaking. Don't invent a figure; your manager may ask where it came from.",
+    },
+    {
+      q: "What should an operations or BizOps self-evaluation include?",
+      a: "Your three to five biggest changes, each with what you did and what it changed: processes you fixed, cross-team work you led, reports or plans leaders relied on, money you saved, and risks you caught early.",
+    },
+    {
+      q: "How do I get credit for work that prevented problems?",
+      a: "Name the problem that used to happen and show it stopped: late closes, missed deadlines, audit findings, outages, or repeat questions. A count from last year next to this year makes prevention visible.",
+    },
+    {
+      q: "How do I remember what I did all year?",
+      a: "Look through your sent email, calendar, tracker history, and old status updates. Next year, write a one-line note each Friday about what you changed, so the before-and-after evidence is already there at review time.",
+    },
+  ],
+};
+
 export const SELF_EVALUATION_PAGES: SelfEvaluationPage[] = [
+  operations,
   projectManagers,
   marketing,
   sales,
