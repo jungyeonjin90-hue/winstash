@@ -3,8 +3,9 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { extensionCorsHeaders } from "@/lib/extensionCors";
 import { getServerCreditStatus, toExtensionCredits, verifyServerAuthAndQuota } from "@/lib/serverAuthQuota";
 import { checkServerRateLimit, getClientIp, MAX_MEMO_CHAR_LIMIT } from "@/lib/serverRateLimit";
-import { CareerRecord, JobRole, ToneManner } from "@/types/career";
+import { CareerRecord } from "@/types/career";
 import { executeAiTransformation } from "@/lib/transformService";
+import { resolveExtensionPersona } from "@/lib/extensionPersona";
 
 
 const DEMO_USER_ID = "demo-user-1234";
@@ -85,8 +86,19 @@ export async function POST(req: NextRequest) {
 
     const existingRecordId = typeof body.existingRecordId === "string" ? body.existingRecordId : undefined;
     const existingCreatedAt = typeof body.existingCreatedAt === "string" ? body.existingCreatedAt : undefined;
-    const jobRole = (typeof body.job_role === "string" ? body.job_role : "engineering") as JobRole;
-    const toneManner = (typeof body.tone_manner === "string" ? body.tone_manner : "impact") as ToneManner;
+
+    // The saved web persona decides the role/tone (older extension builds always sent "engineering").
+    // A failed read falls back to the body/defaults and never fails the request.
+    let savedPersona: unknown;
+    if (!isDemo && adminDb) {
+      try {
+        const snap = await adminDb.collection("users").doc(userId).collection("settings").doc("persona").get();
+        savedPersona = snap.exists ? snap.data() : undefined;
+      } catch (personaErr) {
+        console.error("[Extension Submit API] Failed to read persona, using fallback:", personaErr);
+      }
+    }
+    const { jobRole, toneManner, ...profile } = resolveExtensionPersona(savedPersona, body);
 
     // 4. Atomically reserve one credit (per-user + global kill switch) before the paid AI call
     const reservation = await quotaCheck.reserve!();
@@ -97,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     // 5. AI 3-way transformation (weekly report, brag sheet, STAR portfolio)
     // Output is always English, whatever language the memo was written in.
-    const { output: transformation, aiFallback } = await executeAiTransformation(memoText, jobRole, toneManner);
+    const { output: transformation, aiFallback } = await executeAiTransformation(memoText, jobRole, toneManner, profile);
 
     const recordId = existingRecordId || `rec-${Date.now()}`;
     const cleanRecord = {
