@@ -7,7 +7,7 @@ import { TransformationOutput, JobRole, ToneManner, SeniorityLevel, RegionCode }
 
 /**
  * Silicon Valley Executive System Prompt for Global Career Transformation
- * Benchmarked against Google XYZ formula, Amazon STAR guidelines, and Indeed/LinkedIn standards.
+ * Brag lines follow the idea behind the XYZ formula (outcome, evidence, action) without its fixed template.
  */
 export function buildSystemPromptEn(
   jobRole: JobRole = "engineering",
@@ -26,7 +26,7 @@ export function buildSystemPromptEn(
   };
 
   const toneDescriptions: Record<ToneManner, string> = {
-    impact: "Impact & Quantifiable Metrics tone (revenue growth, cost reduction, latency drop, percentage lift, Google XYZ framework)",
+    impact: "Impact tone (lead with the outcome and any numbers the notes give: revenue, cost, time, percentage change)",
     problem_solving: "Deep Problem-Solving & Technical Mastery tone (root cause identification, architectural resilience, troubleshooting depth)",
     stability: "Reliability & Enterprise Governance tone (risk mitigation, standard operating guidelines, zero downtime, high availability)",
     leadership: "Cross-functional Leadership & Ownership tone (stakeholder alignment, organizational velocity, mentorship, proactive ownership)",
@@ -58,12 +58,13 @@ ${seniorityLevel ? `[Target Seniority Level]: ${seniorityDescriptions[seniorityL
 
 ### THE 7 EXECUTIVE TRANSFORMATION RULES:
 
-1. GOOGLE X-Y-Z FORMULA TARGETING:
-   - Primary Focus: This formula strictly powers "brag_sheet_item.metric_summary" and "star_portfolio.result".
-   - Structure: "Accomplished [X] as measured by [Y], by doing [Z]".
+1. OUTCOME-FIRST IMPACT LINES:
+   - Applies to "brag_sheet_item.metric_summary" and "star_portfolio.result".
+   - One natural sentence: the outcome first, then how it was achieved. Use a number only if it is in the notes (or simple arithmetic on them, see rule 3).
+   - Do not start with "Accomplished", and do not write template phrases like "as measured by" or "by doing". If the notes give no number, describe the concrete outcome in words instead of inventing a measure.
    - Bad: "Fixed checkout page test code to reduce CI build time."
-   - Good: "Overhauled the failing checkout test suite (Z), cutting CI pipeline time by 73% from 45m to 12m (Y) and unblocking mobile releases (X)."
-   - CRITICAL SEPARATION FOR WEEKLY REPORT: For "weekly_report", do NOT force clumsy multi-clause X-Y-Z sentences. Keep weekly updates fast, executive, and action-oriented using the PPP framework (Done / In Progress / Next Week) for 1:1 manager syncs.
+   - Good: "Cut CI pipeline time by 73% (45m to 12m) and unblocked mobile releases by overhauling the failing checkout test suite."
+   - CRITICAL SEPARATION FOR WEEKLY REPORT: For "weekly_report", do NOT write long multi-clause impact sentences. Keep weekly updates fast, executive, and action-oriented using the PPP framework (Done / In Progress / Next Week) for 1:1 manager syncs.
 
 2. EXECUTIVE ACTION VERB MAPPING:
    - Prefer active verbs over weak ones ("did", "worked on", "handled").
@@ -113,14 +114,14 @@ ${seniorityLevel ? `[Target Seniority Level]: ${seniorityDescriptions[seniorityL
 ### 3-WAY OUTPUT TARGET SPECIFICATIONS (ROLE SPECIALIZATION):
 1. weekly_report (Weekly Snippets - Silicon Valley PPP Framework):
    - Fast, clear, executive-ready bullets for Monday manager syncs and team 1:1s.
-   - Action-first phrasing with high-agency verbs (not bloated X-Y-Z clauses).
+   - Action-first phrasing with high-agency verbs (not long multi-clause impact sentences).
    - done: 2-3 accomplishments with clear outcomes (fewer if the notes only support fewer; see rule 6).
    - in_progress: 1-2 active initiatives or bottlenecks being tracked (always at least 1; see rule 6).
    - next_week: 1-2 key upcoming priorities (always at least 1; see rule 6).
 
 2. brag_sheet_item (Brag Document for Performance Reviews & Comp Negotiations):
-   - PURE GOOGLE X-Y-Z FORMULA.
-   - metric_summary: 1 punchy X-Y-Z line highlighting hard numbers or directional scope.
+   - Outcome first, then how (rule 1).
+   - metric_summary: 1 clear line with the outcome and the numbers from the notes, or the concrete outcome in words when there are none.
    - business_impact: Clear strategic organizational value delivered (tied to a Business Pillar).
    - quarter: Current quarter (e.g. "${getCurrentQuarter()}").
 
@@ -130,7 +131,7 @@ ${seniorityLevel ? `[Target Seniority Level]: ${seniorityDescriptions[seniorityL
    - situation: Business context and pain point / constraint.
    - task: Core engineering / product objective.
    - action: Specific architectural or strategic actions taken (tools, methods, ownership).
-   - result: Quantifiable outcomes or eliminated operational friction (grounded in X-Y-Z impact).
+   - result: The outcome the notes state: numbers from the notes, or the friction removed in words.
    - nda_tags: 3-4 professional domain hashtags (e.g. ["#CI_CD", "#PipelineOptimization"]).
    - impactCategory: Exactly one of "efficiency", "revenue", "quality", "leadership", "risk_mitigation", "other".
    - impactMagnitude: Exactly one of "small", "medium", "large".

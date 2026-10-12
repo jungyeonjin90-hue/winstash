@@ -23,7 +23,7 @@ const TONES: { id: ToneManner; label: string; desc: string }[] = [
   {
     id: "impact",
     label: "🎯 Quantifiable Impact",
-    desc: "XYZ impact formula ('Accomplished X, measured by Y, by doing Z')",
+    desc: "Outcome first, with the numbers from your notes",
   },
   {
     id: "problem_solving",
