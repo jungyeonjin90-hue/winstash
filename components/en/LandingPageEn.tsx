@@ -354,16 +354,16 @@ export function LandingPageEn() {
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.18] max-w-4xl mx-auto text-zinc-900 dark:text-zinc-50 text-balance">
             <span className="block">
-              Walk into your review with proof.
+              Can&apos;t remember what you did this year?
             </span>
             <span className="block mt-2 sm:mt-3 text-indigo-600 dark:text-indigo-400">
-              Nothing made up.
+              Turn rough notes into review-ready proof. Nothing made up.
             </span>
           </h1>
 
           <div className="max-w-3xl mx-auto space-y-4">
             <p className="text-sm sm:text-base md:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal text-pretty max-w-2xl mx-auto">
-              Can&apos;t remember what you did this year? Jot a few rough lines for the weeks you remember. WinStash turns them into evidence for your self-review, promotion case, or raise conversation, using only what you wrote. Built for work that doesn&apos;t show up on a dashboard: ops, PMs, customer success, marketing, sales, design, and engineering.
+              Jot a few rough lines for the weeks you remember. WinStash turns them into evidence for your self-review, promotion case, or raise conversation, using only what you wrote. Built for work that doesn&apos;t show up on a dashboard: ops, PMs, customer success, marketing, sales, design, and engineering.
             </p>
 
             {/* 3단 가로 나열 태그 형태 (1줄 정렬 유지) */}
