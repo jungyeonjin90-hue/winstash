@@ -279,8 +279,7 @@ export function LandingPageEn() {
               onClick={() => trackEvent("free_tool_link_clicked", { location: "landing_nav" })}
               className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors whitespace-nowrap"
             >
-              <span className="sm:hidden">Free Tool</span>
-              <span className="hidden sm:inline">Free STAR Tool</span>
+              Try Free
             </Link>
             <Link
               href="/resources"
@@ -296,7 +295,7 @@ export function LandingPageEn() {
               <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center shrink-0 p-0.5 shadow-xs">
                 <GoogleIcon className="w-3 h-3" />
               </div>
-              {/* Short label on phones so the header fits on one line next to the logo, Pricing and Free Tool */}
+              {/* Short label on phones so the header fits on one line next to the logo, Pricing and Try Free */}
               <span className="sm:hidden">Sign in</span>
               <span className="hidden sm:inline">Sign In with Google</span>
               <ArrowRight className="w-3.5 h-3.5 hidden sm:block" />

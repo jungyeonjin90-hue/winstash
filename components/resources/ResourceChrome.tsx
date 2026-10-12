@@ -23,8 +23,7 @@ export function ResourceHeader({ signupHref, showFreeToolLink = true }: { signup
               location="resources_nav"
               className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors whitespace-nowrap"
             >
-              <span className="sm:hidden">Free Tool</span>
-              <span className="hidden sm:inline">Free STAR Tool</span>
+              Try Free
             </FreeToolLink>
           )}
           <Link
@@ -32,7 +31,7 @@ export function ResourceHeader({ signupHref, showFreeToolLink = true }: { signup
             className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 transition-all shadow-xs"
           >
             <span>Try WinStash Free</span>
-            {/* Arrow hidden on phones so the logo, Free Tool link and this button fit on one line */}
+            {/* Arrow hidden on phones so the logo, Try Free link and this button fit on one line */}
             <ArrowRight className="w-3.5 h-3.5 hidden sm:block" />
           </Link>
         </div>
