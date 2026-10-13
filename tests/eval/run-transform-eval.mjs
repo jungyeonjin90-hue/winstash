@@ -70,6 +70,8 @@ function buildSummary(meta, rows) {
   lines.push(`| 요청 언어 일치 | ${count((r) => r.score.languageOk)}/${ai.length} |`);
   lines.push(`| 메모에 없는 숫자 등장 | ${count((r) => r.score.unsupportedNumbers.length > 0)}/${ai.length} |`);
   lines.push(`| 예시 문구 복사 의심 | ${count((r) => r.score.fewShotLeaks.length > 0)}/${ai.length} |`);
+  lines.push(`| 메모에 없는 주장 덧붙임 의심 | ${count((r) => r.score.addedClaims.length > 0)}/${ai.length} |`);
+  lines.push(`| "about 3" 같은 어림수를 정확한 수로 | ${count((r) => r.score.approximationDropped)}/${ai.length} |`);
   lines.push(`| 인젝션 카나리 노출 | ${injection.filter((r) => r.score.canaryLeaked).length}/${injection.length} |`);
   lines.push(`| 불릿 개수 범위 밖 | ${count((r) => r.score.countWarnings.length > 0)}/${ai.length} |`);
   const latencies = ai.map((r) => r.latencyMs).sort((a, b) => a - b);
@@ -79,18 +81,23 @@ function buildSummary(meta, rows) {
   lines.push("");
 
   lines.push("## 케이스별", "");
-  lines.push("| id | run | 출력 | AI | 형식 | 언어(한글비율) | 메모에 없는 숫자 | 한 자리 수 | 예시 복사 | 카나리 | 최장 글자수 |");
-  lines.push("|---|---|---|---|---|---|---|---|---|---|---|");
+  lines.push("| id | run | 출력 | AI | 형식 | 언어(한글비율) | 메모에 없는 숫자 | 한 자리 수 | 예시 복사 | 덧붙임 | 카나리 | 최장 글자수 |");
+  lines.push("|---|---|---|---|---|---|---|---|---|---|---|---|");
   for (const r of rows) {
     if (r.error) {
-      lines.push(`| ${r.id} | ${r.run} | ${r.outputLanguage} | 오류 | ${cell(r.error)} | | | | | | |`);
+      lines.push(`| ${r.id} | ${r.run} | ${r.outputLanguage} | 오류 | ${cell(r.error)} | | | | | | | |`);
       continue;
     }
     const s = r.score;
     lines.push(
       `| ${r.id} | ${r.run} | ${r.outputLanguage} | ${r.aiFallback ? "폴백" : "AI"} | ${s.schemaOk ? "OK" : "실패"} | ${
         s.languageOk ? "OK" : "실패"
-      } (${s.hangulRatio}) | ${s.unsupportedNumbers.join(", ")} | ${s.smallCounts.join(", ")} | ${s.fewShotLeaks.join(", ")} | ${
+      } (${s.hangulRatio}) | ${s.unsupportedNumbers.join(", ")} | ${s.smallCounts.join(", ")} | ${s.fewShotLeaks.join(", ")} | ${[
+        ...s.addedClaims,
+        s.approximationDropped ? "어림수" : "",
+      ]
+        .filter(Boolean)
+        .join(", ")} | ${
         r.canary ? (s.canaryLeaked ? "노출" : "OK") : ""
       } | ${s.longestText} |`
     );
@@ -135,6 +142,8 @@ function buildReviewCsv(rows) {
       s.languageOk ? "" : "언어",
       s.unsupportedNumbers.length ? `숫자:${s.unsupportedNumbers.join("/")}` : "",
       s.fewShotLeaks.length ? `예시복사:${s.fewShotLeaks.join("/")}` : "",
+      s.addedClaims.length ? `덧붙임:${s.addedClaims.join("/")}` : "",
+      s.approximationDropped ? "어림수정확화" : "",
       s.canaryLeaked ? "인젝션" : "",
     ]
       .filter(Boolean)
