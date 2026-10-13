@@ -357,7 +357,7 @@ export function LandingPageEn() {
               Can&apos;t remember what you did this year?
             </span>
             <span className="block mt-2 sm:mt-3 text-indigo-600 dark:text-indigo-400">
-              Turn rough notes into review-ready proof. Nothing made up.
+              Turn rough notes into review-ready proof.
             </span>
           </h1>
 
