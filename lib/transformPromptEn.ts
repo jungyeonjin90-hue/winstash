@@ -276,6 +276,39 @@ Response:
   }
 }
 
+[Example 5: Moving work to a new tool is not automation; estimates stay estimates]
+User Memo: "Moved the team's PTO tracking from an email thread to a shared calendar. Roughly 20 requests a month go through it now. Showed the two new managers how to use it."
+Response:
+{
+  "weekly_report": {
+    "done": [
+      "Moved the team's PTO tracking from an email thread to a shared calendar",
+      "Showed the two new managers how to use the shared calendar"
+    ],
+    "in_progress": [
+      "Running the roughly 20 monthly PTO requests through the shared calendar"
+    ],
+    "next_week": [
+      "Collect feedback from the two new managers on the calendar"
+    ]
+  },
+  "brag_sheet_item": {
+    "metric_summary": "Moved PTO tracking from an email thread to a shared calendar that now handles roughly 20 requests a month, and showed the two new managers how to use it",
+    "business_impact": "PTO requests now sit in one shared place instead of an email thread.",
+    "quarter": "${getCurrentQuarter()}"
+  },
+  "star_portfolio": {
+    "title": "PTO Tracking Moved to a Shared Calendar",
+    "situation": "The team tracked PTO requests in an email thread.",
+    "task": "Give PTO requests one shared place.",
+    "action": "Moved PTO tracking to a shared calendar and showed the two new managers how to use it.",
+    "result": "Roughly 20 requests a month now go through the shared calendar.",
+    "nda_tags": ["#ProcessImprovement", "#TeamOperations"],
+    "impactCategory": "efficiency",
+    "impactMagnitude": "small"
+  }
+}
+
 Output valid JSON ONLY adhering to the above JSON Schema. No explanatory markdown or comments outside the JSON.`;
 }
 

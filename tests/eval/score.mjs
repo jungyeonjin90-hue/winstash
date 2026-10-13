@@ -24,6 +24,8 @@ const FEW_SHOT_TERMS = [
   "HikariCP",
   "Payment Gateway",
   "p99",
+  "PTO",
+  "shared calendar",
 ];
 
 const isString = (v) => typeof v === "string" && v.trim().length > 0;
