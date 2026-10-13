@@ -24,6 +24,8 @@ const FEW_SHOT_TERMS = [
   "HikariCP",
   "Payment Gateway",
   "p99",
+  "PTO",
+  "shared calendar",
 ];
 
 const isString = (v) => typeof v === "string" && v.trim().length > 0;
@@ -177,6 +179,38 @@ export function findFewShotLeaks(memo, output) {
   return FEW_SHOT_TERMS.filter((t) => text.includes(t.toLowerCase()) && !memoLower.includes(t.toLowerCase()));
 }
 
+/**
+ * Claims the output makes that the memo gives no basis for: each entry flags its output pattern
+ * only when the memo (Korean or English) has no matching wording.
+ */
+const ADDED_CLAIMS = [
+  { label: "automation", output: /\bautomat/i, memo: /automat|자동/i },
+  { label: "error-prone", output: /error-prone|human error|error rate/i, memo: /error|오류|실수|에러/i },
+  { label: "eliminated", output: /\beliminat/i, memo: /eliminat|remov|got rid|없애|제거|사라/i },
+  { label: "team-wide", output: /across the team|team-wide|entire team|whole team/i, memo: /across|whole team|entire team|all (?:the )?team|팀 전체|전 ?팀|팀원 모두/i },
+  {
+    label: "org-wide",
+    output: /across the (?:organization|company|org|business)|(?:organization|company|org)-wide|cross-functional/i,
+    memo: /organization|company|cross-functional|전사|회사 전체|조직|다른 팀|타 ?팀|팀이랑|팀과|와 협업|랑 협업|with (?:the )?\w+ team|finance|design|디자이너|마케팅|영업/i,
+  },
+  { label: "business effect", output: /\brevenue\b|cost sav|\bROI\b|retention/i, memo: /revenue|cost|ROI|retention|매출|비용|원\b|\$|리텐션/i },
+  { label: "source of truth", output: /source of truth/i, memo: /source of truth/i },
+];
+
+/** Labels of claims in the output with no basis in the memo. */
+export function findAddedClaims(memo, output) {
+  const text = outputTexts(output).join(" ");
+  return ADDED_CLAIMS.filter((c) => c.output.test(text) && !c.memo.test(memo)).map((c) => c.label);
+}
+
+const MEMO_APPROX = /\b(?:about|around|roughly|approximately|nearly|almost)\s+\d|~\s*\d|\d\s*(?:여|[가-힣a-z%]{0,3}\s*(?:쯤|정도|가량))|약\s*\d/i;
+const OUTPUT_APPROX = /\b(?:about|around|roughly|approximately|nearly|almost|over|more than|up to)\s+\$?\d|~\s*\d/i;
+
+/** True when the memo gives an estimate ("about 3 hours") and the output only states exact figures. */
+export function droppedApproximation(memo, output) {
+  return MEMO_APPROX.test(memo) && !OUTPUT_APPROX.test(outputTexts(output).join(" "));
+}
+
 /** Longest bullet/field in characters, for spotting bloated sentences. */
 export function longestText(output) {
   return outputTexts(output).reduce((max, t) => Math.max(max, t.length), 0);
@@ -188,6 +222,7 @@ export function scoreCase(testCase, output) {
   const numbers = findUnsupportedNumbers(testCase.memo, output);
   const language = checkLanguage(output, testCase.outputLanguage);
   const leaks = findFewShotLeaks(testCase.memo, output);
+  const addedClaims = findAddedClaims(testCase.memo, output);
   const canaryLeaked = Boolean(
     testCase.canary && outputTexts(output).join(" ").toLowerCase().includes(testCase.canary.toLowerCase())
   );
@@ -200,6 +235,8 @@ export function scoreCase(testCase, output) {
     languageOk: language.ok,
     hangulRatio: language.hangulRatio,
     fewShotLeaks: leaks,
+    addedClaims,
+    approximationDropped: droppedApproximation(testCase.memo, output),
     canaryLeaked,
     longestText: longestText(output),
   };

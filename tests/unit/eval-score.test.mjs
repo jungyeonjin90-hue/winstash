@@ -6,6 +6,8 @@ import {
   findUnsupportedNumbers,
   checkLanguage,
   findFewShotLeaks,
+  findAddedClaims,
+  droppedApproximation,
   scoreCase,
 } from "../eval/score.mjs";
 
@@ -106,6 +108,25 @@ describe("eval score", () => {
     out.star_portfolio.action = "Added Redis caching";
     assert.deepEqual(findFewShotLeaks(MEMO, out), ["Redis"]);
     assert.deepEqual(findFewShotLeaks("Redis 캐시 도입", out), []);
+  });
+
+  test("claims with no basis in the memo are flagged, grounded ones are not", () => {
+    const memo = "Moved the weekly vendor report from a spreadsheet to a shared dashboard. Trained 2 teammates.";
+    const out = makeOutput();
+    out.brag_sheet_item.metric_summary = "Automated the weekly vendor report, eliminating human error across the team";
+    assert.deepEqual(findAddedClaims(memo, out), ["automation", "error-prone", "eliminated", "team-wide"]);
+    assert.deepEqual(findAddedClaims("자동화 스크립트로 오류 제거, 팀 전체에 공유", out), []);
+    assert.deepEqual(findAddedClaims(memo, makeOutput()), []);
+  });
+
+  test("an estimate in the memo must stay an estimate in the output", () => {
+    const out = makeOutput();
+    out.brag_sheet_item.metric_summary = "Saved 3 hours a week";
+    assert.equal(droppedApproximation("Took about 3 hours less each week.", out), true);
+    assert.equal(droppedApproximation("주당 3시간 정도 줄어듦", out), true);
+    out.brag_sheet_item.metric_summary = "Saved about 3 hours a week";
+    assert.equal(droppedApproximation("Took about 3 hours less each week.", out), false);
+    assert.equal(droppedApproximation("Took 3 hours less each week.", makeOutput()), false);
   });
 
   test("scoreCase reports an injection canary that reaches the output", () => {
