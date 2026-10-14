@@ -428,20 +428,26 @@ export function LandingPageEn() {
                 ))}
               </ol>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center text-pretty">
-                Then keep it going with a 1-minute note every Friday, so next year&apos;s review is already written.{" "}
-                Log from any tab with the{" "}
-                <a
-                  href={CHROME_EXTENSION_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-                >
-                  Chrome extension
-                </a>{" "}
-                (Alt+W).{" "}
-                <Link href="/resources" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-                  See self-evaluation examples by role →
-                </Link>
+                Then keep it going with a 1-minute note every Friday, so next year&apos;s review is already written.
+                <span className="block mt-1">
+                  Log from any tab with the{" "}
+                  <span className="whitespace-nowrap">
+                    <a
+                      href={CHROME_EXTENSION_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      Chrome extension
+                    </a>{" "}
+                    (Alt+W).
+                  </span>
+                </span>
+                <span className="block mt-1">
+                  <Link href="/resources" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    See self-evaluation examples by role →
+                  </Link>
+                </span>
               </p>
             </div>
           </div>
