@@ -15,7 +15,7 @@ import { PRO_PRICE_USD, IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig
 export const metadata: Metadata = {
   title: "WinStash Pricing: Free Plan & Pro ($5.99/mo)",
   description:
-    "Log career wins for free forever. Upgrade to WinStash Pro ($5.99/mo) for unlimited weekly AI transformations, brag sheets, and STAR portfolio syntheses.",
+    "Log career wins for free forever. Upgrade to WinStash Pro ($5.99/mo) for unlimited Weekly Update, Brag Sheet, and STAR Story drafts.",
   keywords: [
     "WinStash pricing",
     "work wins tracker cost",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "WinStash Pricing: Free Plan & Pro ($5.99/mo)",
     description:
-      "Log career wins for free forever. Upgrade to WinStash Pro ($5.99/mo) for unlimited weekly AI transformations, brag sheets, and STAR portfolio syntheses.",
+      "Log career wins for free forever. Upgrade to WinStash Pro ($5.99/mo) for unlimited Weekly Update, Brag Sheet, and STAR Story drafts.",
     url: "https://winstash.net/pricing",
     siteName: "WinStash",
     images: [
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "WinStash Pricing: Free Plan & Pro ($5.99/mo)",
     description:
-      "Log career wins for free forever. Upgrade to WinStash Pro ($5.99/mo) for unlimited weekly AI transformations and syntheses.",
+      "Log career wins for free forever. Upgrade to WinStash Pro ($5.99/mo) for unlimited drafts, edits, and redos.",
     images: ["/og-image.png"],
   },
 };
@@ -62,8 +62,8 @@ const PRICING_FAQS = [
   {
     q: "What happens when I use up my free AI credits?",
     a: IS_PAYMENT_GATEWAY_LIVE
-      ? "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or upgrade to Pro to unlock unlimited AI syntheses."
-      : "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or join the waitlist for Pro to unlock unlimited AI syntheses.",
+      ? "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or upgrade to Pro for unlimited drafts, edits, and redos."
+      : "Your notes stay yours forever. You can continue logging, editing, and reading your past accomplishments. Once your free credits are used, you can either continue manual logging for free or join the waitlist for Pro to unlock unlimited drafts, edits, and redos.",
   },
   {
     q: IS_PAYMENT_GATEWAY_LIVE ? "How do I upgrade to Pro?" : "When does Pro open?",
@@ -176,7 +176,7 @@ export default function PricingPage() {
       <div className="w-full bg-indigo-50/80 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/60 py-2.5 px-4 text-center text-xs font-semibold text-indigo-900 dark:text-indigo-300">
         <span>
           {IS_PAYMENT_GATEWAY_LIVE
-            ? "Every draft uses only what you wrote. Pro adds unlimited AI syntheses."
+            ? "Every draft uses only what you wrote. Pro adds unlimited drafts, edits, and redos."
             : "🎉 Free during the public beta. Pro opens soon."}
         </span>
       </div>
@@ -194,7 +194,7 @@ export default function PricingPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
-            Log your wins for free, forever. Pro adds unlimited AI transformations and syntheses when
+            Log your wins for free, forever. Pro adds unlimited drafts, edits, and redos when
             you need them.
           </p>
         </div>
@@ -282,7 +282,7 @@ export default function PricingPage() {
                   <span className="text-xs font-medium text-zinc-500">/ month + tax</span>
                 </div>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                  For professionals who want unlimited weekly AI syntheses.
+                  For professionals who want unlimited drafts, edits, and redos.
                 </p>
               </div>
 
@@ -297,7 +297,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[3]" />
-                  <span><strong>Unlimited</strong> edits &amp; re-syntheses for all past weeks</span>
+                  <span><strong>Unlimited</strong> edits &amp; redos for all past weeks</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[3]" />

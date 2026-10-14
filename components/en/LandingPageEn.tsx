@@ -25,6 +25,9 @@ import { FeedbackModalEn } from "./FeedbackModalEn";
 import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
 
+const CHROME_EXTENSION_URL =
+  "https://chromewebstore.google.com/detail/winstash-weekly-career-br/lafkjhaebgdafcckekcdffiimacfpajb?utm_source=winstash.net&utm_medium=landing&utm_campaign=catch_up_steps";
+
 const PRICING_NOTE = IS_PAYMENT_GATEWAY_LIVE
   ? "Free to start · Pro ($5.99/mo) for unlimited drafts, edits & redos"
   : "Free to start · Pro ($5.99/mo) adds unlimited drafts, edits & redos after launch";
@@ -426,6 +429,16 @@ export function LandingPageEn() {
               </ol>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center text-pretty">
                 Then keep it going with a 1-minute note every Friday, so next year&apos;s review is already written.{" "}
+                Log from any tab with the{" "}
+                <a
+                  href={CHROME_EXTENSION_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  Chrome extension
+                </a>{" "}
+                (Alt+W).{" "}
                 <Link href="/resources" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
                   See self-evaluation examples by role →
                 </Link>
