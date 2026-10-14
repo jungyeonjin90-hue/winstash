@@ -26,8 +26,8 @@ import { WinStashBrandBadge } from "@/components/WinStashLogo";
 import { IS_PAYMENT_GATEWAY_LIVE } from "@/lib/lemonSqueezyConfig";
 
 const PRICING_NOTE = IS_PAYMENT_GATEWAY_LIVE
-  ? "Free to start · Pro ($5.99/mo) for unlimited AI syntheses"
-  : "Free to start · Pro ($5.99/mo) adds unlimited AI syntheses after launch";
+  ? "Free to start · Pro ($5.99/mo) for unlimited drafts, edits & redos"
+  : "Free to start · Pro ($5.99/mo) adds unlimited drafts, edits & redos after launch";
 
 function GoogleIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -504,7 +504,7 @@ export function LandingPageEn() {
               </button>
 
               <span className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border border-dashed border-zinc-300 dark:border-zinc-700">
-                + Design, Sales & CS in App
+                + Works for any role
               </span>
             </div>
           </div>
@@ -517,7 +517,7 @@ export function LandingPageEn() {
                 <div className="flex items-center gap-2">
                   <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                    Step 1: Friday 1-Min Raw Brain Dump
+                    Step 1: 1-Min Rough Note (weekly or catching up)
                   </span>
                 </div>
                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800">
@@ -949,11 +949,11 @@ export function LandingPageEn() {
             {[
               {
                 q: "What is included in the free plan? Do I need a credit card?",
-                a: "WinStash is 100% free to start with zero credit card required. Upon signing in, you receive 10 full AI weekly transformations, 3 performance review (Brag Sheet) syntheses, and 3 STAR portfolio case study syntheses. You can continue logging your raw career wins for free forever.",
+                a: "WinStash is 100% free to start with zero credit card required. When you sign in, you get 10 Weekly Update drafts, 3 Brag Sheet drafts, and 3 STAR Story drafts for free. Editing a saved week uses one Weekly Update draft. You can keep logging your notes for free forever.",
               },
               {
                 q: "My self-review is due soon. Can WinStash still help?",
-                a: "Yes. In the week picker, choose any past week, write a few lines about what you worked on, and save. Repeat for the projects you remember, then generate a Brag Sheet for the year, half, or quarter. The free plan's 10 AI transformations are enough to cover your biggest projects. For wording ideas, see our free self-evaluation examples by role in Resources.",
+                a: "Yes. In the week picker, choose any past week, write a few lines about what you worked on, and save. Repeat for the projects you remember, then generate a Brag Sheet for the year, half, or quarter. The free plan's 10 Weekly Update drafts are enough to cover your biggest projects. For wording ideas, see our free self-evaluation examples by role in Resources.",
               },
               {
                 q: "Will WinStash make up numbers to make me look better?",
@@ -966,8 +966,8 @@ export function LandingPageEn() {
               {
                 q: "What happens after I use my free AI credits?",
                 a: IS_PAYMENT_GATEWAY_LIVE
-                  ? "You can continue logging and storing your weekly notes for free forever. To keep generating weekly updates, Brag Sheets, and STAR stories, upgrade to WinStash Pro ($5.99/mo) for unlimited AI syntheses. Cancel anytime."
-                  : "You can continue logging and storing your weekly notes for free forever. During our public beta, active users who share feedback can get credits topped up anytime. When we launch, WinStash Pro ($5.99/mo) will unlock unlimited syntheses.",
+                  ? "You can continue logging and storing your weekly notes for free forever. To keep generating weekly updates, Brag Sheets, and STAR stories, upgrade to WinStash Pro ($5.99/mo) for unlimited drafts, edits to past weeks, and redone Brag Sheets and STAR Stories. Cancel anytime."
+                  : "You can continue logging and storing your weekly notes for free forever. During our public beta, active users who share feedback can get credits topped up anytime. When we launch, WinStash Pro ($5.99/mo) will unlock unlimited drafts, edits, and redos.",
               },
               {
                 q: "Can I use WinStash if I am not a Software Engineer?",
@@ -1095,7 +1095,7 @@ export function LandingPageEn() {
           Notes are encrypted at rest &amp; in transit and private to your account.
         </p>
         <p className="text-[10px] text-zinc-400 max-w-xl mx-auto leading-relaxed">
-          Disclaimer: WinStash is an independent product and is not affiliated with, endorsed by, or sponsored by Google LLC, Amazon.com, Inc., or any other referenced organizations. All trademarks belong to their respective owners. AI-synthesized outputs should be reviewed and verified by the user before professional use.
+          Disclaimer: WinStash is an independent product and is not affiliated with, endorsed by, or sponsored by any company or trademark holder mentioned on this site. All trademarks belong to their respective owners. AI-synthesized outputs should be reviewed and verified by the user before professional use.
         </p>
       </footer>
 
