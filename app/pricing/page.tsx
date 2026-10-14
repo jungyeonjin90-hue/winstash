@@ -56,8 +56,8 @@ const PRICING_FAQS = [
   {
     q: "Is WinStash really free?",
     a: IS_PAYMENT_GATEWAY_LIVE
-      ? "Yes. You can log and stash your raw weekly wins for free forever. Every free account receives 10 weekly AI transformations, 3 Brag Sheet syntheses, and 3 STAR portfolio syntheses with zero credit card required."
-      : "Yes. You can log and stash your raw weekly wins for free forever. During our public beta, every account receives 10 free weekly AI transformations, 3 Brag Sheet syntheses, and 3 STAR portfolio syntheses with zero credit card required.",
+      ? "Yes. You can log and stash your raw weekly wins for free forever. Every free account gets 10 Weekly Update drafts, 3 Brag Sheet drafts, and 3 STAR Story drafts with no credit card required. Editing a saved week uses one Weekly Update draft."
+      : "Yes. You can log and stash your raw weekly wins for free forever. During our public beta, every account gets 10 Weekly Update drafts, 3 Brag Sheet drafts, and 3 STAR Story drafts with no credit card required.",
   },
   {
     q: "What happens when I use up my free AI credits?",
@@ -68,7 +68,7 @@ const PRICING_FAQS = [
   {
     q: IS_PAYMENT_GATEWAY_LIVE ? "How do I upgrade to Pro?" : "When does Pro open?",
     a: IS_PAYMENT_GATEWAY_LIVE
-      ? "Use the Upgrade button above. Pro starts right away and gives you unlimited AI transformations, brag sheets, and STAR portfolio syntheses."
+      ? "Use the Upgrade button above. Pro starts right away and gives you unlimited Weekly Update, Brag Sheet, and STAR Story drafts, including edits and redos."
       : "Very soon. We are putting the finishing touches on our billing integration. Click the 'Notify Me' button on this page to join our early-access waitlist, and we'll send you an email the moment Pro launches.",
   },
   {
@@ -230,15 +230,15 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
-                  <span><strong>10 total</strong> weekly AI transformations</span>
+                  <span><strong>10</strong> Weekly Update drafts</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
-                  <span><strong>3 total</strong> Brag Sheet syntheses</span>
+                  <span><strong>3</strong> Brag Sheet drafts</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
-                  <span><strong>3 total</strong> STAR portfolio syntheses</span>
+                  <span><strong>3</strong> STAR Story drafts</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-emerald-500 shrink-0 stroke-[3]" />
@@ -293,7 +293,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[3]" />
-                  <span><strong>Unlimited</strong> weekly AI transformations</span>
+                  <span><strong>Unlimited</strong> Weekly Update drafts</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[3]" />
@@ -301,7 +301,7 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[3]" />
-                  <span><strong>Unlimited</strong> Brag Sheet &amp; STAR syntheses</span>
+                  <span><strong>Unlimited</strong> Brag Sheet &amp; STAR Story drafts</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 stroke-[3]" />

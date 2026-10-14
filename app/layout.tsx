@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://winstash.net",
   },
-  title: "WinStash: Self-Review Prep from Your Own Work Notes",
+  title: "WinStash: Self-Review & Brag Sheet Prep from Your Work Notes",
   description:
     "Turn rough work notes into a brag sheet, weekly updates, and STAR stories for your review. Only what you wrote, nothing made up. Free to start.",
   verification: {
