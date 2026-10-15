@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import { SELF_EVALUATION_PAGES, countExamples } from "@/lib/resources/selfEvaluationPages";
 import { CANT_REMEMBER_GUIDE_SLUG } from "@/lib/resources/guides";
+import { getPublishedArticles } from "@/lib/resources/articles";
+
+// Markdown articles (content/resources) appear here once their publish date passes; hourly refresh.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Career & Performance Review Resources | WinStash",
@@ -56,6 +60,7 @@ export const metadata: Metadata = {
 };
 
 export default function ResourcesHubPage() {
+  const articles = getPublishedArticles();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -127,6 +132,38 @@ export default function ResourcesHubPage() {
             track team impact, and breeze through performance reviews without the year-end panic.
           </p>
         </div>
+
+        {/* Latest guides (Markdown articles from content/resources) */}
+        {articles.length > 0 && (
+          <section className="space-y-5">
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+                Latest guides
+              </h2>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Practical how-tos for weekly updates, self-reviews and promotion season.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {articles.map((article) => (
+                <Link
+                  key={article.slug}
+                  href={`/resources/${article.slug}`}
+                  className="group block p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 hover:border-indigo-500/80 dark:hover:border-indigo-500/80 transition-all"
+                >
+                  <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+                    <Clock className="w-3 h-3" />
+                    <span>{article.readingMinutes} min read</span>
+                  </div>
+                  <h3 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-2">
+                    {article.title}
+                  </h3>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{article.description}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* 3. Self-evaluation examples by role */}
         <section className="space-y-5">

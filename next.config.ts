@@ -30,6 +30,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["firebase-admin"],
+  // Markdown articles are read from disk at request time when a scheduled article goes live (ISR).
+  outputFileTracingIncludes: {
+    "/resources": ["./content/resources/**/*"],
+    "/resources/[slug]": ["./content/resources/**/*"],
+    "/sitemap.xml": ["./content/resources/**/*"],
+  },
   // The Korean service (/ko) was removed: send old links to the matching English page, else home.
   async redirects() {
     return [
