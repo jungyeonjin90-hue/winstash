@@ -1,10 +1,9 @@
 import { useState, useRef } from "react";
 import { Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { WinStashBrandBadge } from "./WinStashLogo";
-import { loginWithGoogle } from "../lib/firebase";
 import { WEB_BASE_URL } from "../lib/webBase";
 
-/** What LoginView reports after a direct (popup) Google sign-in. */
+/** What LoginView reports after a successful sign-in. */
 export interface LoginResult {
   uid: string;
   email: string;
@@ -15,38 +14,14 @@ interface LoginViewProps {
 }
 
 /*
- * Two ways in:
- * 1. Firebase signInWithPopup directly in the extension.
- * 2. If that is unavailable, /auth/extension-connect on the web app signs in and hands the extension a
- *    one-time custom token (content script -> background -> chrome.storage.session). App.tsx picks it
- *    up and signs in; its auth listener then replaces this view. No session data is polled or copied.
+ * Sign-in happens on the web app: /auth/extension-connect signs in and hands the extension a one-time
+ * custom token (content script -> background -> chrome.storage.session). App.tsx picks it up and signs
+ * in; its auth listener then replaces this view. No session data is polled or copied.
  */
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const authWindowIdRef = useRef<number | null>(null);
-
-  // Helper to close authentication window / tabs 100% reliably
-  const closeAuthWindow = () => {
-    if (authWindowIdRef.current && typeof chrome !== "undefined" && chrome.windows) {
-      try {
-        chrome.windows.remove(authWindowIdRef.current, () => {});
-      } catch {}
-      authWindowIdRef.current = null;
-    }
-
-    if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
-        tabs?.forEach((t) => {
-          if (t.id && t.url && t.url.includes("/auth/extension-connect")) {
-            try {
-              chrome.tabs.remove(t.id);
-            } catch {}
-          }
-        });
-      });
-    }
-  };
 
   const openConnectWindow = () => {
     const connectUrl = `${WEB_BASE_URL}/auth/extension-connect?auto=true`;
@@ -78,24 +53,10 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     }
   };
 
-  const handleConnect = async () => {
+  const handleConnect = () => {
     setIsLoading(true);
     setStatusMsg("Opening Google account selection...");
-
-    // Method 1: Try direct Firebase signInWithPopup in extension
-    try {
-      const user = await loginWithGoogle();
-      if (user && user.uid) {
-        setStatusMsg("Connected successfully!");
-        closeAuthWindow();
-        onLoginSuccess({ uid: user.uid, email: user.email || "" });
-        return;
-      }
-    } catch (popupErr) {
-      console.log("[WinStash Extension] Direct popup fallback:", (popupErr as Error | null)?.message);
-    }
-
-    // Method 2: Open the web connect window; it hands a one-time token back to the extension
+    // The web connect window hands a one-time token back to the extension
     openConnectWindow();
   };
 
