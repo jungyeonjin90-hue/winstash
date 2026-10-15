@@ -1,13 +1,14 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
+// The web-extension build of Firebase Auth leaves out the popup/redirect and reCAPTCHA code, which
+// loads scripts from apis.google.com and google.com. Manifest V3 forbids remotely hosted code, and the
+// Chrome Web Store flags those URLs even when they are never called (violation "Blue Argon").
 import {
   getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
   signInWithCustomToken,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  User,
-} from "firebase/auth";
+  type User,
+} from "firebase/auth/web-extension";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBvyjCpGsZ_b1Ovcrj-TWlAlAMxmN2sU_0",
@@ -20,16 +21,6 @@ const firebaseConfig = {
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: "select_account",
-});
-
-export async function loginWithGoogle(): Promise<User> {
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
-}
 
 export async function logoutUser(): Promise<void> {
   await firebaseSignOut(auth);
