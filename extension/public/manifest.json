@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "WinStash - Weekly Career & Brag OS",
-  "version": "1.2.1",
-  "description": "1-click weekly memo logger and AI career synthesis for Chrome",
+  "name": "WinStash: Work Log, Brag Doc & Self-Review",
+  "version": "1.2.2",
+  "description": "Log your week in a minute. Turn rough notes into a weekly update, brag doc and STAR stories for your self-review. Nothing made up.",
   "action": {
     "default_popup": "index.html",
     "default_title": "WinStash - Quick Log"
