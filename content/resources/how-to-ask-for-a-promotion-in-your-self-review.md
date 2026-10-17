@@ -18,7 +18,7 @@ faq:
   - q: "Should I explicitly ask for a promotion inside the written self-evaluation form?"
     a: "Yes, in the forward-looking or career goals section at the bottom, and verbally in your review 1:1. In the accomplishments section above it, focus on proving you are already doing next-level work so the ask feels like a natural conclusion."
   - q: "Why does my manager need written proof if they already see my work?"
-    a: "In most companies, your manager has to defend your promotion in a calibration meeting with other managers and HR who don't watch your day-to-day work. Clear, concrete bullets give your manager something they can read aloud or paste directly into a promotion packet."
+    a: "At many companies, your manager has to defend your promotion in a calibration meeting with other managers and HR who don't watch your day-to-day work. Clear, concrete bullets give your manager something they can read aloud or paste directly into a promotion packet."
   - q: "What if my company doesn't have a formal career ladder or level rubric?"
     a: "Show growth across four universal signals of seniority: taking a problem from vague idea to completion without hand-holding, improving how the whole team works, coordinating across departments, and training or unblocking teammates."
   - q: "What if my manager says 'not this cycle'?"
@@ -27,7 +27,7 @@ faq:
 
 Many people treat their self-evaluation like a school report card: list what you did, hope the teacher notices, and wait to see if a promotion happens.
 
-That rarely works—not because your manager doesn't care, but because **your manager is usually not the only person in the room when promotions are decided.** In most companies, managers have to pitch their promotion candidates in a calibration meeting with directors, HR, and peer managers who have never seen your daily work.
+That rarely works—not because your manager doesn't care, but because **your manager is usually not the only person in the room when promotions are decided.** At many companies, managers have to make the case for their promotion candidates in a calibration meeting with directors, HR, and peer managers who have never seen your daily work.
 
 A promotion-ready self-evaluation gives your manager the exact evidence they need to win that conversation for you. Below is how to structure your review around next-level scope, before-and-after examples, and exact wording for making the ask.
 
@@ -44,7 +44,7 @@ Even if your company doesn't publish a formal rubric, reviewers look for four sh
 
 ## Rewriting "good job" lines into "next-level scope" lines
 
-You don't need to invent fake numbers to sound senior. You just need to include the **ownership, coordination, and multiplier effect** that you usually leave out.
+You don't need to invent fake numbers to sound senior. You just need to include the **ownership, coordination, and multiplier effect** that you usually leave out. The examples below are illustrative: replace the details with your own and only keep a number you can show.
 
 | Sounds like meeting expectations | Sounds like operating at the next level |
 | --- | --- |
@@ -94,7 +94,7 @@ In my draft, I've pulled together examples of where I've been taking on broader 
 
 The hardest way to write a promotion case is trying to reconstruct twelve months of ownership, cross-team alignment, and stakeholder praise on the night before the form is due.
 
-The easiest way is keeping a running [work brag sheet](/resources/brag-sheet-template-for-work) and sending a [weekly status update](/resources/weekly-status-update-template) every Friday. When you log the decision you drove, the risk you caught, and the teammate you unblocked the week it happens, your promotion packet is 80% written before review season even starts.
+The easiest way is keeping a running [work brag sheet](/resources/brag-sheet-template-for-work) and sending a [weekly status update](/resources/weekly-status-update-template) every Friday. When you log the decision you drove, the risk you caught, and the teammate you unblocked the week it happens, most of your promotion packet is already written before review season starts.
 
 For role-specific examples to adapt, explore our self-evaluation guides for [Operations](/resources/self-evaluation-examples-operations), [Project Managers](/resources/self-evaluation-examples-project-managers), [Product Managers](/resources/self-evaluation-examples-product-managers), [Business & Data Analysts](/resources/self-evaluation-examples-business-analysts), and [Customer Success](/resources/self-evaluation-examples-customer-success).
 

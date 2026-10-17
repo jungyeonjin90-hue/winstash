@@ -25,7 +25,7 @@ faq:
     a: "Log the friction you removed: checklists you created, backlogs you cleared, recurring errors you fixed, and handoffs you smoothed out. Those details are the hardest to remember later and the most useful in a review."
 ---
 
-Every November, millions of people open a blank self-evaluation form and realize they can't remember what they did in March. Calendar invites only show meeting titles. Chat history is too noisy to search. So they spend a Sunday night writing vague lines like "kept things running smoothly" and underselling a full year of work.
+Review season usually starts the same way: you open a blank self-evaluation form and realize you can't remember what you did in March. Calendar invites only show meeting titles. Chat history is too noisy to search. So you spend a Sunday night writing vague lines like "kept things running smoothly" and undersell a full year of work.
 
 A **brag sheet** (also called a brag document or work accomplishments log) fixes this. It's a single running page where you jot down a couple of lines each week about what you finished, what you fixed, and what changed.
 
@@ -73,7 +73,7 @@ Role: [Your Title] | Year: [Year]
 
 The biggest mistake people make is waiting for a huge, company-wide launch before writing anything down. Most careers are built out of dozens of smaller fixes that look ordinary in the moment and impressive when collected over six months.
 
-Here are five categories worth logging, with examples across non-technical and technical roles:
+Here are five categories worth logging, with examples across non-technical and technical roles. The examples are illustrative: swap in your own work and only keep a number you can point to.
 
 ### 1. Projects and deliverables shipped
 
@@ -111,7 +111,7 @@ When someone thanks you in Slack or email—especially for something specific—
 
 Your weekly log doesn't need to be polished prose. Write messy notes on Friday, and polish only the best ones when review season arrives.
 
-| Friday note in your brag sheet ( takes 30 seconds ) | Self-evaluation line at review time |
+| Friday note in your brag sheet | Self-evaluation line at review time |
 | --- | --- |
 | Oct 10: finally got finance + legal on one sheet for vendor approvals, down from ~6 days to 2 | Cut vendor approval turnaround from ~6 days to ~2 days by consolidating three email threads into a single shared approval sheet with finance and legal. |
 | Aug 22: caught missing compliance step on ERP rollout, would've pushed launch 2 months | Identified a compliance gap during ERP planning and worked with legal to close it early, preventing a two-month delay to go-live. |

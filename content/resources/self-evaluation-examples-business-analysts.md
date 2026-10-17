@@ -97,7 +97,7 @@ Review period: [Start] to [End]
 
 ## Don't let ad-hoc wins vanish into Slack history
 
-Analysts have a unique memory problem at review time: your biggest project sits in Jira, but 60% of your actual value happened in Slack threads, quick SQL checks, requirement clarifications, and fires you prevented before a meeting. By November, those threads are impossible to dig up.
+Analysts have a unique memory problem at review time: your biggest project sits in Jira, but much of your actual value happened in Slack threads, quick SQL checks, requirement clarifications, and fires you prevented before a meeting. By November, those threads are impossible to dig up.
 
 The fix takes two minutes on a Friday: jot down the question you answered, the discrepancy you caught, or the requirement you unblocked in a [running brag sheet](/resources/brag-sheet-template-for-work) or a [weekly status update](/resources/weekly-status-update-template).
 
