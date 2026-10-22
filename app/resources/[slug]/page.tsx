@@ -93,34 +93,50 @@ export default async function ResourceArticlePage({ params }: { params: Promise<
     { href: "/resources/brag-doc-template-software-engineers", title: "Brag Doc Template (Free Markdown)" },
   ].slice(0, 4);
 
+  const graph: Record<string, unknown>[] = [
+    {
+      "@type": "Article",
+      headline: article.title,
+      description: article.description,
+      url,
+      mainEntityOfPage: url,
+      datePublished: article.date,
+      dateModified: article.updated ?? article.date,
+      image: `${BASE_URL}/og-image.png`,
+      author: { "@type": "Organization", name: "WinStash", url: BASE_URL },
+      publisher: {
+        "@type": "Organization",
+        name: "WinStash",
+        logo: { "@type": "ImageObject", url: `${BASE_URL}/icon-192.png` },
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
+        { "@type": "ListItem", position: 2, name: "Resources", item: `${BASE_URL}/resources` },
+        { "@type": "ListItem", position: 3, name: article.title, item: url },
+      ],
+    },
+  ];
+
+  if (article.faq.length > 0) {
+    graph.push({
+      "@type": "FAQPage",
+      mainEntity: article.faq.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.a,
+        },
+      })),
+    });
+  }
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Article",
-        headline: article.title,
-        description: article.description,
-        url,
-        mainEntityOfPage: url,
-        datePublished: article.date,
-        dateModified: article.updated ?? article.date,
-        image: `${BASE_URL}/og-image.png`,
-        author: { "@type": "Organization", name: "WinStash", url: BASE_URL },
-        publisher: {
-          "@type": "Organization",
-          name: "WinStash",
-          logo: { "@type": "ImageObject", url: `${BASE_URL}/icon-192.png` },
-        },
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL },
-          { "@type": "ListItem", position: 2, name: "Resources", item: `${BASE_URL}/resources` },
-          { "@type": "ListItem", position: 3, name: article.title, item: url },
-        ],
-      },
-    ],
+    "@graph": graph,
   };
 
   return (
