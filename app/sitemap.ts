@@ -3,8 +3,9 @@ import { SELF_EVALUATION_PAGES } from "@/lib/resources/selfEvaluationPages";
 import { CANT_REMEMBER_GUIDE_SLUG } from "@/lib/resources/guides";
 import { getPublishedArticles } from "@/lib/resources/articles";
 
-// Scheduled Markdown articles join the sitemap once their publish date passes.
-export const revalidate = 3600;
+// Scheduled Markdown articles join the sitemap dynamically the moment their publish date passes.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://winstash.net";
