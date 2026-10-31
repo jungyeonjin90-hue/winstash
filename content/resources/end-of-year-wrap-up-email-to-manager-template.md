@@ -13,10 +13,10 @@ tldr:
   - "Send your year-end wrap-up email one to two weeks before holiday PTO starts to give your manager a clean, memorable summary while calibration is active."
   - "Keep it to four short sections: top 3–4 annual outcomes, coverage plans for the holiday freeze, appreciation, and priorities for Q1."
   - "Focus on outcomes and friction removed rather than listing 30 minor tasks."
-  - "This email doubles as the final positive impression your manager has of your year before ratings and bonuses are finalized."
+  - "This email doubles as a clean, positive summary for your manager before holiday PTO and year-end planning."
 faq:
   - q: "When is the best time to send an end-of-year wrap-up email?"
-    a: "Mid-December, roughly one to two weeks before your company's holiday break or code freeze begins. This timing catches your manager right as annual calibration ratings and bonus allocations are finalized."
+    a: "Mid-December, roughly one to two weeks before your company's holiday break or code freeze begins. At many companies, this timing aligns with when annual calibration ratings and bonus allocations are finalized."
   - q: "How is an end-of-year email different from my official self-evaluation?"
     a: "Your self-evaluation is an official HR form. The year-end email is a personal, low-stress note sent directly to your manager's inbox that synthesizes your year into three punchy bullets, ties up holiday loose ends, and reinforces your strong partnership."
   - q: "Should I include numbers or metrics in a year-end email?"
@@ -32,7 +32,7 @@ Most employees simply log off for the holidays with an automatic out-of-office m
 Top performers do something smarter: they send a concise, thoughtful **End-of-Year Wrap-Up Email** to their manager.
 
 This email takes ten minutes to write, but it does three high-value things:
-1. It cements your top achievements in your manager's mind right as year-end ratings and compensation adjustments are finalized.
+1. It cements your top achievements in your manager's mind as annual reviews and planning wrap up at many companies.
 2. It gives your manager peace of mind that all holiday coverage and urgent handoffs are handled.
 3. It sets a clear, ambitious tone for your priorities heading into Q1.
 
@@ -137,7 +137,7 @@ Marcus
 
 Managers have to evaluate dozens of moving parts in December. A clear email that celebrates wins and ties up loose ends demonstrates senior professionalism:
 
-1. **It reinforces your annual review packet:** If calibration discussions are still wrapping up, this email provides a timely, positive reminder of your high-leverage work.
+1. **It reinforces your annual review packet:** At companies where review calibrations continue into December, this email provides a timely, positive reminder of your high-leverage work.
 2. **It prevents holiday anxiety:** Your manager doesn't have to wonder who is covering the queue or if a project will stall while you're skiing.
 3. **It demonstrates ownership:** You are already thinking about Q1 priorities before January even starts.
 

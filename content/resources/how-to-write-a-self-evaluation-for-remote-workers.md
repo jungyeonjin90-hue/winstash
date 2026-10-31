@@ -39,7 +39,7 @@ Below are before-and-after rewrites, copy-and-paste examples across core remote 
 
 | Weak (passive remote duty) | Strong (documented async leverage) |
 | --- | --- |
-| I communicated well remotely and attended all Zoom syncs. | Sent a one-page Friday status update covering shipments, next priorities, and blockers, which cut ad-hoc check-ins and eliminated our weekly status meeting. |
+| I communicated well remotely and attended all Zoom syncs. | Replaced recurring multi-timezone alignment calls with a structured async project brief and 48-hour comment windows, cutting review turnaround in half. |
 | I worked independently from home. | Owned the Q3 customer migration end-to-end across three time zones, writing the rollout spec and coordinating reviews with legal and IT without escalation. |
 | I helped teammates with questions in Slack. | Turned recurring setup questions from team chat into a step-by-step onboarding guide, which two new remote hires used to ramp in their first two weeks. |
 | I managed my time well. | Documented project decisions in shared Jira tickets and recorded 2-minute Loom walkthroughs for design handoffs, enabling async sign-offs without scheduling calls. |
@@ -51,7 +51,7 @@ These are illustrative examples. Replace the details with your own work and only
 ### 1. Asynchronous communication and documentation
 
 - "Maintained high project momentum across three time zones by writing clear one-page scopes with explicit decision deadlines, keeping work moving without waiting for live calls."
-- "Replaced a 45-minute weekly status meeting with a structured Friday written digest, saving roughly three hours of team meeting time each month."
+- "Introduced a standardized async RFC template with clear decision deadlines, allowing teams in three time zones to review and approve proposals without scheduling midnight syncs."
 - "Documented the runbook for our monthly reporting process in our team wiki, walking a backup reviewer through two cycles so operations stayed on schedule during team PTO."
 - "Created short video walkthroughs for complex feature handoffs, allowing engineering and design partners to review specs on their own schedules."
 

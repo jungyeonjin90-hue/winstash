@@ -61,7 +61,7 @@ These are illustrative examples. Replace the details with your own work and only
 ### 3. Technical debt, testing, and developer productivity
 
 - "Refactored our monolithic [module/service] into smaller, decoupled utility packages, reducing circular dependencies and unblocking two partner teams from independent deployments."
-- "Stabilized our flaky end-to-end test suite by isolating database seeds and mocking third-party network calls, raising CI build pass rates from 72% to 98%."
+- "Profiled our slowest database queries and added targeted composite indexes, dropping p95 query latency on the dashboard endpoint from 420ms to 65ms."
 - "Audited legacy npm/pip dependencies for security vulnerabilities, upgrading outdated libraries and removing four deprecated packages before quarterly compliance review."
 - "Standardized our local Docker development environment with a single setup script, cutting new hire local environment setup time from two days to under two hours."
 
