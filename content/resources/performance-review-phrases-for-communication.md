@@ -25,9 +25,9 @@ faq:
     a: "Yes. Simply adjust the pronoun from \"I\" to \"they\" (e.g., \"Their weekly one-pagers kept our project aligned without extra syncs\")."
 ---
 
-Almost every employee performance review evaluates **Communication Skills**.
+Most employee performance reviews evaluate **Communication Skills**.
 
-And almost every review uses the same five exhausted phrases: *strong communicator, active listener, team player, keeps people updated, responsive in Slack.*
+And many reviews rely on the same generic phrases: *strong communicator, active listener, team player, keeps people updated, responsive in Slack.*
 
 The problem is that these phrases describe activity rather than effectiveness. A manager doesn't care whether you typed 200 Slack messages today. They care whether **your communication prevented misunderstandings, sped up decisions, and kept projects moving without extra meetings.**
 
@@ -43,6 +43,8 @@ Below are before-and-after rewrites, 20 copy-and-paste performance review phrase
 | I translate technical requirements for non-tech teams. | Wrote a plain-language troubleshooting guide with engineering that helped support reps resolve complex setup questions on day one without escalating. |
 
 ## 20 performance review phrases by communication competency
+
+These are illustrative examples. Replace the details with your own work and only use numbers you can back up.
 
 ### 1. Written communication, documentation, and async clarity
 

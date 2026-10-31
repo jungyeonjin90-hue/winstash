@@ -25,7 +25,7 @@ faq:
     a: "Two short paragraphs (around 70 to 120 words) is the sweet spot: one paragraph highlighting their biggest strength or impact, and one brief paragraph offering constructive feedback or encouragement for next period."
 ---
 
-During performance review season, you are rarely asked to write only about yourself. Almost every 360-degree review cycle asks you to review three to five coworkers or cross-functional partners.
+During performance review season, you are rarely asked to write only about yourself. Many 360-degree review cycles ask you to review three to five coworkers or cross-functional partners.
 
 Writing peer reviews often feels stressful. Write something generic like *"Alex is great to work with and a true team player,"* and you fail to give your peer the evidence they need for a promotion. Write something critical without tact, and you worry about creating tension next week.
 
@@ -44,7 +44,7 @@ Below are before-and-after rewrites, 16 copy-and-paste peer review examples acro
 
 ## 16 peer review examples by scenario
 
-Swap in your coworker's name and project details, and only reference work you directly observed.
+These are illustrative examples. Replace the details with your own work and only use numbers you can back up. Swap in your coworker's name and project details, and only reference work you directly observed.
 
 ### 1. Cross-functional partnership and handoffs
 

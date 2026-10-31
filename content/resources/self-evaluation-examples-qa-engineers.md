@@ -44,6 +44,8 @@ Below are before-and-after rewrites, copy-and-paste examples across five core QA
 
 ## QA engineer self-evaluation examples by category
 
+These are illustrative examples. Replace the details with your own work and only use numbers you can back up.
+
 ### 1. Test automation and engineering velocity (SDET focus)
 
 - "Automated our top 25 end-to-end regression test cases in [Playwright / Cypress / Selenium], reducing manual pre-release regression testing from two days to four hours."

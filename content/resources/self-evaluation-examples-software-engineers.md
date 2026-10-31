@@ -42,6 +42,8 @@ Below are before-and-after rewrites, copy-and-paste examples across five core en
 
 ## Software engineer self-evaluation examples by category
 
+These are illustrative examples. Replace the details with your own work and only use numbers you can back up.
+
 ### 1. Feature delivery and system design
 
 - "Architected and shipped the [Feature Name] backend service on schedule, breaking the build into four phased milestones to allow early integration testing with the frontend team."

@@ -73,6 +73,8 @@ Best,
 
 ## Two filled-in year-end email examples
 
+These are illustrative examples. Replace the details with your own work and only use numbers you can back up.
+
 ### Example 1: Operations / Project Management
 
 ```
@@ -114,7 +116,7 @@ Before logging off for the holiday freeze, I wanted to send a quick recap of wha
 Key Engineering Highlights from 2026:
 - Core service migration: led the zero-downtime database cutover in Q3 with p99 latency remaining under 45ms at peak traffic.
 - Reliability & tech debt: traced and patched the nightly export timezone bug, eliminating manual on-call reruns and bringing weekly job failures to zero.
-- Developer productivity: stabilized our end-to-end test suite and optimized Docker seeds, cutting CI build times from 28 minutes to 11 minutes.
+- Infrastructure & resilience: resolved a database connection pool leak in staging, eliminating pod crash loops during high-concurrency batch jobs.
 
 Holiday Coverage & Code Freeze:
 - I am on PTO from Dec 23 through Jan 3.
