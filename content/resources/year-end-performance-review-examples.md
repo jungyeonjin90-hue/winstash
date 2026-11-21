@@ -27,7 +27,7 @@ faq:
 
 Writing a year-end performance review is harder than writing a quarterly check-in because you are trying to compress 12 months of context into a single form—often while rushing to finish Q4 work before the holidays.
 
-Most employees fall into one of two traps: either they dump 30 disconnected bullet points from December backward, or they write broad claims like *"Had a productive year supporting team goals."* Neither helps your manager during annual calibration.
+A common trap is falling to one of two extremes: dumping 30 disconnected bullet points from December backward, or writing broad claims like *"Had a productive year supporting team goals."* Neither helps your manager during annual calibration.
 
 A strong year-end review reads like an executive summary of your year: **the three to five biggest themes you owned, the friction you removed for others, and where you plan to stretch next year.**
 

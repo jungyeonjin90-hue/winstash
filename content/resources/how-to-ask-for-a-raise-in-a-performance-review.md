@@ -18,7 +18,7 @@ faq:
   - q: "When is the right time to ask for a raise tied to a performance review?"
     a: "Bring it up in a 1:1 four to six weeks before formal review ratings and merit pools are finalized. By the time your manager hands you the final review summary, compensation numbers at many companies have already been approved by finance and HR."
   - q: "Should I ask for a specific dollar amount or percentage?"
-    a: "Yes—provide a clear target figure or tight range backed by role benchmarks and your expanded scope, rather than saying 'I'd just like a fair bump.' Giving a specific number keeps the conversation concrete and prevents a token 2% adjustment."
+    a: "Yes—provide a clear target figure or tight range backed by role benchmarks and your expanded scope, rather than saying 'I'd just like a fair bump.' Giving a specific number keeps the conversation concrete and gives your manager a clear target to discuss."
   - q: "What is the difference between asking for a raise and asking for a promotion?"
     a: "A promotion moves you to a higher job level and band, while an in-band merit raise or market adjustment increases pay within your current level because of strong performance, scarce skills, or market drift. Be clear with your manager which one you are proposing."
   - q: "What should I do if my manager says the budget is frozen this cycle?"
@@ -29,7 +29,7 @@ Waiting until your performance review meeting to ask for a raise is one of the m
 
 At many companies, merit budgets, bonus pools, and band adjustments are locked weeks **before** managers sit down to deliver formal review ratings. If you bring up pay for the first time after seeing your score, your manager often has zero budget left to move—even if they agree you deserve more.
 
-The highest-success approach starts **before calibration closes**: prepare a concise one-page record of your expanded scope, anchor it with objective market context, and have a collaborative conversation with your manager early.
+A practical approach starts **before calibration closes**: prepare a concise one-page record of your expanded scope, anchor it with objective market context, and have a collaborative conversation with your manager early.
 
 ## Before and after: framing a raise request around value
 
