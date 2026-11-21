@@ -17,7 +17,7 @@ import {
 import { SELF_EVALUATION_PAGES, countExamples } from "@/lib/resources/selfEvaluationPages";
 import { CANT_REMEMBER_GUIDE_SLUG } from "@/lib/resources/guides";
 import { getPublishedArticles } from "@/lib/resources/articles";
-import type { Article } from "@/lib/resources/articleFormat";
+import { isRoleResourceSlug, isTemplateResourceSlug } from "@/lib/llmsTxt";
 
 // Markdown articles (content/resources) appear here once their publish date passes; hourly refresh.
 export const revalidate = 3600;
@@ -64,20 +64,6 @@ export const metadata: Metadata = {
   },
 };
 
-function isRoleArticle(article: Article): boolean {
-  return article.slug.startsWith("self-evaluation-examples-");
-}
-
-function isTemplateArticle(article: Article): boolean {
-  return (
-    !isRoleArticle(article) &&
-    (article.slug.includes("template") ||
-      article.slug.includes("brag-sheet") ||
-      article.slug.includes("brag-doc") ||
-      article.slug.includes("work-log"))
-  );
-}
-
 function formatRoleHeading(title: string): string {
   const cleaned = title
     .replace(/\s*Self-Evaluation Examples.*$/i, "")
@@ -87,14 +73,17 @@ function formatRoleHeading(title: string): string {
   if (cleaned === "Business Analyst & Data Analyst") return "Business & Data Analysts";
   if (cleaned.endsWith("Manager")) return `${cleaned}s`;
   if (cleaned.endsWith("Analyst")) return `${cleaned}s`;
+  if (cleaned.endsWith("Engineer")) return `${cleaned}s`;
   return cleaned;
 }
 
 export default function ResourcesHubPage() {
   const articles = getPublishedArticles();
-  const roleArticles = articles.filter(isRoleArticle);
-  const templateArticles = articles.filter(isTemplateArticle);
-  const guideArticles = articles.filter((a) => !isRoleArticle(a) && !isTemplateArticle(a));
+  const roleArticles = articles.filter((a) => isRoleResourceSlug(a.slug));
+  const templateArticles = articles.filter((a) => isTemplateResourceSlug(a.slug));
+  const guideArticles = articles.filter(
+    (a) => !isRoleResourceSlug(a.slug) && !isTemplateResourceSlug(a.slug)
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",

@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
     "/resources": ["./content/resources/**/*"],
     "/resources/[slug]": ["./content/resources/**/*"],
     "/sitemap.xml": ["./content/resources/**/*"],
+    "/llms.txt": ["./content/resources/**/*"],
   },
   // The Korean service (/ko) was removed: send old links to the matching English page, else home.
   async redirects() {

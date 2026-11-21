@@ -43,6 +43,8 @@ next-env.d.ts
 
 # local notes
 *.txt
+!/app/llms.txt/
+!/app/llms.txt/**
 
 # chrome extension
 extension/node_modules/

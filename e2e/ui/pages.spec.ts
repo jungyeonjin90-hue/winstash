@@ -158,3 +158,62 @@ test("indexed pages declare their own canonical URL", async ({ page }) => {
     await expect(page.locator('link[rel="canonical"]'), path).toHaveAttribute("href", canonical);
   }
 });
+
+test("llms.txt serves text/plain Markdown summary for AI crawlers", async ({ request }) => {
+  const res = await request.get("/llms.txt");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("text/plain");
+  const body = await res.text();
+  expect(body).toContain("# WinStash");
+  expect(body).toContain("https://winstash.net/tools/star-method-generator");
+  expect(body).toContain("https://winstash.net/pricing");
+});
+
+test("home page renders Schema.org JSON-LD graph and exposes FAQ answers in initial SSR HTML", async ({ page, request }) => {
+  const html = await (await request.get("/")).text();
+  expect(html).toContain("WinStash is 100% free to start with zero credit card required.");
+
+  await page.goto("/");
+  const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();
+  expect(scripts.length).toBeGreaterThanOrEqual(1);
+
+  const parsed = JSON.parse(scripts[0]) as { "@graph": Array<{ "@type": string; mainEntity?: unknown[] }> };
+  const types = parsed["@graph"].map((node) => node["@type"]);
+  expect(types).toContain("Organization");
+  expect(types).toContain("WebSite");
+  expect(types).toContain("SoftwareApplication");
+  expect(types).toContain("FAQPage");
+
+  const faqNode = parsed["@graph"].find((node) => node["@type"] === "FAQPage");
+  expect(faqNode?.mainEntity).toHaveLength(8);
+});
+
+test("sitemap uses stable lastmod for static pages and respects scheduled article dates", async ({ request }) => {
+  const xml1 = await (await request.get("/sitemap.xml")).text();
+  await new Promise((r) => setTimeout(r, 1100));
+  const xml2 = await (await request.get("/sitemap.xml")).text();
+
+  const extractLastmod = (xml: string, url: string) => {
+    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = new RegExp(`<loc>${escaped}</loc>\\s*<lastmod>([^<]+)</lastmod>`).exec(xml);
+    return match?.[1];
+  };
+
+  expect(extractLastmod(xml1, "https://winstash.net/privacy")).toBeTruthy();
+  expect(extractLastmod(xml1, "https://winstash.net/privacy")).toBe(
+    extractLastmod(xml2, "https://winstash.net/privacy")
+  );
+  expect(extractLastmod(xml1, "https://winstash.net/pricing")).toBe(
+    extractLastmod(xml2, "https://winstash.net/pricing")
+  );
+
+  if (Date.now() < Date.parse("2026-11-23T09:00:00+09:00")) {
+    expect(xml1).not.toContain("year-end-performance-review-examples");
+  }
+});
+
+test("robots.txt blocks /api/ and /auth/", async ({ request }) => {
+  const text = await (await request.get("/robots.txt")).text();
+  expect(text).toContain("Disallow: /api/");
+  expect(text).toContain("Disallow: /auth/");
+});
